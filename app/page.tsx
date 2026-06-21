@@ -1,4 +1,5 @@
 import { MainButton } from "@/shared/buttons/mainButton";
+import { Login } from "./auth/login/page";
 
 export default function Home() {
   return (
@@ -7,6 +8,7 @@ export default function Home() {
         <div className="flex gap-4">
           <MainButton title="Sign In"/>
           <MainButton title="Sign Up"/>
+          <Login/>
         </div>
       </main>
     </div>
