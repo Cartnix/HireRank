@@ -1,7 +1,9 @@
+import { Hero } from "@/widgets/Hero"
+
 export const Landing = () => {
     return (
-        <main className="bg-primary w-full h-dvw">
-            
-        </main>
+        <div className="w-full h-vh flex items-center justify-center">
+            <Hero />
+        </div>
     )
 }
