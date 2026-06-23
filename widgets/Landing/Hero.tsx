@@ -1,31 +1,19 @@
 "use client"
 
-import { motion, useScroll, useTransform } from "framer-motion"
-import { useRef } from "react";
+import { motion } from "framer-motion"
+import { useId } from "react";
 
 const patterns = {
     outer: "12 18 4 18 4 18",
-    middle: "8 12 16 12 8 12", 
-    inner: "20 4 4 4 20 4"     
+    middle: "8 12 16 12 8 12",
+    inner: "20 4 4 4 20 4"
 };
 
 export const Hero = () => {
-    const containerRef = useRef<HTMLDivElement>(null)
-
-    const { scrollYProgress } = useScroll({
-        target: containerRef,
-        offset: ["start start", "end start"]
-    })
-
-    const scale = useTransform(scrollYProgress, [0, 1], [1.5, 1])
-    const opacity = useTransform(scrollYProgress, [0, 1], [1, 0.3])
 
     return (
-        <div ref={containerRef} className="relative flex items-center justify-center w-98 h-98">
-            <motion.div
-                className="absolute inset-0"
-                style={{ scale, opacity }} 
-            >
+        <section className="relative flex items-center justify-center w-full min-h-screen">
+            <motion.div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <BrokenCircle size="100%" dash={patterns.outer} rotate={0} duration={60} direction={1} strokeWidth={0.5} style={{ filter: "blur(0.8px)" }} />
                 <BrokenCircle size="95%" dash={patterns.middle} rotate={35} centered duration={45} direction={-1} strokeWidth={0.7} style={{ filter: "blur(0.4px)" }} />
                 <BrokenCircle size="90%" dash={patterns.inner} rotate={-20} centered duration={30} direction={1} strokeWidth={1} />
@@ -33,7 +21,6 @@ export const Hero = () => {
 
             <motion.div
                 className="relative z-10 flex flex-col items-center text-center px-6"
-                style={{ opacity: useTransform(scrollYProgress, [0, 0.5], [1, 0]) }}
             >
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-foreground">
                     HireRank
@@ -42,22 +29,25 @@ export const Hero = () => {
                     Каждый кандидат — на своём месте. Без хаоса в таблицах.
                 </p>
             </motion.div>
-        </div>
+        </section>
     )
 }
 
 const BrokenCircle = ({
     size, dash, rotate, centered,
     strokeWidth = 0.8, duration = 20, direction = 1,
-    style = {} // Добавляем поддержку внешних стилей (для blur)
+    style = {}
 }: any) => {
-    const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
-
+    const id = useId(); 
+    const gradientId = `gradient-${id}`;
+    
     return (
         <motion.svg
             viewBox="0 0 100 100"
-            className={centered ? "absolute inset-0 m-auto" : "absolute inset-0"}
-            style={{ width: size, height: size, ...style }} // Применяем blur через style
+            preserveAspectRatio="xMidYMid meet"
+            overflow="visible"
+            className={"absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"}
+            style={{ width: size, height: size, ...style }}
             animate={{ rotate: [rotate, rotate + 360 * direction] }}
             transition={{ duration, repeat: Infinity, ease: "linear" }}
         >
@@ -69,7 +59,7 @@ const BrokenCircle = ({
                 </linearGradient>
             </defs>
             <circle
-                cx="50" cy="50" r="48"
+                cx="50" cy="50" r="42.5"
                 fill="none"
                 stroke={`url(#${gradientId})`}
                 className="stroke-primary"

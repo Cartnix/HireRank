@@ -1,5 +1,6 @@
-import { Landing } from "@/pages/LandingPage/page";
+import { Footer } from "@/widgets/Footer";
 import { Header } from "@/widgets/Header";
+import Landing from "./Landing/page";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <main className="flex flex-1 w-full flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
         <Landing />
       </main>
+      <Footer />
     </div>
   );
 }

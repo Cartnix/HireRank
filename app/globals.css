@@ -4,45 +4,45 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary-color);
-  --color-secondary: var(--secondary-color);
-  --color-border: var(--border);
-  --radius-lg: var(--radius);
-}
+  --color-background: #fafafa;
+  --color-foreground: #18181b;
+  --color-foreground-muted: #71717a;
+  --color-primary: #0284c7;
+  --color-accent: #0a84ff;
+  --color-border: #e4e4e7;
+  --color-glass-bg: rgba(255, 255, 255, 0.06);
+  --color-glass-border: rgba(255, 255, 255, 0.14);
 
-:root {
-  --background: #fafafa;
-  --foreground: #18181b;
-  --primary-color: #0284c7;
-  --secondary-color: #e0f2fe;
-  --border: #e4e4e7;
-  --radius: 0.625rem;
+  /*Темная тема*/
+  
+  --color-background-dark: #09090b;
+  --color-foreground-dark: #f4f4f5;
+  --color-foreground-muted-dark: #a1a1aa;
+  --color-primary-dark: #38bdf8;
+  --color-accent-dark: #3b82f6;
+  --color-border-dark: #27272a;
+  --color-glass-bg-dark: rgba(0, 0, 0, 0.3);
+  --color-glass-border-dark: rgba(255, 255, 255, 0.05);
 
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-border: rgba(255, 255, 255, 0.14);
-  --glass-highlight: rgba(255, 255, 255, 0.25);
-  --accent: #0a84ff;
-  --accent-soft: rgba(10, 132, 255, 0.18);
-}
-
-.glass {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  box-shadow:
-    inset 0 1px 0 0 var(--glass-highlight),
-    0 8px 30px rgba(0, 0, 0, 0.12);
+  --radius-lg: 0.625rem;
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border dark:border-border-dark;
   }
-
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground dark:bg-background-dark dark:text-foreground-dark;
+  }
+}
+
+.glass {
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(20px);
+  /* Dark mode override */
+  .dark & {
+    background: var(--color-glass-bg-dark);
+    border-color: var(--color-glass-border-dark);
   }
 }
