@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: light-dark(#fafafa, #09090b);
+  --color-foreground: light-dark(#18181b, #f4f4f5);
+  --color-foreground-muted: light-dark(#71717a, #a1a1aa);
+  --color-border: light-dark(#e4e4e7, #27272a);
+  /* ... остальные */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@utility glass {
+  background-color: light-dark(var(--color-glass-bg), var(--color-glass-bg-dark));
+  border: 1px solid light-dark(var(--color-glass-border), var(--color-glass-border-dark));
+  backdrop-filter: blur(20px);
+}
