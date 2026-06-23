@@ -2,7 +2,7 @@ import { MainButton } from "@/shared/buttons/MainButton";
 
 export const Header = () => {
   return (
-    <header className="fixed top-0 left-0 w-full z-50 px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-md dark:bg-black/80">
+    <header className="fixed top-0 left-0 w-full z-50 px-6 py-4 flex items-center justify-between bg-transparent backdrop-blur-md dark:bg-black/80">
 
       <div className="font-bold text-xl tracking-tight cursor-pointer">
         HireRank<span className="text-primary">.</span>
@@ -22,6 +22,7 @@ export const Header = () => {
           ))}
           <li>
             <MainButton title="Sign Up" />
+
           </li>
         </ul>
       </nav>
