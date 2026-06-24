@@ -1,6 +1,6 @@
 import { Footer } from "@/widgets/Footer";
 import { Header } from "@/widgets/Header";
-import Landing from "./Landing/page";
+import Landing from "./landing/page";
 import { RegisterForm } from "./auth/login/page";
 
 export default function Home() {
