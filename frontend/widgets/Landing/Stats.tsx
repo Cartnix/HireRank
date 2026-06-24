@@ -18,12 +18,15 @@ export const Stats = () => (
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-80px" }}
                     transition={{ duration: 0.6, delay: i * 0.12, ease: "easeOut" }}
-                    className="glass rounded-3xl p-8 text-center"
+                    whileHover={{ y: -4 }}
+                    className="group relative rounded-3xl p-8 text-center bg-background-elevated border border-border-subtle shadow-sm hover:shadow-md transition-shadow"
                 >
-                    <div className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 h-1 w-10 rounded-full bg-brand-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                    <div className="text-4xl md:text-5xl font-semibold tracking-tight text-brand-primary">
                         {s.value}
                     </div>
-                    <p className="mt-3 text-sm text-foreground/60 leading-relaxed">
+                    <p className="mt-3 text-sm text-foreground-secondary leading-relaxed">
                         {s.label}
                     </p>
                 </motion.div>

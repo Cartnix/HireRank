@@ -17,7 +17,7 @@ export const HowItWorks = () => (
 
             <div className="relative">
                 {/* соединительная линия, как трек прогресса */}
-                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/10 hidden md:block" />
+                <div className="absolute left-1/2 top-2 bottom-2 w-px bg-border -translate-x-1/2 hidden md:block" />
 
                 <div className="space-y-6">
                     {steps.map((s, i) => (
@@ -27,15 +27,28 @@ export const HowItWorks = () => (
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true, margin: "-80px" }}
                             transition={{ duration: 0.5 }}
-                            className={`glass rounded-3xl p-7 md:w-[46%] relative ${
-                                i % 2 === 0 ? "md:mr-auto" : "md:ml-auto"
-                            }`}
+                            className="relative md:w-[46%]"
+                            style={{ marginLeft: i % 2 === 0 ? "0" : "auto" }}
                         >
-                            <span className="text-xs font-medium" style={{ color: "var(--accent)" }}>
-                                Шаг {i + 1}
-                            </span>
-                            <h3 className="text-lg font-medium text-foreground mt-1 mb-2">{s.title}</h3>
-                            <p className="text-sm text-foreground/60 leading-relaxed">{s.desc}</p>
+                            {/* точка на центральной линии */}
+                            <div
+                                className={`absolute top-7 w-3 h-3 rounded-full bg-brand-primary ring-4 ring-background hidden md:block ${
+                                    i % 2 === 0 ? "-right-7.5" : "-left-7.5"
+                                }`}
+                            />
+
+                            <div className="rounded-3xl p-7 bg-background-elevated border border-border-subtle shadow-sm hover:shadow-md transition-shadow duration-300">
+                                <div className="flex items-center gap-2.5 mb-1">
+                                    <span className="w-6 h-6 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-semibold flex items-center justify-center">
+                                        {i + 1}
+                                    </span>
+                                    <span className="text-xs font-medium text-brand-primary uppercase tracking-wide">
+                                        Шаг {i + 1}
+                                    </span>
+                                </div>
+                                <h3 className="text-lg font-medium text-foreground mt-2 mb-2">{s.title}</h3>
+                                <p className="text-sm text-foreground-secondary leading-relaxed">{s.desc}</p>
+                            </div>
                         </motion.div>
                     ))}
                 </div>

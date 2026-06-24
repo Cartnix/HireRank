@@ -32,19 +32,20 @@ export const RegisterForm = () => {
 
     return (
         <div className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden bg-background">
-            {/* Декоративные пятна: теперь используем классы bg-accent и bg-primary */}
-            <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full blur-3xl opacity-40 bg-accent" />
-            <div className="absolute bottom-0 right-0 w-md h-112 rounded-full blur-3xl opacity-30 bg-primary" />
+            {/* декоративные пятна на токенах */}
+            <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full blur-3xl opacity-40 bg-brand-primary/20" />
+            <div className="absolute bottom-0 right-0 w-md h-112 rounded-full blur-3xl opacity-30 bg-brand-primary/10" />
 
             <form
                 onSubmit={handleSubmit(onSubmit)}
-                className="glass relative z-10 w-full max-w-md rounded-3xl p-8 flex flex-col gap-5 shadow-lg"
+                className="relative z-10 w-full max-w-md rounded-3xl p-8 flex flex-col gap-5
+                   bg-background-elevated border border-border-subtle shadow-lg"
             >
                 <div className="mb-1">
                     <h2 className="text-2xl font-semibold tracking-tight text-foreground">
                         Регистрация
                     </h2>
-                    <p className="text-sm text-foreground-muted mt-1">
+                    <p className="text-sm text-foreground-secondary mt-1">
                         Создайте аккаунт за пару секунд
                     </p>
                 </div>
@@ -56,15 +57,16 @@ export const RegisterForm = () => {
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="mt-2 py-3 rounded-2xl font-medium text-white transition-all duration-200 
-                               hover:scale-[1.015] active:scale-[0.985] disabled:opacity-50 bg-accent"
+                    className="mt-2 py-3 rounded-2xl font-medium text-brand-primary-foreground bg-brand-primary
+                       hover:bg-brand-primary-hover transition-all duration-200
+                       hover:scale-[1.015] active:scale-[0.985] disabled:opacity-50 shadow-sm"
                 >
                     {isSubmitting ? "Отправка..." : "Зарегистрироваться"}
                 </button>
 
-                <p className="text-center text-sm text-foreground-muted">
+                <p className="text-center text-sm text-foreground-secondary">
                     Уже есть аккаунт?{" "}
-                    <a href="/login" className="font-medium hover:underline text-accent">
+                    <a href="/login" className="font-medium hover:underline text-brand-primary">
                         Войти
                     </a>
                 </p>

@@ -33,7 +33,7 @@ export const Features = () => (
                 <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
                     Всё, что нужно нанимающей команде
                 </h2>
-                <p className="mt-3 text-foreground/60 max-w-xl mx-auto">
+                <p className="mt-3 text-foreground-secondary max-w-xl mx-auto">
                     Ничего лишнего. Только то, что ускоряет решение «да» или «нет».
                 </p>
             </div>
@@ -48,14 +48,16 @@ export const Features = () => (
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, margin: "-60px" }}
                             transition={{ duration: 0.5, delay: i * 0.08 }}
-                            className="glass rounded-3xl p-7 group hover:bg-white/9 transition-colors duration-300"
+                            whileHover={{ y: -3 }}
+                            className="group relative rounded-3xl p-7 bg-background-elevated border border-border-subtle shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all duration-300"
                         >
-                            <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
-                                 style={{ background: "var(--accent-soft)" }}>
-                                <Icon className="w-5 h-5" style={{ color: "var(--accent)" }} strokeWidth={1.8} />
+                            <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5 bg-brand-primary/10 group-hover:bg-brand-primary/15 transition-colors duration-300">
+                                <Icon className="w-5 h-5 text-brand-primary" strokeWidth={1.8} />
                             </div>
                             <h3 className="text-lg font-medium text-foreground mb-2">{f.title}</h3>
-                            <p className="text-sm text-foreground/60 leading-relaxed">{f.desc}</p>
+                            <p className="text-sm text-foreground-secondary leading-relaxed">{f.desc}</p>
+
+                            <div className="absolute bottom-0 left-7 right-7 h-px bg-linear-to-r from-transparent via-border to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         </motion.div>
                     )
                 })}
