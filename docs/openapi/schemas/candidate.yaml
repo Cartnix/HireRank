@@ -22,88 +22,113 @@ VacancyMatchScore:
       maximum: 10
       example: 8.7
 
+EducationEntry:
+  type: object
+  description: Одна строка таблицы учебных заведений из ЛПК (п.7)
+  properties:
+    institution:
+      type: string
+      description: Название учебного заведения и его местонахождение
+      example: КазНУ им. аль-Фараби, г. Алматы
+    year_from:
+      type: string
+      description: Год поступления (строка — форма не гарантирует число)
+      example: "2012"
+    year_to:
+      type: string
+      description: Год окончания или ухода
+      example: "2016"
+    dropped_at_year:
+      type: string
+      nullable: true
+      description: С какого курса ушёл (если не окончил)
+      example: null
+    specialty:
+      type: string
+      description: Специальность, по которой обучался
+      example: Информационные системы
+    diploma:
+      type: string
+      description: Квалификация и № диплома / удостоверения
+      example: Диплом бакалавра № 012345
+
 Questionnaire:
   type: object
-  description: Кадровая анкета кандидата (HTML-форма)
+  description: |
+    Кадровая анкета кандидата — структура соответствует официальному
+    «Личному листку по учёту кадров» (ЛПК, форма lpk.html).
+    Поля пронумерованы в соответствии с пунктами формы.
   properties:
-    # Личные данные
+    # п.1 — ФИО
+    surname:
+      type: string
+      description: "п.1 — Фамилия (name=surname в форме)"
+      example: Сейткали
     first_name:
       type: string
+      description: "п.1 — Имя (name=first_name)"
       example: Алибек
-    last_name:
+    patronymic:
       type: string
-      example: Сейткали
-    middle_name:
-      type: string
+      description: "п.1 — Отчество (name=patronymic)"
       example: Серикович
-    date_of_birth:
-      type: string
-      format: date
-      example: "1995-03-15"
+    # п.2 — Пол
     gender:
       type: string
-      enum: [male, female, other]
-    phone:
+      description: "п.2 — Пол (free-text из формы)"
+      example: мужской
+    # п.3 — Дата рождения
+    birth_date:
       type: string
-      example: "+77001234567"
-    address:
+      description: |
+        п.3 — Год, число и месяц рождения.
+        Принимается как string: форма free-text, нормализацию делает бэк.
+      example: "1995-03-15"
+    # п.4 — Место рождения
+    birth_place:
       type: string
-      example: г. Алматы, ул. Абая 10
-    # Образование
+      description: "п.4 — Место рождения (село/город, район, область, республика)"
+      example: г. Алматы, Алматинская обл., Казахстан
+    # п.5–6
+    nationality:
+      type: string
+      description: "п.5 — Национальность (Ұлты)"
+      example: казах
+    citizenship:
+      type: string
+      description: "п.6 — Гражданство (Азаматтығы)"
+      example: Казахстан
+    # п.7 — Образование
     education_level:
       type: string
-      enum: [secondary, vocational, bachelor, master, phd]
-      example: bachelor
-    education_institution:
-      type: string
-      example: КазНУ им. аль-Фараби
-    education_specialty:
-      type: string
-      example: Информационные системы
-    education_year:
-      type: integer
-      example: 2018
-    # Опыт
-    experience_years:
-      type: integer
-      example: 5
-    experience_summary:
-      type: string
-      example: Разработка веб-приложений на Python/Django
-    last_position:
-      type: string
-      example: Senior Backend Developer
-    last_employer:
-      type: string
-      example: ООО Технологии
-    # Навыки
-    skills:
+      description: "п.7 — Уровень образования (free-text из формы)"
+      example: высшее
+    education:
       type: array
+      description: "п.7 — Таблица учебных заведений (до 4 строк в форме)"
+      maxItems: 4
+      items:
+        $ref: '#/EducationEntry'
+    # п.8 — Языки
+    languages:
+      type: string
+      description: |
+        п.8 — Родной язык и другие языки, степень владения (free-text).
+        Форма содержит одно поле name=languages.
+      example: "казахский (родной), русский (свободно), английский (читаю и перевожу со словарём)"
+    # п.9 — Учёная степень
+    academic_degree:
+      type: string
+      description: "п.9 — Учёная степень / учёное звание"
+      example: ""
+    # п.10 — Научные труды
+    scientific_works:
+      type: array
+      description: "п.10 — Научные труды и изобретения (две строки в форме)"
+      maxItems: 2
       items:
         type: string
-      example: [Python, FastAPI, PostgreSQL, Docker]
-    languages:
-      type: array
-      items:
-        type: object
-        properties:
-          language:
-            type: string
-            example: Английский
-          level:
-            type: string
-            enum: [A1, A2, B1, B2, C1, C2, native]
-            example: B2
-    # Дополнительно
-    desired_position:
-      type: string
-      example: Backend Developer
-    desired_salary:
-      type: integer
-      example: 500000
-    notes:
-      type: string
-      example: Готов к командировкам
+      example: ["", ""]
 
 Candidate:
   type: object
