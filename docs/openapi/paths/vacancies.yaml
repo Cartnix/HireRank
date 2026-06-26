@@ -1,0 +1,132 @@
+# paths/vacancies.yaml
+
+paths:
+  /vacancies:
+    get:
+      tags: [Vacancies]
+      operationId: listVacancies
+      summary: Список вакансий предприятия
+      description: Доступно всем авторизованным пользователям предприятия.
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '../schemas/vacancy.yaml#/VacancyStatus'
+          description: Фильтр по статусу
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Поиск по названию или отделу
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Список вакансий
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/vacancy.yaml#/PagedVacancyResponse'
+        '401':
+          description: Не авторизован
+
+    post:
+      tags: [Vacancies]
+      operationId: createVacancy
+      summary: Создать вакансию
+      description: Доступно только **administrator**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/vacancy.yaml#/CreateVacancyRequest'
+      responses:
+        '201':
+          description: Вакансия создана
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/vacancy.yaml#/Vacancy'
+        '400':
+          description: Ошибка валидации
+        '403':
+          description: Только administrator
+
+  /vacancies/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Vacancies]
+      operationId: getVacancyById
+      summary: Карточка вакансии
+      description: Доступно всем авторизованным пользователям предприятия.
+      responses:
+        '200':
+          description: Вакансия найдена
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/vacancy.yaml#/Vacancy'
+        '404':
+          description: Вакансия не найдена
+
+    patch:
+      tags: [Vacancies]
+      operationId: updateVacancy
+      summary: Обновить вакансию
+      description: Доступно только **administrator**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/vacancy.yaml#/UpdateVacancyRequest'
+      responses:
+        '200':
+          description: Вакансия обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/vacancy.yaml#/Vacancy'
+        '403':
+          description: Только administrator
+        '404':
+          description: Вакансия не найдена
+
+    delete:
+      tags: [Vacancies]
+      operationId: deleteVacancy
+      summary: Удалить вакансию
+      description: Доступно только **administrator**.
+      responses:
+        '204':
+          description: Вакансия удалена
+        '403':
+          description: Только administrator
+        '404':
+          description: Вакансия не найдена
+        '409':
+          description: Нельзя удалить вакансию с закреплёнными кандидатами
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/ErrorResponse'
+              example:
+                code: VACANCY_HAS_CANDIDATES
+                message: Cannot delete vacancy with assigned candidates

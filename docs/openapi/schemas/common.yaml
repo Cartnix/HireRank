@@ -1,0 +1,58 @@
+# schemas/common.yaml
+
+ErrorResponse:
+  type: object
+  required: [code, message]
+  properties:
+    code:
+      type: string
+      example: NOT_FOUND
+    message:
+      type: string
+      example: Resource not found
+    details:
+      type: object
+      additionalProperties: true
+
+ValidationError:
+  type: object
+  required: [code, message, errors]
+  properties:
+    code:
+      type: string
+      example: VALIDATION_ERROR
+    message:
+      type: string
+      example: Request validation failed
+    errors:
+      type: array
+      items:
+        type: object
+        required: [field, message]
+        properties:
+          field:
+            type: string
+            example: email
+          message:
+            type: string
+            example: Must be a valid email address
+
+Pagination:
+  type: object
+  required: [page, page_size, total, total_pages]
+  properties:
+    page:
+      type: integer
+      minimum: 1
+      example: 1
+    page_size:
+      type: integer
+      minimum: 1
+      maximum: 100
+      example: 20
+    total:
+      type: integer
+      example: 42
+    total_pages:
+      type: integer
+      example: 3

@@ -1,0 +1,57 @@
+# schemas/notification.yaml
+
+NotificationType:
+  type: string
+  enum:
+    - candidate_created
+    - vacancy_created
+    - candidate_assigned
+  example: candidate_created
+
+Notification:
+  type: object
+  required: [id, enterprise_id, recipient_id, type, is_read, created_at]
+  properties:
+    id:
+      type: string
+      format: uuid
+    enterprise_id:
+      type: string
+      format: uuid
+    recipient_id:
+      type: string
+      format: uuid
+    type:
+      $ref: '#/NotificationType'
+    title:
+      type: string
+      example: Новый кандидат
+    body:
+      type: string
+      example: Зарегистрирован новый кандидат — Алибек Сейткали.
+    payload:
+      type: object
+      description: Дополнительный контекст (candidate_id, vacancy_id и т.д.)
+      additionalProperties: true
+      example:
+        candidate_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+    is_read:
+      type: boolean
+      example: false
+    created_at:
+      type: string
+      format: date-time
+
+PagedNotificationResponse:
+  type: object
+  required: [items, pagination, unread_count]
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/Notification'
+    pagination:
+      $ref: './common.yaml#/Pagination'
+    unread_count:
+      type: integer
+      example: 5

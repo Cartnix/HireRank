@@ -1,0 +1,59 @@
+# paths/dashboard.yaml
+
+paths:
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      operationId: getDashboard
+      summary: Главная панель — данные зависят от роли пользователя
+      description: |
+        Один endpoint, ответ которого зависит от `role` в JWT:
+        
+        | Роль | Тип ответа |
+        |------|-----------|
+        | `administrator` | `AdminDashboard` |
+        | `hr_operator` | `HRDashboard` |
+        | `manager` | `ManagerDashboard` |
+        | `candidate` | `CandidateDashboard` |
+      responses:
+        '200':
+          description: Данные дашборда для текущей роли
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/dashboard.yaml#/DashboardResponse'
+              examples:
+                administrator:
+                  summary: Ответ для Administrator
+                  value:
+                    total_candidates: 34
+                    unassigned_candidates: 12
+                    total_vacancies: 8
+                    open_vacancies: 5
+                    total_users: 15
+                    unread_notifications: 3
+                    top_candidates:
+                      - candidate_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                        full_name: Алибек Сейткали
+                        ai_score: 9.1
+                hr_operator:
+                  summary: Ответ для HR Operator
+                  value:
+                    candidates_created_by_me: 7
+                    total_candidates: 34
+                    open_vacancies: 5
+                    unread_notifications: 2
+                manager:
+                  summary: Ответ для Manager
+                  value:
+                    assigned_candidates: 4
+                    open_vacancies: 5
+                    unread_notifications: 1
+                candidate:
+                  summary: Ответ для Candidate
+                  value:
+                    questionnaire_filled: true
+                    status: unassigned
+                    assigned_vacancy: null
+        '401':
+          description: Не авторизован

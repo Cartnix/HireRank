@@ -1,0 +1,97 @@
+# schemas/vacancy.yaml
+
+VacancyStatus:
+  type: string
+  enum: [open, closed, draft]
+  example: open
+
+Vacancy:
+  type: object
+  required: [id, enterprise_id, title, status, created_at]
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: b2c3d4e5-f6a7-8901-bcde-f23456789012
+    enterprise_id:
+      type: string
+      format: uuid
+    title:
+      type: string
+      example: Backend Developer
+    department:
+      type: string
+      example: Разработка
+    description:
+      type: string
+      example: |
+        Ищем опытного Backend-разработчика для работы над核心 сервисами.
+        Требования: Python 3.10+, FastAPI, PostgreSQL.
+    requirements:
+      type: array
+      items:
+        type: string
+      example: [Python, FastAPI, PostgreSQL, 3+ года опыта]
+    status:
+      $ref: '#/VacancyStatus'
+    assigned_candidate_ids:
+      type: array
+      items:
+        type: string
+        format: uuid
+    created_by:
+      type: string
+      format: uuid
+      description: id Administrator, создавшего вакансию
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateVacancyRequest:
+  type: object
+  required: [title, status]
+  properties:
+    title:
+      type: string
+      example: Backend Developer
+    department:
+      type: string
+      example: Разработка
+    description:
+      type: string
+    requirements:
+      type: array
+      items:
+        type: string
+    status:
+      $ref: '#/VacancyStatus'
+
+UpdateVacancyRequest:
+  type: object
+  properties:
+    title:
+      type: string
+    department:
+      type: string
+    description:
+      type: string
+    requirements:
+      type: array
+      items:
+        type: string
+    status:
+      $ref: '#/VacancyStatus'
+
+PagedVacancyResponse:
+  type: object
+  required: [items, pagination]
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/Vacancy'
+    pagination:
+      $ref: './common.yaml#/Pagination'

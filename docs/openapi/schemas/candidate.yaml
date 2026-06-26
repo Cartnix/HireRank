@@ -1,0 +1,184 @@
+# schemas/candidate.yaml
+
+CandidateStatus:
+  type: string
+  enum: [unassigned, assigned]
+  example: unassigned
+
+VacancyMatchScore:
+  type: object
+  required: [vacancy_id, vacancy_title, score]
+  properties:
+    vacancy_id:
+      type: string
+      format: uuid
+    vacancy_title:
+      type: string
+      example: Backend Developer
+    score:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 10
+      example: 8.7
+
+Questionnaire:
+  type: object
+  description: Кадровая анкета кандидата (HTML-форма)
+  properties:
+    # Личные данные
+    first_name:
+      type: string
+      example: Алибек
+    last_name:
+      type: string
+      example: Сейткали
+    middle_name:
+      type: string
+      example: Серикович
+    date_of_birth:
+      type: string
+      format: date
+      example: "1995-03-15"
+    gender:
+      type: string
+      enum: [male, female, other]
+    phone:
+      type: string
+      example: "+77001234567"
+    address:
+      type: string
+      example: г. Алматы, ул. Абая 10
+    # Образование
+    education_level:
+      type: string
+      enum: [secondary, vocational, bachelor, master, phd]
+      example: bachelor
+    education_institution:
+      type: string
+      example: КазНУ им. аль-Фараби
+    education_specialty:
+      type: string
+      example: Информационные системы
+    education_year:
+      type: integer
+      example: 2018
+    # Опыт
+    experience_years:
+      type: integer
+      example: 5
+    experience_summary:
+      type: string
+      example: Разработка веб-приложений на Python/Django
+    last_position:
+      type: string
+      example: Senior Backend Developer
+    last_employer:
+      type: string
+      example: ООО Технологии
+    # Навыки
+    skills:
+      type: array
+      items:
+        type: string
+      example: [Python, FastAPI, PostgreSQL, Docker]
+    languages:
+      type: array
+      items:
+        type: object
+        properties:
+          language:
+            type: string
+            example: Английский
+          level:
+            type: string
+            enum: [A1, A2, B1, B2, C1, C2, native]
+            example: B2
+    # Дополнительно
+    desired_position:
+      type: string
+      example: Backend Developer
+    desired_salary:
+      type: integer
+      example: 500000
+    notes:
+      type: string
+      example: Готов к командировкам
+
+Candidate:
+  type: object
+  required: [id, enterprise_id, status, created_at]
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+    enterprise_id:
+      type: string
+      format: uuid
+    user_id:
+      type: string
+      format: uuid
+      description: Связанный User (если кандидат зарегистрировался сам)
+      nullable: true
+    status:
+      $ref: '#/CandidateStatus'
+    assigned_vacancy_id:
+      type: string
+      format: uuid
+      nullable: true
+    questionnaire:
+      $ref: '#/Questionnaire'
+    ai_score:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 10
+      nullable: true
+      example: 7.4
+    ai_rankings:
+      type: array
+      items:
+        $ref: '#/VacancyMatchScore'
+      description: Скоры по всем вакансиям предприятия
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateCandidateRequest:
+  type: object
+  description: Используется HR Operator для ручного создания карточки кандидата
+  required: [questionnaire]
+  properties:
+    questionnaire:
+      $ref: '#/Questionnaire'
+
+UpdateQuestionnaireRequest:
+  type: object
+  required: [questionnaire]
+  properties:
+    questionnaire:
+      $ref: '#/Questionnaire'
+
+AssignCandidateRequest:
+  type: object
+  required: [vacancy_id]
+  properties:
+    vacancy_id:
+      type: string
+      format: uuid
+      example: b2c3d4e5-f6a7-8901-bcde-f23456789012
+
+PagedCandidateResponse:
+  type: object
+  required: [items, pagination]
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/Candidate'
+    pagination:
+      $ref: './common.yaml#/Pagination'
