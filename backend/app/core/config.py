@@ -1,12 +1,17 @@
 """Application settings."""
 
+import os
 from functools import lru_cache
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+load_dotenv(os.getenv("ENV_FILE", ".env"))
+
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file=os.getenv("ENV_FILE", ".env"), env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "HireAI API"
     app_version: str = "1.0.0"

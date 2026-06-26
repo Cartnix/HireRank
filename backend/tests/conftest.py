@@ -7,6 +7,9 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from dotenv import load_dotenv
+
+load_dotenv(".env.test", override=True)
 
 from app.main import app as fastapi_app
 
