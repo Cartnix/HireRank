@@ -12,6 +12,15 @@ info:
     
     **Auth**: Bearer JWT. Получить токен через `POST /auth/login`.
 
+    **Business rules**:
+
+    * кандидат и HR Operator загружают JSON-анкету кадрового листа;
+    * кандидат после сохранения попадает в пул `Unassigned`;
+    * AI ranking рассчитывается локально на Qwen 2.5 и возвращает score от 0 до 10;
+    * Administrator управляет вакансиями и закрепляет кандидатов за вакансиями;
+    * Manager только просматривает вакансии, закрепления и уведомления;
+    * enterprise isolation enforced by `enterprise_id` for all actors.
+
 servers:
   - url: http://localhost:8000/api/v1
     description: Local dev
@@ -32,7 +41,7 @@ tags:
   - name: Dashboard
     description: Сводные данные по ролям
   - name: Admin
-    description: Административные операции
+    description: Админ-панель, управление пользователями и правами доступа
 
 security:
   - BearerAuth: []

@@ -6,7 +6,9 @@ paths:
       tags: [Vacancies]
       operationId: listVacancies
       summary: Список вакансий предприятия
-      description: Доступно всем авторизованным пользователям предприятия.
+      description: |
+        Доступно всем авторизованным пользователям предприятия.
+        Manager и HR Operator видят только вакансии своего enterprise.
       parameters:
         - name: status
           in: query
@@ -75,7 +77,9 @@ paths:
       tags: [Vacancies]
       operationId: getVacancyById
       summary: Карточка вакансии
-      description: Доступно всем авторизованным пользователям предприятия.
+      description: |
+        Доступно всем авторизованным пользователям предприятия.
+        Tenant isolation enforced by `enterprise_id`.
       responses:
         '200':
           description: Вакансия найдена

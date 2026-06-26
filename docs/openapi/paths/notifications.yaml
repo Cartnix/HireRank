@@ -9,6 +9,7 @@ paths:
       description: |
         Возвращает уведомления, адресованные текущему пользователю,
         отсортированные по убыванию `created_at`.
+        Менеджер дополнительно получает уведомления по email через SMTP/Outlook.
       parameters:
         - name: is_read
           in: query

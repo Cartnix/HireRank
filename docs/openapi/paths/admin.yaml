@@ -1,0 +1,65 @@
+paths:
+  /admin/users:
+    get:
+      tags: [Admin]
+      operationId: listAdminUsers
+      summary: Админ-панель — список пользователей предприятия
+      description: |
+        Доступно только **administrator**.
+        Возвращает только пользователей текущего предприятия (`enterprise_id` из JWT).
+      parameters:
+        - name: role
+          in: query
+          schema:
+            $ref: '../schemas/user.yaml#/UserRole'
+          description: Фильтр по роли
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Список пользователей предприятия
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/PagedUserResponse'
+        '401':
+          description: Не авторизован
+        '403':
+          description: Только administrator
+
+  /admin/users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Admin]
+      operationId: getAdminUserById
+      summary: Админ-панель — карточка пользователя
+      description: Доступно только **administrator**.
+      responses:
+        '200':
+          description: Пользователь найден
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '401':
+          description: Не авторизован
+        '403':
+          description: Только administrator
+        '404':
+          description: Пользователь не найден

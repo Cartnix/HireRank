@@ -55,10 +55,11 @@ paths:
     post:
       tags: [Candidates]
       operationId: createCandidate
-      summary: Создать карточку кандидата (HR Operator)
+      summary: Создать карточку кандидата из JSON анкеты
       description: |
-        Используется **hr_operator** для ручного создания кандидата из бумажной анкеты.
-        После создания автоматически запускается AI-оценка.
+        Используется **hr_operator** для ручного создания кандидата из JSON анкеты кадрового листа.
+        После создания кандидат попадает в пул предприятия со статусом `unassigned`.
+        Затем запускается AI ranking и создаются уведомления.
       requestBody:
         required: true
         content:
@@ -210,10 +211,11 @@ paths:
     put:
       tags: [Candidates]
       operationId: updateQuestionnaire
-      summary: Заполнить или обновить анкету (Candidate self-service)
+      summary: Заполнить или обновить JSON-анкету кандидата
       description: |
-        Candidate заполняет собственную анкету через HTML-форму.
-        Если анкета заполнена впервые — запускается AI-оценка и отправляются уведомления.
+        Candidate отправляет JSON-форму кадрового листа с фронтенда.
+        Если анкета заполнена впервые — кандидат попадает в пул `unassigned`.
+        После сохранения запускается AI ranking и создаются уведомления.
       requestBody:
         required: true
         content:
