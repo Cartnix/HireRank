@@ -1,0 +1,1 @@
+"""HireAI backend application package."""
