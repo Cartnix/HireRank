@@ -4,6 +4,8 @@ import os
 from functools import lru_cache
 
 from dotenv import load_dotenv
+from pydantic import Field
+from pydantic.aliases import AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,11 +20,22 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
-    database_url: str = "sqlite:///./hireai.db"
-    jwt_secret_key: str = "change-me"
-    jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
-    refresh_token_expire_days: int = 30
+    database_url: str = Field(
+        default="sqlite:///./hireai.db",
+        validation_alias=AliasChoices("DATABASE_URL", "SUPABASE_DATABASE_URL"),
+    )
+    supabase_url: str | None = Field(default=None, validation_alias=AliasChoices("SUPABASE_URL"))
+    supabase_anon_key: str | None = Field(default=None, validation_alias=AliasChoices("SUPABASE_ANON_KEY"))
+    supabase_service_role_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SUPABASE_SERVICE_ROLE_KEY"),
+    )
+    supabase_jwt_secret: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SUPABASE_JWT_SECRET", "JWT_SECRET"),
+    )
+    supabase_jwt_audience: str = "authenticated"
+    supabase_jwt_issuer: str | None = Field(default=None, validation_alias=AliasChoices("SUPABASE_JWT_ISSUER"))
     ai_model_name: str = "qwen2.5"
 
 

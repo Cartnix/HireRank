@@ -9,7 +9,12 @@ from app.core.config import get_settings
 
 
 settings = get_settings()
-engine = create_engine(settings.database_url, future=True)
+engine_options: dict[str, object] = {"future": True, "pool_pre_ping": True, "echo": settings.debug}
+
+if settings.database_url.startswith("sqlite"):
+    engine_options["connect_args"] = {"check_same_thread": False}
+
+engine = create_engine(settings.database_url, **engine_options)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, class_=Session)
 
 
