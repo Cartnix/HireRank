@@ -5,8 +5,23 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.14.0",
+    "anyio>=4.9.0",
+    "fastapi>=0.115.0",
+    "factory-boy>=3.3.1",
+    "faker>=30.8.1",
+    "httpx>=0.28.0",
     "mypy>=2.1.0",
+    "pydantic-settings>=2.8.0",
+    "sqlalchemy>=2.0.0",
+    "pytest-cov>=6.0.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.15.19",
+    "uvicorn>=0.32.0",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=app --cov-report=term-missing --cov-report=html"
