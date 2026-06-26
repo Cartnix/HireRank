@@ -4,13 +4,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 interface MainButtonI {
-  title: string
+  title: string,
+  link?: string,
 }
 
-export const MainButton = ({title}: MainButtonI) => {
+export const MainButton = ({ title, link }: MainButtonI) => {
   return (
     <Button asChild>
-      <Link href="/login">{title}</Link>
+      {link ? <Link href="/login">{title}</Link> : <span>{title}</span>}
     </Button>
   );
 }
