@@ -8,6 +8,14 @@ NotificationType:
     - candidate_assigned
   example: candidate_created
 
+NotificationChannel:
+  type: string
+  enum:
+    - in_app
+    - email_smtp
+    - email_outlook
+  example: in_app
+
 Notification:
   type: object
   required: [id, enterprise_id, recipient_id, type, is_read, created_at]
@@ -23,6 +31,8 @@ Notification:
       format: uuid
     type:
       $ref: '#/NotificationType'
+    channel:
+      $ref: '#/NotificationChannel'
     title:
       type: string
       example: Новый кандидат
