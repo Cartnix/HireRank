@@ -1,20 +1,21 @@
 """Auth schemas."""
 
+from typing import Any
+
 from pydantic import BaseModel, EmailStr
 
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+class SupabaseUserClaims(BaseModel):
+    sub: str
+    email: EmailStr | None = None
+    role: str | None = None
+    enterprise_id: str | None = None
+    app_metadata: dict[str, Any] = {}
+    user_metadata: dict[str, Any] = {}
 
 
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str
-    role: str
-    enterprise_id: str
-
-
-class TokenPair(BaseModel):
-    access_token: str
-    refresh_token: str
+class AuthenticatedUser(BaseModel):
+    user_id: str
+    email: EmailStr | None = None
+    role: str | None = None
+    enterprise_id: str | None = None
