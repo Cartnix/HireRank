@@ -1,0 +1,99 @@
+# paths/users.yaml
+
+paths:
+  /users/me:
+    get:
+      tags: [Users]
+      operationId: getMyProfile
+      summary: Получить собственный профиль
+      responses:
+        '200':
+          description: Профиль текущего пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '401':
+          description: Не авторизован
+
+    patch:
+      tags: [Users]
+      operationId: updateMyProfile
+      summary: Обновить собственный профиль
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/user.yaml#/UpdateUserRequest'
+      responses:
+        '200':
+          description: Профиль обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+
+  /users:
+    get:
+      tags: [Users]
+      operationId: listUsers
+      summary: Список пользователей предприятия
+      description: |
+        Доступно только **administrator**.
+        Возвращает только пользователей текущего предприятия (`enterprise_id` из JWT).
+      parameters:
+        - name: role
+          in: query
+          schema:
+            $ref: '../schemas/user.yaml#/UserRole'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/PagedUserResponse'
+        '403':
+          description: Недостаточно прав
+
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Users]
+      operationId: getUserById
+      summary: Получить пользователя по ID
+      description: Доступно только **administrator**.
+      responses:
+        '200':
+          description: Пользователь найден
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '403':
+          description: Недостаточно прав
+        '404':
+          description: Пользователь не найден

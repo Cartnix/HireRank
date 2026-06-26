@@ -1,0 +1,74 @@
+# schemas/user.yaml
+
+UserRole:
+  type: string
+  enum: [administrator, hr_operator, manager, candidate]
+  example: hr_operator
+
+User:
+  type: object
+  required: [id, enterprise_id, email, role, created_at]
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    enterprise_id:
+      type: string
+      format: uuid
+      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+    email:
+      type: string
+      format: email
+      example: ivan@company.kz
+    role:
+      $ref: '#/UserRole'
+    first_name:
+      type: string
+      example: Иван
+    last_name:
+      type: string
+      example: Петров
+    is_active:
+      type: boolean
+      example: true
+    created_at:
+      type: string
+      format: date-time
+      example: "2025-06-01T10:00:00Z"
+
+UpdateUserRequest:
+  type: object
+  properties:
+    first_name:
+      type: string
+      example: Иван
+    last_name:
+      type: string
+      example: Петров
+    email:
+      type: string
+      format: email
+
+ChangePasswordRequest:
+  type: object
+  required: [old_password, new_password]
+  properties:
+    old_password:
+      type: string
+      format: password
+    new_password:
+      type: string
+      format: password
+      minLength: 8
+
+PagedUserResponse:
+  type: object
+  required: [items, pagination]
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/User'
+    pagination:
+      $ref: './common.yaml#/Pagination'

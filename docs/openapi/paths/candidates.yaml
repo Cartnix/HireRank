@@ -1,0 +1,233 @@
+# paths/candidates.yaml
+
+paths:
+  /candidates:
+    get:
+      tags: [Candidates]
+      operationId: listCandidates
+      summary: Список кандидатов предприятия
+      description: |
+        Доступно: **administrator**, **hr_operator**, **manager**.
+        
+        Результаты отсортированы по `ai_score` убыванию (AI ranking).
+        
+        Manager видит только кандидатов, закреплённых за вакансиями.
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '../schemas/candidate.yaml#/CandidateStatus'
+          description: Фильтр по статусу
+        - name: vacancy_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по вакансии
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Поиск по ФИО или должности
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Список кандидатов с пагинацией
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/candidate.yaml#/PagedCandidateResponse'
+        '401':
+          description: Не авторизован
+        '403':
+          description: Недостаточно прав
+
+    post:
+      tags: [Candidates]
+      operationId: createCandidate
+      summary: Создать карточку кандидата (HR Operator)
+      description: |
+        Используется **hr_operator** для ручного создания кандидата из бумажной анкеты.
+        После создания автоматически запускается AI-оценка.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/candidate.yaml#/CreateCandidateRequest'
+      responses:
+        '201':
+          description: Кандидат создан, AI-оценка поставлена в очередь
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/candidate.yaml#/Candidate'
+        '400':
+          description: Ошибка валидации анкеты
+        '403':
+          description: Только hr_operator или administrator
+
+  /candidates/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Candidates]
+      operationId: getCandidateById
+      summary: Карточка кандидата
+      description: |
+        Candidate видит только свою карточку.
+        HR Operator, Manager, Administrator видят любого кандидата своего предприятия.
+      responses:
+        '200':
+          description: Карточка кандидата
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/candidate.yaml#/Candidate'
+        '403':
+          description: Нет доступа
+        '404':
+          description: Кандидат не найден
+
+    patch:
+      tags: [Candidates]
+      operationId: updateCandidate
+      summary: Обновить карточку кандидата
+      description: |
+        Candidate может обновлять свою анкету до назначения.
+        HR Operator может редактировать любую карточку.
+        После обновления повторно запускается AI-оценка.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/candidate.yaml#/UpdateQuestionnaireRequest'
+      responses:
+        '200':
+          description: Карточка обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/candidate.yaml#/Candidate'
+        '403':
+          description: Нет доступа
+        '404':
+          description: Кандидат не найден
+
+    delete:
+      tags: [Candidates]
+      operationId: deleteCandidate
+      summary: Удалить кандидата
+      description: Доступно только **administrator**.
+      responses:
+        '204':
+          description: Кандидат удалён
+        '403':
+          description: Только administrator
+        '404':
+          description: Кандидат не найден
+
+  /candidates/{id}/assign:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Candidates]
+      operationId: assignCandidate
+      summary: Закрепить кандидата за вакансией
+      description: |
+        Доступно только **administrator**.
+        
+        После закрепления статус кандидата меняется на `assigned`.
+        Менеджеры получают уведомление.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/candidate.yaml#/AssignCandidateRequest'
+      responses:
+        '200':
+          description: Кандидат закреплён за вакансией
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/candidate.yaml#/Candidate'
+        '403':
+          description: Только administrator
+        '404':
+          description: Кандидат или вакансия не найдены
+        '409':
+          description: Кандидат уже закреплён за этой вакансией
+
+  /candidates/{id}/questionnaire:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Candidates]
+      operationId: getQuestionnaire
+      summary: Получить анкету кандидата
+      responses:
+        '200':
+          description: Анкета кандидата
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/candidate.yaml#/Questionnaire'
+        '403':
+          description: Нет доступа
+        '404':
+          description: Анкета не найдена
+
+    put:
+      tags: [Candidates]
+      operationId: updateQuestionnaire
+      summary: Заполнить или обновить анкету (Candidate self-service)
+      description: |
+        Candidate заполняет собственную анкету через HTML-форму.
+        Если анкета заполнена впервые — запускается AI-оценка и отправляются уведомления.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/candidate.yaml#/UpdateQuestionnaireRequest'
+      responses:
+        '200':
+          description: Анкета сохранена
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/candidate.yaml#/Candidate'
+        '403':
+          description: Нет доступа (не владелец анкеты или статус не позволяет)
+        '404':
+          description: Кандидат не найден

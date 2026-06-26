@@ -1,0 +1,98 @@
+# schemas/dashboard.yaml
+
+AdminDashboard:
+  type: object
+  properties:
+    total_candidates:
+      type: integer
+      example: 34
+    unassigned_candidates:
+      type: integer
+      example: 12
+    total_vacancies:
+      type: integer
+      example: 8
+    open_vacancies:
+      type: integer
+      example: 5
+    total_users:
+      type: integer
+      example: 15
+    unread_notifications:
+      type: integer
+      example: 3
+    top_candidates:
+      type: array
+      description: Топ-5 кандидатов по ai_score
+      items:
+        type: object
+        properties:
+          candidate_id:
+            type: string
+            format: uuid
+          full_name:
+            type: string
+            example: Алибек Сейткали
+          ai_score:
+            type: number
+            format: float
+            example: 9.1
+
+HRDashboard:
+  type: object
+  properties:
+    candidates_created_by_me:
+      type: integer
+      example: 7
+    total_candidates:
+      type: integer
+      example: 34
+    open_vacancies:
+      type: integer
+      example: 5
+    unread_notifications:
+      type: integer
+      example: 2
+
+ManagerDashboard:
+  type: object
+  properties:
+    assigned_candidates:
+      type: integer
+      example: 4
+    open_vacancies:
+      type: integer
+      example: 5
+    unread_notifications:
+      type: integer
+      example: 1
+
+CandidateDashboard:
+  type: object
+  properties:
+    questionnaire_filled:
+      type: boolean
+      example: true
+    status:
+      type: string
+      enum: [unassigned, assigned]
+      example: unassigned
+    assigned_vacancy:
+      nullable: true
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: Backend Developer
+
+DashboardResponse:
+  oneOf:
+    - $ref: '#/AdminDashboard'
+    - $ref: '#/HRDashboard'
+    - $ref: '#/ManagerDashboard'
+    - $ref: '#/CandidateDashboard'
+  discriminator:
+    propertyName: role

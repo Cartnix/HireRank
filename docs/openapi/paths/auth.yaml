@@ -1,0 +1,136 @@
+# paths/auth.yaml
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: registerUser
+      summary: Регистрация нового пользователя
+      description: |
+        Доступные роли при регистрации: `candidate`, `hr_operator`, `manager`.
+        Роль `administrator` создаётся вручную через БД или seed-скрипт.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/auth.yaml#/RegisterRequest'
+      responses:
+        '201':
+          description: Пользователь создан, токены выданы
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/auth.yaml#/TokenPair'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/ValidationError'
+        '409':
+          description: Email уже зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/ErrorResponse'
+              example:
+                code: EMAIL_ALREADY_EXISTS
+                message: This email is already registered
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: loginUser
+      summary: Вход в систему
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/auth.yaml#/LoginRequest'
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/auth.yaml#/TokenPair'
+        '401':
+          description: Неверные учётные данные
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/ErrorResponse'
+              example:
+                code: INVALID_CREDENTIALS
+                message: Email or password is incorrect
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutUser
+      summary: Выход из системы (инвалидация refresh токена)
+      responses:
+        '204':
+          description: Успешный выход
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      summary: Получить текущего авторизованного пользователя
+      responses:
+        '200':
+          description: Данные текущего пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Обновить access токен по refresh токену
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/auth.yaml#/RefreshRequest'
+      responses:
+        '200':
+          description: Новая пара токенов
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/auth.yaml#/TokenPair'
+        '401':
+          description: Refresh токен недействителен или истёк
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/ErrorResponse'
+              example:
+                code: INVALID_REFRESH_TOKEN
+                message: Refresh token is invalid or expired
+
+components:
+  responses:
+    Unauthorized:
+      description: Токен отсутствует или недействителен
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/ErrorResponse'
+          example:
+            code: UNAUTHORIZED
+            message: Authentication required

@@ -1,0 +1,72 @@
+# paths/notifications.yaml
+
+paths:
+  /notifications:
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      summary: Список уведомлений текущего пользователя
+      description: |
+        Возвращает уведомления, адресованные текущему пользователю,
+        отсортированные по убыванию `created_at`.
+      parameters:
+        - name: is_read
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по статусу прочтения
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification.yaml#/PagedNotificationResponse'
+        '401':
+          description: Не авторизован
+
+  /notifications/{id}/read:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    patch:
+      tags: [Notifications]
+      operationId: markNotificationRead
+      summary: Отметить уведомление как прочитанное
+      responses:
+        '200':
+          description: Уведомление отмечено как прочитанное
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification.yaml#/Notification'
+        '403':
+          description: Уведомление не принадлежит текущему пользователю
+        '404':
+          description: Уведомление не найдено
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      operationId: markAllNotificationsRead
+      summary: Отметить все уведомления как прочитанные
+      responses:
+        '204':
+          description: Все уведомления отмечены как прочитанные
+        '401':
+          description: Не авторизован

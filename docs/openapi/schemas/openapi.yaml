@@ -1,0 +1,103 @@
+openapi: 3.1.0
+
+info:
+  title: HireAI API
+  version: 1.0.0
+  description: |
+    REST API контракт платформы HireAI (MVP).
+    
+    **Multi-tenant**: каждый запрос изолирован по `enterprise_id`, который берётся из JWT-токена.
+    
+    **RBAC**: роли `administrator`, `hr_operator`, `manager`, `candidate`.
+    
+    **Auth**: Bearer JWT. Получить токен через `POST /auth/login`.
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local dev
+  - url: https://api.hireai.example.com/v1
+    description: Production
+
+tags:
+  - name: Auth
+    description: Регистрация, вход, сессия
+  - name: Users
+    description: Профиль пользователя и управление пользователями (admin)
+  - name: Candidates
+    description: Кандидаты, анкеты, назначение на вакансию
+  - name: Vacancies
+    description: Вакансии предприятия
+  - name: Notifications
+    description: Уведомления
+  - name: Dashboard
+    description: Сводные данные по ролям
+  - name: Admin
+    description: Административные операции
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    $ref: './schemas/_index.yaml'
+
+paths:
+  # Auth
+  /auth/register:
+    $ref: './paths/auth.yaml#/paths/~1auth~1register'
+  /auth/login:
+    $ref: './paths/auth.yaml#/paths/~1auth~1login'
+  /auth/logout:
+    $ref: './paths/auth.yaml#/paths/~1auth~1logout'
+  /auth/me:
+    $ref: './paths/auth.yaml#/paths/~1auth~1me'
+  /auth/refresh:
+    $ref: './paths/auth.yaml#/paths/~1auth~1refresh'
+
+  # Users
+  /users/me:
+    $ref: './paths/users.yaml#/paths/~1users~1me'
+  /users:
+    $ref: './paths/users.yaml#/paths/~1users'
+  /users/{id}:
+    $ref: './paths/users.yaml#/paths/~1users~1{id}'
+
+  # Candidates
+  /candidates:
+    $ref: './paths/candidates.yaml#/paths/~1candidates'
+  /candidates/{id}:
+    $ref: './paths/candidates.yaml#/paths/~1candidates~1{id}'
+  /candidates/{id}/assign:
+    $ref: './paths/candidates.yaml#/paths/~1candidates~1{id}~1assign'
+  /candidates/{id}/questionnaire:
+    $ref: './paths/candidates.yaml#/paths/~1candidates~1{id}~1questionnaire'
+
+  # Vacancies
+  /vacancies:
+    $ref: './paths/vacancies.yaml#/paths/~1vacancies'
+  /vacancies/{id}:
+    $ref: './paths/vacancies.yaml#/paths/~1vacancies~1{id}'
+
+  # Notifications
+  /notifications:
+    $ref: './paths/notifications.yaml#/paths/~1notifications'
+  /notifications/{id}/read:
+    $ref: './paths/notifications.yaml#/paths/~1notifications~1{id}~1read'
+  /notifications/read-all:
+    $ref: './paths/notifications.yaml#/paths/~1notifications~1read-all'
+
+  # Dashboard
+  /dashboard:
+    $ref: './paths/dashboard.yaml#/paths/~1dashboard'
+
+  # Admin
+  /admin/users:
+    $ref: './paths/admin.yaml#/paths/~1admin~1users'
+  /admin/users/{id}:
+    $ref: './paths/admin.yaml#/paths/~1admin~1users~1{id}'
