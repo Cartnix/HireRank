@@ -1,22 +1,23 @@
 import {
     Field,
-    FieldDescription,
     FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-export function InputField() {
+interface InputProps {
+    type: "text" | "email" | "password",
+    placeholder: string,
+    label: string
+}
+
+export function InputField({ type, placeholder, label }: InputProps) {
     return (
         <Field>
-            <FieldLabel htmlFor="input-field-username">Username</FieldLabel>
+            <FieldLabel htmlFor="input-field-username">{label}</FieldLabel>
             <Input
-                id="input-field-username"
-                type="text"
-                placeholder="Enter your username"
+                type={type}
+                placeholder={placeholder}
             />
-            <FieldDescription>
-                Choose a unique username for your account.
-            </FieldDescription>
         </Field>
     )
 }

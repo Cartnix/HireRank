@@ -22,7 +22,7 @@ export const Header = () => {
             </li>
           ))}
           <li>
-            <MainButton title="Sign Up" />
+            <MainButton title="Sign Up" link="/auth"/>
           </li>
         </ul>
       </nav>
