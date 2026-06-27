@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod";
 import { MainButton } from "@/shared/buttons/MainButton";
 import { FormValues } from "../model/FormSchema";
+import { register } from "module";
+
 
 type FormValuesType = z.infer<typeof FormValues>;
 
@@ -55,6 +57,7 @@ export const AuthModal = () => {
                hover:bg-brand-primary-hover transition-all duration-200 
                hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 shadow-lg shadow-brand-primary/20 relative"
             />
+
 
             <p className="text-center text-sm text-foreground-secondary mt-1">
                 Уже есть аккаунт?{" "}
