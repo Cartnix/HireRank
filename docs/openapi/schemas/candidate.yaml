@@ -55,15 +55,9 @@ EducationEntry:
 Questionnaire:
   type: object
   description: |
-<<<<<<< HEAD
-    Кадровая анкета кандидата в JSON-формате.
-    Структура соответствует официальному «Личному листку по учёту кадров»
-    (ЛПК, форма lpk.html) и передается с фронтенда как JSON payload.
-=======
     Кадровая анкета кандидата — структура соответствует официальному
     «Личному листку по учёту кадров» (ЛПК, форма lpk.html).
     Поля пронумерованы в соответствии с пунктами формы.
->>>>>>> 8be1dcf (test(contract): add initial API and OpenAPI contract tests)
   properties:
     # п.1 — ФИО
     surname:

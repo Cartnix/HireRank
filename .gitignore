@@ -26,3 +26,7 @@ __pycache__/
 *.pyd
 
 .coverage
+.cursor
+.pytest_cache
+.ruff_cache
+tmp*
