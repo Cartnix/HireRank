@@ -36,10 +36,10 @@ export const AuthModal = () => {
                        bg-background-elevated border border-border-subtle/50 shadow-2xl transition-all duration-300"
         >
             <div className="mb-2 text-center">
-                <h2 className="text-3xl font-bold tracking-tight text-foreground">
+                <h2 className="text-foreground">
                     {isRegister ? "Регистрация" : "Вход в систему"}
                 </h2>
-                <p className="text-base text-foreground-secondary mt-2">
+                <p className="text-foreground-secondary mt-2">
                     {isRegister 
                         ? "Создайте аккаунт в системе ToU за пару секунд" 
                         : "Добро пожаловать обратно, используйте свои данные"}
@@ -49,14 +49,12 @@ export const AuthModal = () => {
             <div className="flex flex-col gap-4">
                 <InputField 
                     {...register("email")} 
-                    type="text" 
                     placeholder="name@university.kz" 
                     label="Email" 
                     error={errors.email?.message} 
                 />
                 <InputField 
                     {...register("password")} 
-                    type="password" 
                     placeholder="••••••••" 
                     label="Password" 
                     error={errors.password?.message}
@@ -64,7 +62,6 @@ export const AuthModal = () => {
                 {isRegister && (
                     <InputField 
                         {...register("repeatPassword")} 
-                        type="password" 
                         placeholder="••••••••" 
                         label="Repeat password" 
                         error={errors.repeatPassword?.message}
