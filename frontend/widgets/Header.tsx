@@ -4,6 +4,7 @@ export const Header = () => {
   return (
     <header className="fixed top-0 left-0 w-full z-50 px-6 flex items-center justify-between
                         bg-background/70 backdrop-blur-md border-b border-border-subtle">
+                          
 
       <div className="font-bold text-xl tracking-tight cursor-pointer text-foreground">
         <h3>HireAI</h3>

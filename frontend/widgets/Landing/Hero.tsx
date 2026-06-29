@@ -13,10 +13,43 @@ export const Hero = () => {
     return (
         <section className="relative flex flex-col items-center justify-center w-full min-h-screen bg-background overflow-hidden">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="relative w-full max-w-200 aspect-square">
-                    <BrokenCircle size="100%" dash={patterns.outer} rotate={0} duration={60} direction={1} strokeWidth={0.5} style={{ filter: "blur(0.8px)" }} />
-                    <BrokenCircle size="95%" dash={patterns.middle} rotate={35} duration={45} direction={-1} strokeWidth={0.7} style={{ filter: "blur(0.4px)" }} />
-                    <BrokenCircle size="90%" dash={patterns.inner} rotate={-20} duration={30} direction={1} strokeWidth={1} />
+                <div className="relative w-full max-w-200 aspect-square p-2">
+                    <div className="absolute inset-x-[4%] inset-y-[4%]">
+                        <BrokenCircle
+                            size="100%"
+                            dash={patterns.outer}
+                            rotate={0}
+                            duration={60}
+                            direction={1}
+                            strokeWidth={0.5}
+                            style={{ filter: "blur(0.8px)", overflow: "visible" }}
+                        />
+                    </div>
+
+                    <div className="absolute inset-x-[6%] inset-y-[6%]">
+                        <BrokenCircle
+                            size="100%" 
+                            dash={patterns.middle}
+                            rotate={35}
+                            duration={45}
+                            direction={-1}
+                            strokeWidth={0.7}
+                            style={{ filter: "blur(0.4px)", overflow: "visible" }}
+                        />
+                    </div>
+
+                    <div className="absolute inset-x-[8%] inset-y-[8%]">
+                        <BrokenCircle
+                            size="100%" 
+                            dash={patterns.inner}
+                            rotate={-20}
+                            duration={30}
+                            direction={1}
+                            strokeWidth={1}
+                            style={{ overflow: "visible" }}
+                        />
+                    </div>
+
                 </div>
             </div>
 
@@ -31,7 +64,7 @@ export const Hero = () => {
 }
 
 const BrokenCircle = ({
-    size, dash, rotate, centered,
+    size, dash, rotate,
     strokeWidth = 0.8, duration = 20, direction = 1,
     style = {}
 }: any) => {

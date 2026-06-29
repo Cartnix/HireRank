@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 const stats = [
     { value: "73%", label: "резюме отсеиваются вручную, теряя сильных кандидатов" },
     { value: "11 дней", label: "в среднем тратится на закрытие одной вакансии в Excel" },
-    { value: "1 экран", label: "нужен HireRank, чтобы увидеть весь пайплайн найма" },
+    { value: "1 экран", label: "нужен HireAI, чтобы увидеть весь пайплайн найма" },
 ]
 
 export const Stats = () => (
