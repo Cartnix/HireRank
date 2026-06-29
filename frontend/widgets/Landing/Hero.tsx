@@ -10,25 +10,22 @@ const patterns = {
 };
 
 export const Hero = () => {
-
     return (
-        <section className="relative flex items-center justify-center w-full min-h-screen bg-background">
-            <motion.div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <BrokenCircle size="100%" dash={patterns.outer} rotate={0} duration={60} direction={1} strokeWidth={0.5} style={{ filter: "blur(0.8px)" }} />
-                <BrokenCircle size="95%" dash={patterns.middle} rotate={35} centered duration={45} direction={-1} strokeWidth={0.7} style={{ filter: "blur(0.4px)" }} />
-                <BrokenCircle size="90%" dash={patterns.inner} rotate={-20} centered duration={30} direction={1} strokeWidth={1} />
-            </motion.div>
+        <section className="relative flex flex-col items-center justify-center w-full min-h-screen bg-background overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="relative w-full max-w-200 aspect-square">
+                    <BrokenCircle size="100%" dash={patterns.outer} rotate={0} duration={60} direction={1} strokeWidth={0.5} style={{ filter: "blur(0.8px)" }} />
+                    <BrokenCircle size="95%" dash={patterns.middle} rotate={35} duration={45} direction={-1} strokeWidth={0.7} style={{ filter: "blur(0.4px)" }} />
+                    <BrokenCircle size="90%" dash={patterns.inner} rotate={-20} duration={30} direction={1} strokeWidth={1} />
+                </div>
+            </div>
 
-            <motion.div
-                className="relative z-10 flex flex-col items-center text-center px-6"
-            >
-                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-foreground">
-                    HireAI
-                </h1>
-                <p className="mt-4 max-w-md text-base md:text-lg font-medium text-foreground-secondary">
+            <div className="relative z-10 flex flex-col items-center text-center px-6">
+                <h1 className="text-h1 font-bold text-foreground">HireAI</h1>
+                <p className="mt-4 text-p text-foreground-secondary">
                     Каждый кандидат — на своём месте. Без хаоса в таблицах.
                 </p>
-            </motion.div>
+            </div>
         </section>
     )
 }
@@ -38,9 +35,9 @@ const BrokenCircle = ({
     strokeWidth = 0.8, duration = 20, direction = 1,
     style = {}
 }: any) => {
-    const id = useId(); 
+    const id = useId();
     const gradientId = `gradient-${id}`;
-    
+
     return (
         <motion.svg
             viewBox="0 0 100 100"

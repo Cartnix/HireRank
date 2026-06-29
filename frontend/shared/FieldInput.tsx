@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input"
 interface InputProps {
     type: "text" | "email" | "password",
     placeholder: string,
-    label: string
+    label: string,
+    error?: string
 }
 
-export function InputField({ type, placeholder, label }: InputProps) {
+export function InputField({ type, placeholder, label, error }: InputProps) {
     return (
         <Field>
             <FieldLabel htmlFor="input-field-username">{label}</FieldLabel>
@@ -18,6 +19,7 @@ export function InputField({ type, placeholder, label }: InputProps) {
                 type={type}
                 placeholder={placeholder}
             />
+            {error && <span className="text-red-500 text-xs mt-1">{error}</span>}
         </Field>
     )
 }
