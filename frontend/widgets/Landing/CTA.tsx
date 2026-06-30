@@ -1,4 +1,4 @@
-import { MainButton } from "@/shared/buttons/MainButton";
+import { MainButton } from "@/shared/ui/buttons/MainButton";
 
 export const CTA = () => (
     <section className="relative py-32 px-6">
