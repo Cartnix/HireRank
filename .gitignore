@@ -6,9 +6,11 @@
 /frontend/*.tsbuildinfo
 /frontend/next-env.d.ts
 
+
 .DS_Store
 .env*
 .venv*
+!.env.example
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
