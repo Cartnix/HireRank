@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 const stats = [
     { value: "73%", label: "резюме отсеиваются вручную, теряя сильных кандидатов" },
     { value: "11 дней", label: "в среднем тратится на закрытие одной вакансии в Excel" },
-    { value: "1 экран", label: "нужен HireRank, чтобы увидеть весь пайплайн найма" },
+    { value: "1 экран", label: "нужен HireAI, чтобы увидеть весь пайплайн найма" },
 ]
 
 export const Stats = () => (
@@ -18,12 +18,15 @@ export const Stats = () => (
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-80px" }}
                     transition={{ duration: 0.6, delay: i * 0.12, ease: "easeOut" }}
-                    className="glass rounded-3xl p-8 text-center"
+                    whileHover={{ y: -4 }}
+                    className="group relative rounded-3xl p-8 text-center bg-background-elevated border border-border-subtle shadow-sm hover:shadow-md transition-shadow"
                 >
-                    <div className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 h-1 w-10 rounded-full bg-brand-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                    <h2 className="tracking-tight text-brand-primary">
                         {s.value}
-                    </div>
-                    <p className="mt-3 text-sm text-foreground/60 leading-relaxed">
+                    </h2>
+                    <p className="mt-3 text-foreground-secondary leading-relaxed">
                         {s.label}
                     </p>
                 </motion.div>
