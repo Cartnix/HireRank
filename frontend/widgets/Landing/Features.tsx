@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { Card } from "@/shared/ui/card"
 import { Layers, Filter, MessageSquareText, BarChart3 } from "lucide-react"
 
 const features = [
@@ -39,28 +39,9 @@ export const Features = () => (
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {features.map((f, i) => {
-                    const Icon = f.icon
-                    return (
-                        <motion.div
-                            key={f.title}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-60px" }}
-                            transition={{ duration: 0.5, delay: i * 0.08 }}
-                            whileHover={{ y: -3 }}
-                            className="group relative rounded-3xl p-7 bg-background-elevated border border-border-subtle shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all duration-300"
-                        >
-                            <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5 bg-brand-primary/10 group-hover:bg-brand-primary/15 transition-colors duration-300">
-                                <Icon className="w-5 h-5 text-brand-primary" strokeWidth={1.8} />
-                            </div>
-                            <h3 className="text-foreground mb-2">{f.title}</h3>
-                            <p className="text-foreground-secondary">{f.desc}</p>
-
-                            <div className="absolute bottom-0 left-7 right-7 h-px bg-linear-to-r from-transparent via-border to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        </motion.div>
-                    )
-                })}
+                {features.map((f, i) => (
+                    <Card key={f.title} icon={f.icon} title={f.title} desc={f.desc} index={i} />
+                ))}
             </div>
         </div>
     </section>
