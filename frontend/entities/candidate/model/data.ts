@@ -39,3 +39,7 @@ export const initialCandidates: Candidate[] = [
   { id: "c14", name: "Олжас Кенжебаев", jobId: "j3", stage: "Отклик", source: "Карьерный сайт", appliedDate: "2026-06-27", email: "o.kenzhebaev@mail.com", phone: "+7 701 456 7890", location: "Алматы", skills: ["Figma", "Illustrator"], rating: 3, resumeFileName: "Kenzhebaev_CV.pdf", history: [{ date: "2026-06-27", action: "Отклик на вакансию" }] },
   { id: "c15", name: "Гульнара Есенова", jobId: "j6", stage: "Интервью", source: "Агентство", appliedDate: "2026-06-08", email: "g.esenova@mail.com", phone: "+7 701 567 8901", location: "Алматы", skills: ["B2B продажи", "Переговоры"], rating: 4, resumeFileName: "Esenova_CV.pdf", history: [{ date: "2026-06-08", action: "Отклик на вакансию" }] },
 ];
+
+export async function getCandidates(): Promise<Candidate[]> {
+  return initialCandidates;
+}

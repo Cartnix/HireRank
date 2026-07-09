@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { ChevronLeft, Mail, Phone, MapPin, FileText, Paperclip } from "lucide-react";
 import { Candidate, StageBadge } from "@/entities/candidate";

@@ -1,4 +1,3 @@
-// features/search/SearchInput.tsx
 import { InputField } from "@/shared/FieldInput";
 import { Search } from "lucide-react";
 
@@ -11,7 +10,7 @@ export function SearchInput({
 }) {
   return (
     <InputField
-      LeftIcon={Search}
+      LeftIcon={<Search className="w-4 h-4" />}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder="Поиск по имени или навыку..."

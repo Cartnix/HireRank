@@ -1,4 +1,6 @@
-import { useId, useState, forwardRef } from "react";
+"use client";
+
+import React, { useId, useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, AlertCircle, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -6,12 +8,22 @@ import { cn } from "@/lib/utils";
 interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  LeftIcon?: LucideIcon;
+  LeftIcon?: React.ReactNode;
 }
 
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
   (
-    { type, placeholder, label, error, onFocus, onBlur, LeftIcon, className, ...props },
+    {
+      type,
+      placeholder,
+      label,
+      error,
+      onFocus,
+      onBlur,
+      LeftIcon,
+      className,
+      ...props
+    },
     ref,
   ) => {
     const id = useId();
@@ -42,7 +54,9 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
             )}
           >
             {LeftIcon && (
-              <LeftIcon className="ml-3.5 w-4 h-4 text-foreground-tertiary" />
+              <div className="ml-3.5 w-4 h-4 text-foreground-tertiary flex items-center justify-center">
+                {LeftIcon}
+              </div>
             )}
             <motion.label
               htmlFor={id}

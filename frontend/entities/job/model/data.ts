@@ -70,3 +70,7 @@ export const initialJobs: Job[] = [
     stages: DEFAULT_STAGES,
   },
 ];
+
+export async function getJobs(): Promise<Job[]> {
+  return initialJobs;
+}
