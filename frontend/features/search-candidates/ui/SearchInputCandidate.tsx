@@ -2,7 +2,13 @@
 import { InputField } from "@/shared/FieldInput";
 import { Search } from "lucide-react";
 
-export function SearchInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function SearchInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <InputField
       LeftIcon={Search}
