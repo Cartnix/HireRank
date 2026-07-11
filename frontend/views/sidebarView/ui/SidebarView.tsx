@@ -16,6 +16,6 @@ export default function SidebarView() {
     setSelectedJobId(null);
     setSelectedCandidateId(null);
   };
-  
-  return <Sidebar view={view} onNavigate={navigate} />;
+
+  return <Sidebar/>;
 }

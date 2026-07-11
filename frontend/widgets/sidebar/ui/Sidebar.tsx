@@ -1,13 +1,13 @@
-import { Avatar } from "@/shared/ui/avatar";
-import { navItems, View } from "@/shared/utils/navigation";
+'use client';
 
-export function Sidebar({
-  view,
-  onNavigate,
-}: {
-  view: View;
-  onNavigate: (v: View) => void;
-}) {
+import { Avatar } from "@/shared/ui/avatar";
+import { navItems } from "@/shared/utils/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+export function Sidebar() {
+  const pathname = usePathname();
+
   return (
     <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border bg-background-elevated px-3 py-5">
       <div className="mb-6 flex items-center gap-2 px-2">
@@ -20,20 +20,24 @@ export function Sidebar({
       <nav className="flex flex-1 flex-col gap-1.5">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active = view === item.id;
+          const isActive =
+            item.href === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname.startsWith(item.href);
+
           return (
-            <button
+            <Link
               key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={`flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-left text-[14px] font-medium transition-colors ${
-                active
-                  ? "bg-brand-primary text-brand-primary-foreground"
-                  : "text-foreground-secondary hover:bg-muted"
+              href={item.href}
+              className={`flex items-center gap-2 rounded-lg px-2 py-2 text-[13.5px] transition-colors ${
+                isActive
+                  ? "bg-brand-primary/10 font-semibold text-brand-primary"
+                  : "text-muted-foreground hover:bg-background-hover"
               }`}
             >
-              <Icon size={17} strokeWidth={2} />
+              <Icon size={17} />
               {item.label}
-            </button>
+            </Link>
           );
         })}
       </nav>

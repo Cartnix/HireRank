@@ -6,7 +6,7 @@ import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { JobsTable } from "@/widgets/job-table";
 import { JobOverview } from "@/widgets/job-overview/ui/JobOverview";
 
-export default function JobsPage({
+export const JobsView = ({
   jobs,
   candidates,
   selectedJob,
@@ -24,7 +24,7 @@ export default function JobsPage({
   onCreateJob: () => void;
   onUpdateStages: (stages: Stage[]) => void;
   onOpenCandidate: (id: string) => void;
-}) {
+}) => {
   if (selectedJob) {
     return (
       <JobOverview
@@ -52,4 +52,4 @@ export default function JobsPage({
       <JobsTable jobs={jobs} candidates={candidates} onOpenJob={onOpenJob} />
     </div>
   );
-}
+};
