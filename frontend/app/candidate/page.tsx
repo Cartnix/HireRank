@@ -13,7 +13,7 @@ export default async function Page() {
     <CandidatesPageClient
       candidates={candidates}
       jobById={jobById}
-      currentUserName="Вы"
+      currentUserName="Test"
     />
   );
 }
