@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { InputField } from "@/shared/FieldInput";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 import {
-    LoginFormValues,
-    RegisterFormValues,
+
+    loginFormSchema,
+    registerFormSchema,
     RegisterFormValuesType,
 } from "@/features/auth/model/FormSchema";
 import { useAuthForm } from "@/features/auth/useAuthForm";
@@ -23,7 +24,7 @@ export const AuthModal = () => {
         reset,
         formState: { errors, isSubmitting },
     } = useForm<RegisterFormValuesType>({
-        resolver: zodResolver(isRegister ? RegisterFormValues : LoginFormValues),
+        resolver: zodResolver(isRegister ? registerFormSchema : loginFormSchema),
         mode: "onChange",
     });
 
