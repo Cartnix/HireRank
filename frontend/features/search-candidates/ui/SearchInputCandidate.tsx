@@ -13,7 +13,7 @@ export function SearchInput({
       LeftIcon={<Search className="w-4 h-4" />}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder="Поиск по имени или навыку..."
+      placeholder="Поиск по имени..."
       className="rounded-full"
     />
   );

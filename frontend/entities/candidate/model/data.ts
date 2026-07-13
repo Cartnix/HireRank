@@ -43,3 +43,8 @@ export const initialCandidates: Candidate[] = [
 export async function getCandidates(): Promise<Candidate[]> {
   return initialCandidates;
 }
+
+export async function getCandidateById(id: string): Promise<Candidate | null> {
+  const candidates = await getCandidates();
+  return candidates.find((c) => c.id === id) ?? null;
+}

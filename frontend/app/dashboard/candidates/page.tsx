@@ -1,4 +1,4 @@
-import { CandidatesPageClient } from "@/widgets/candidate-page-ui/ui/CandidateUI";
+import { CandidatesPageClient } from "@/widgets/candidate-page/ui/CandidateUI";
 import { getCandidates } from "@/entities/candidate";
 import { getJobs, type Job } from "@/entities/job";
 
