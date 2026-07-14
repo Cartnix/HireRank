@@ -9,17 +9,15 @@ export async function proxy(request: NextRequest) {
   const isOnboardingPage = pathname.startsWith("/onboarding");
   const isProtectedRoute = pathname.startsWith("/dashboard") || isOnboardingPage;
 
-  // не авторизован — пускаем везде, кроме защищённых роутов
   if (!user) {
     if (isProtectedRoute) {
       return NextResponse.redirect(new URL("/auth", request.url));
     }
-    return response; // лендинг, /auth и всё остальное — свободно
+    return response;
   }
 
-  // дальше — авторизован, проверяем профиль
   const { data: profile } = await supabase
-    .from("profiles")
+    .from("Profiles")
     .select("first_name, last_name, company_name, role")
     .eq("id", user.id)
     .single();
@@ -31,7 +29,6 @@ export async function proxy(request: NextRequest) {
     profile?.role
   );
 
-  // авторизован, но зашёл на /auth — некуда ему туда, отправляем дальше
   if (isAuthPage) {
     return NextResponse.redirect(
       new URL(isOnboarded ? "/dashboard" : "/onboarding", request.url)
