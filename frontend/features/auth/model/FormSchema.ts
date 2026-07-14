@@ -12,6 +12,7 @@ export const loginFormSchema = z.object({
 
 export const registerFormSchema = loginFormSchema.extend({
   repeatPassword: passwordSchema,
+  
 }).refine((data) => data.password === data.repeatPassword, {
   message: "Пароли не совпадают",
   path: ["repeatPassword"],
