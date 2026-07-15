@@ -2,8 +2,8 @@ import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { Card } from "@/shared/ui/card";
 
 export const CTA = () => (
-  <section className="relative py-32 px-6">
-    <Card>
+  <section className="relative py-32 px-6 flex justify-center">
+    <Card className="w-1/2">
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-brand-primary/10 blur-3xl pointer-events-none" />
 
       <h2 className="relative text-foreground">
