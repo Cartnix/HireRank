@@ -10,6 +10,13 @@ import { Card } from "@/shared/ui/Card";
 import { Avatar } from "@/shared/ui/Avatar";
 import { GhostButton } from "@/shared/ui/buttons/GhostButton";
 
+const tabs = [
+  { key: "profile", label: "Анкета" },
+  { key: "history", label: "История" },
+  { key: "files", label: "Файлы" },
+  { key: "notes", label: "Заметки" },
+] as const;
+
 export function CandidateProfile({
   candidate,
   job,
@@ -27,7 +34,8 @@ export function CandidateProfile({
   addNote: () => void;
   onBack: () => void;
 }) {
-  const [tab, setTab] = useState<"history" | "files" | "notes">("history");
+  const [tab, setTab] = useState<"profile" | "history" | "files" | "notes">("profile");
+  const q = candidate.questionnaire;
 
   return (
     <div>
@@ -43,6 +51,16 @@ export function CandidateProfile({
             <div className="text-[13px] text-foreground-secondary">{job?.title}</div>
             <div className="mt-2">
               <StageBadge stage={candidate.stage} />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+                {candidate.status === "assigned" ? "Назначен" : "Не назначен"}
+              </span>
+              {candidate.ai_score != null && (
+                <span className="rounded-full bg-brand-primary/10 px-2.5 py-1 text-[11px] font-medium text-brand-primary">
+                  AI score {candidate.ai_score.toFixed(1)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -71,6 +89,75 @@ export function CandidateProfile({
         </Card>
 
         <div className="col-span-2">
+          <div className="mb-4 inline-flex rounded-[10px] border border-border bg-background p-1">
+            {tabs.map((item) => {
+              const active = tab === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => setTab(item.key as typeof tab)}
+                  className={`rounded-lg px-3 py-2 text-[12.5px] font-medium transition-colors ${
+                    active ? "bg-brand-primary text-brand-primary-foreground" : "text-foreground-secondary hover:text-foreground"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {tab === "profile" && (
+            <Card className="p-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-3">
+                  <div className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">Основные данные</div>
+                  <div className="space-y-2 text-[13px] text-foreground-secondary">
+                    <div><span className="font-medium text-foreground">Дата рождения:</span> {q.birth_date || "—"}</div>
+                    <div><span className="font-medium text-foreground">Место рождения:</span> {q.birth_place || "—"}</div>
+                    <div><span className="font-medium text-foreground">Национальность:</span> {q.nationality || "—"}</div>
+                    <div><span className="font-medium text-foreground">Гражданство:</span> {q.citizenship || "—"}</div>
+                    <div><span className="font-medium text-foreground">Языки:</span> {q.languages || "—"}</div>
+                    <div><span className="font-medium text-foreground">Уровень образования:</span> {q.education_level || "—"}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">Образование</div>
+                  {q.education.length === 0 ? (
+                    <div className="text-[13px] text-muted-foreground">Данных об образовании пока нет.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {q.education.map((entry, index) => (
+                        <div key={`${entry.institution}-${index}`} className="rounded-[10px] border border-border bg-muted/40 p-3">
+                          <div className="text-[13px] font-medium text-foreground">{entry.institution}</div>
+                          <div className="text-[12px] text-muted-foreground">
+                            {entry.year_from}–{entry.year_to} · {entry.specialty}
+                          </div>
+                          <div className="mt-1 text-[12px] text-foreground-secondary">{entry.diploma}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-[10px] border border-border bg-muted/30 p-4">
+                <div className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">AI Match по вакансиям</div>
+                {candidate.ai_rankings && candidate.ai_rankings.length > 0 ? (
+                  <div className="space-y-2">
+                    {candidate.ai_rankings.map((item) => (
+                      <div key={item.vacancy_id} className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
+                        <span className="text-[13px] text-foreground-secondary">{item.vacancy_title}</span>
+                        <span className="text-[13px] font-semibold text-brand-primary">{item.score.toFixed(1)}/10</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-[13px] text-muted-foreground">Пока нет оценок совместимости.</div>
+                )}
+              </div>
+            </Card>
+          )}
 
           {tab === "history" && (
             <Card className="p-6">
