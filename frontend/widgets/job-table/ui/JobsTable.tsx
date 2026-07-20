@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import { Job, JobStatusBadge } from "@/entities/job";
 import { Candidate } from "@/entities/candidate";
-import { Card } from "@/shared/ui/card";
+import { Card } from "@/shared/ui/Card";
 
 export function JobsTable({
   jobs,

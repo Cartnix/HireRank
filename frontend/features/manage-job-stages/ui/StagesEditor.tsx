@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Stage } from "@/entities/job";
-import { Card } from "@/shared/ui/card";
+import { Card } from "@/shared/ui/Card";
 import { GhostButton } from "@/shared/ui/buttons/GhostButton";
 
 export function StagesEditor({

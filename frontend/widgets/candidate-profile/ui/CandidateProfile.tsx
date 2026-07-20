@@ -6,8 +6,8 @@ import { Candidate, StageBadge } from "@/entities/candidate";
 import { Job } from "@/entities/job";
 import { Note } from "@/entities/note";
 import { NoteComposer } from "@/features/add-candidate-note";
-import { Card } from "@/shared/ui/card";
-import { Avatar } from "@/shared/ui/avatar";
+import { Card } from "@/shared/ui/Card";
+import { Avatar } from "@/shared/ui/Avatar";
 import { GhostButton } from "@/shared/ui/buttons/GhostButton";
 
 export function CandidateProfile({

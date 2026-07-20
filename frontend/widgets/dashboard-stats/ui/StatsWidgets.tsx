@@ -1,4 +1,4 @@
-import { Card } from "@/shared/ui/card";
+import { Card } from "@/shared/ui/Card";
 import { Briefcase, Users, CalendarDays } from "lucide-react";
 
 export function StatsWidgets({

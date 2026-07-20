@@ -2,9 +2,9 @@ import { ChevronLeft, MoreHorizontal } from "lucide-react";
 import { Job, JobStatusBadge, Stage } from "@/entities/job";
 import { Candidate, StageBadge } from "@/entities/candidate";
 import { StagesEditor } from "@/features/manage-job-stages";
-import { Card } from "@/shared/ui/card";
+import { Card } from "@/shared/ui/Card";
 import { GhostButton } from "@/shared/ui/buttons/GhostButton";
-import { Avatar } from "@/shared/ui/avatar";
+import { Avatar } from "@/shared/ui/Avatar";
 
 export function JobOverview({
   job,

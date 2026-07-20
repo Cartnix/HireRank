@@ -1,5 +1,5 @@
 import { MainButton } from "@/shared/ui/buttons/MainButton";
-import { Card } from "@/shared/ui/card";
+import { Card } from "@/shared/ui/Card";
 
 export const CTA = () => (
   <section className="relative py-32 px-6 flex justify-center">

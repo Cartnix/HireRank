@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar } from "@/shared/ui/avatar";
+import { Avatar } from "@/shared/ui/Avatar";
 import { navItems } from "@/shared/utils/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

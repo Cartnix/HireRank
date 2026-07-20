@@ -1,4 +1,4 @@
-import SidebarView from "@/views/sidebarView/ui/SidebarView";
+import SidebarView from "@/views/sidebar/ui/SidebarView";
 
 export default function DashboardLayout({ children } : { children: React.ReactNode }) {
   return (

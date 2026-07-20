@@ -1,8 +1,8 @@
 import { Star } from "lucide-react";
 import { Candidate, StageBadge } from "@/entities/candidate";
 import { Job } from "@/entities/job";
-import { Card } from "@/shared/ui/card";
-import { Avatar } from "@/shared/ui/avatar";
+import { Card } from "@/shared/ui/Card";
+import { Avatar } from "@/shared/ui/Avatar";
 
 export function CandidatesTable({
   candidates,

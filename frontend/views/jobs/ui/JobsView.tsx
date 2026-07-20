@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { Job, Stage } from "@/entities/job";
 import { Candidate } from "@/entities/candidate";
-import { SectionTitle } from "@/shared/ui/sectionTitle";
+import { SectionTitle } from "@/shared/ui/SectionTitle";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { JobsTable } from "@/widgets/job-table";
 import { JobOverview } from "@/widgets/job-overview/ui/JobOverview";
