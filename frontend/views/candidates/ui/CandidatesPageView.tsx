@@ -6,6 +6,7 @@ export type CandidatesPageViewProps = {
   candidates: Candidate[];
   jobById: Record<string, Job>;
   currentUserName: string;
+  initialSelectedCandidateId?: string | null;
 };
 
 export function CandidatesPageView(props: CandidatesPageViewProps) {

@@ -38,6 +38,49 @@ export function JobOverview({
         <GhostButton icon={<MoreHorizontal size={15} />}>Действия</GhostButton>
       </div>
 
+      <Card className="mb-5 p-5">
+        <div className="flex flex-wrap gap-2">
+          {job.salaryMin && job.salaryMax ? (
+            <span className="rounded-full border border-brand-primary/20 bg-brand-primary/10 px-3 py-1 text-[12px] font-medium text-brand-primary">
+              {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()} {job.currency ?? "KZT"}
+            </span>
+          ) : null}
+          {job.workMode ? (
+            <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">
+              {job.workMode}
+            </span>
+          ) : null}
+          {job.experienceLevel ? (
+            <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">
+              {job.experienceLevel}
+            </span>
+          ) : null}
+          {job.priority ? (
+            <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">
+              Приоритет: {job.priority}
+            </span>
+          ) : null}
+          {job.openingsCount ? (
+            <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">
+              Откликов: {job.openingsCount}
+            </span>
+          ) : null}
+        </div>
+        {job.requiredSkills && job.requiredSkills.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {job.requiredSkills.map((skill) => (
+              <span key={skill} className="rounded-full bg-muted px-3 py-1 text-[12px] text-foreground-secondary">
+                {skill}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <div className="mt-3 flex flex-wrap gap-4 text-[12px] text-foreground-secondary">
+          {job.recruiter ? <span>Рекрутер: {job.recruiter}</span> : null}
+          {job.closingDate ? <span>Закрытие: {job.closingDate}</span> : null}
+        </div>
+      </Card>
+
       <div className="grid grid-cols-3 gap-5">
         <div className="col-span-2 space-y-5">
           <Card className="p-6">

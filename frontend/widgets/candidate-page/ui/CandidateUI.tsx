@@ -12,10 +12,12 @@ export function CandidatesPageClient({
   candidates,
   jobById,
   currentUserName,
+  initialSelectedCandidateId = null,
 }: {
   candidates: Candidate[];
   jobById: Record<string, Job>;
   currentUserName: string;
+  initialSelectedCandidateId?: string | null;
 }) {
   const {
     search,
@@ -31,7 +33,7 @@ export function CandidatesPageClient({
     setNoteDraft,
     addNote,
     back,
-  } = useCandidatesPage(candidates, jobById, currentUserName);
+  } = useCandidatesPage(candidates, jobById, currentUserName, initialSelectedCandidateId);
 
   if (selectedCandidate && selectedJob) {
     return (

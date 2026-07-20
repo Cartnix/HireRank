@@ -19,6 +19,7 @@ export function JobsTable({
           <tr className="border-b border-border text-[12px] uppercase tracking-wide text-muted-foreground">
             <th className="px-5 py-3 font-medium">Название</th>
             <th className="px-5 py-3 font-medium">Отдел</th>
+            <th className="px-5 py-3 font-medium">Мета</th>
             <th className="px-5 py-3 font-medium">Статус</th>
             <th className="px-5 py-3 font-medium">Кандидаты</th>
             <th className="px-5 py-3 font-medium">Создана</th>
@@ -36,6 +37,14 @@ export function JobsTable({
               >
                 <td className="px-5 py-3.5 font-medium">{job.title}</td>
                 <td className="px-5 py-3.5 text-foreground-secondary">{job.department}</td>
+                <td className="px-5 py-3.5 text-foreground-secondary">
+                  <div className="line-clamp-2 max-w-60">
+                    {job.salaryMin && job.salaryMax ? `${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()} ${job.currency ?? "KZT"}` : "—"}
+                  </div>
+                  <div className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {job.workMode ?? "—"} · {job.experienceLevel ?? "—"}
+                  </div>
+                </td>
                 <td className="px-5 py-3.5">
                   <JobStatusBadge status={job.status} />
                 </td>
