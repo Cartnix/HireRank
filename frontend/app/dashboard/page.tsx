@@ -1,4 +1,4 @@
-import { DashboardPageView } from "@/views/dashboard/ui/DashboardView";
+import { DashboardPageView } from "@/views/dashboard";
 import type { DashboardPageViewProps } from "@/views/dashboard/ui/DashboardView";
 
 export default async function DashboardPage() {

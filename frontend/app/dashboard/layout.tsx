@@ -1,6 +1,6 @@
-import SidebarView from "@/views/sidebar/ui/SidebarView";
+import { SidebarView } from "@/views/sidebar";
 
-export default function DashboardLayout({ children } : { children: React.ReactNode }) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <SidebarView />

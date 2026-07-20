@@ -1,6 +1,6 @@
-import { CandidatesPageClient } from "@/widgets/candidate-page/ui/CandidateUI";
 import { getCandidates } from "@/entities/candidate";
 import { getJobs, type Job } from "@/entities/job";
+import { CandidatesPageView } from "@/views/candidates";
 
 export default async function Page() {
   const [candidates, jobs] = await Promise.all([getCandidates(), getJobs()]);
@@ -10,7 +10,7 @@ export default async function Page() {
   ) as Record<string, Job>;
 
   return (
-    <CandidatesPageClient
+    <CandidatesPageView
       candidates={candidates}
       jobById={jobById}
       currentUserName="Test"

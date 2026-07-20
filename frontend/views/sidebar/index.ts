@@ -1,1 +1,1 @@
-export * from "./ui/SidebarView"
+export { default as SidebarView } from "./ui/SidebarView";

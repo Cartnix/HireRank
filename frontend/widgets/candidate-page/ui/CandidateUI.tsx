@@ -6,7 +6,7 @@ import { StageFilter } from "@/features/filter-candidates/ui/StageFilter";
 import { CandidatesTable } from "@/widgets/candidate-table/ui/CandidatesTable";
 import { Candidate } from "@/entities/candidate";
 import { Job } from "@/entities/job";
-import { useCandidatesPage } from "../model/useCandidatesPage";
+import { useCandidatesPage } from "@/features/candidate-page";
 
 export function CandidatesPageClient({
   candidates,
