@@ -25,7 +25,7 @@ export function JobOverview({
         <ChevronLeft size={15} /> Все вакансии
       </button>
 
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-4 flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="text-[26px] font-bold tracking-tight">{job.title}</div>
@@ -38,57 +38,37 @@ export function JobOverview({
         <GhostButton icon={<MoreHorizontal size={15} />}>Действия</GhostButton>
       </div>
 
-      <Card className="mb-5 p-5">
-        <div className="flex flex-wrap gap-2">
-          {job.salaryMin && job.salaryMax ? (
-            <span className="rounded-full border border-brand-primary/20 bg-brand-primary/10 px-3 py-1 text-[12px] font-medium text-brand-primary">
-              {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()} {job.currency ?? "KZT"}
-            </span>
-          ) : null}
-          {job.workMode ? (
-            <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">
-              {job.workMode}
-            </span>
-          ) : null}
-          {job.experienceLevel ? (
-            <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">
-              {job.experienceLevel}
-            </span>
-          ) : null}
-          {job.priority ? (
-            <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">
-              Приоритет: {job.priority}
-            </span>
-          ) : null}
-          {job.openingsCount ? (
-            <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">
-              Откликов: {job.openingsCount}
-            </span>
-          ) : null}
-        </div>
-        {job.requiredSkills && job.requiredSkills.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {job.requiredSkills.map((skill) => (
-              <span key={skill} className="rounded-full bg-muted px-3 py-1 text-[12px] text-foreground-secondary">
-                {skill}
-              </span>
-            ))}
-          </div>
+      {/* мета-бейджи без карточки — легче для глаз, прямо под шапкой */}
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        {job.salaryMin && job.salaryMax ? (
+          <span className="rounded-full border border-brand-primary/20 bg-brand-primary/10 px-3 py-1 text-[12px] font-medium text-brand-primary">
+            {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()} {job.currency ?? "KZT"}
+          </span>
         ) : null}
-        <div className="mt-3 flex flex-wrap gap-4 text-[12px] text-foreground-secondary">
-          {job.recruiter ? <span>Рекрутер: {job.recruiter}</span> : null}
-          {job.closingDate ? <span>Закрытие: {job.closingDate}</span> : null}
-        </div>
-      </Card>
+        {job.workMode ? (
+          <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">{job.workMode}</span>
+        ) : null}
+        {job.experienceLevel ? (
+          <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">{job.experienceLevel}</span>
+        ) : null}
+        {job.requiredSkills?.map((skill) => (
+          <span key={skill} className="rounded-full bg-muted px-3 py-1 text-[12px] text-foreground-secondary">
+            {skill}
+          </span>
+        ))}
+        {job.recruiter ? <span className="ml-1 text-[12px] text-foreground-secondary">Рекрутер: {job.recruiter}</span> : null}
+        {job.closingDate ? <span className="text-[12px] text-foreground-secondary">· Закрытие: {job.closingDate}</span> : null}
+      </div>
 
       <div className="grid grid-cols-3 gap-5">
-        <div className="col-span-2 space-y-5">
+        <div className="col-span-2">
+          {/* описание + кандидаты в одной карточке с разделителем */}
           <Card className="p-6">
             <div className="mb-3 text-[15px] font-semibold">Описание вакансии</div>
             <p className="mb-0 max-w-none text-[13.5px] leading-relaxed text-foreground-secondary">{job.description}</p>
-          </Card>
 
-          <Card className="p-6">
+            <div className="my-5 border-t border-border" />
+
             <div className="mb-4 flex items-center justify-between">
               <div className="text-[15px] font-semibold">Кандидаты по вакансии ({candidates.length})</div>
             </div>

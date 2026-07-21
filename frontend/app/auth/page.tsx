@@ -1,6 +1,6 @@
 "use client";
 
-import { AuthModal } from "@/widgets/authModal/ui/AuthModal";
+import { AuthModal } from "@/widgets/auth-modal/ui/AuthModal";
 
 export default function AuthForm() {
     return (
