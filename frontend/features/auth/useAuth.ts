@@ -2,10 +2,11 @@ import { createClient } from "@/shared/utils/supabase/client"
 import { useState } from "react"
 
 export const useAuth = () => {
-    const supabase = createClient()
     const [isLoading, setLoading] = useState(false)
 
     const signUp = async (email: string, password: string) => {
+        const supabase = createClient()
+
         setLoading(true)
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -16,6 +17,8 @@ export const useAuth = () => {
     }
 
     const signIn = async (email: string, password: string) => {
+        const supabase = createClient()
+
         setLoading(true)
         const { data, error } = await supabase.auth.signInWithPassword({
             email,

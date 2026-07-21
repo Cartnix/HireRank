@@ -1,3 +1,4 @@
+# Frontend
 /frontend/node_modules
 /frontend/.next
 /frontend/out
@@ -5,30 +6,18 @@
 /frontend/.vercel
 /frontend/*.tsbuildinfo
 /frontend/next-env.d.ts
+node_modules/
+.next/
 
-
+# General
 .DS_Store
 .env*
-!backend/.env.test
-.venv*
 !.env.example
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-/coverage
-
-backend/uv.lock
-node_modules/
-.next/
-
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-.coverage
 .cursor
-.pytest_cache
-.ruff_cache
-tmp*
+*.tmp
+.venv
+.github/copilot-instructions.md

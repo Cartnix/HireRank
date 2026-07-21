@@ -1,17 +1,33 @@
-"""FastAPI application factory and ASGI app."""
-
+import sentry_sdk
 from fastapi import FastAPI
+from fastapi.routing import APIRoute
+from starlette.middleware.cors import CORSMiddleware
 
-from app.api.v1.router import api_router
-from app.core.config import get_settings
-
-
-settings = get_settings()
-
-app = FastAPI(title=settings.app_name, version=settings.app_version)
-app.include_router(api_router, prefix=settings.api_v1_prefix)
+from app.api.main import api_router
+from app.core.config import settings
 
 
-@app.get("/health", tags=["System"])
-def health_check() -> dict[str, str]:
-    return {"status": "ok", "environment": settings.environment}
+def custom_generate_unique_id(route: APIRoute) -> str:
+    return f"{route.tags[0]}-{route.name}"
+
+
+if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
+    sentry_sdk.init(dsn=str(settings.SENTRY_DSN), enable_tracing=True)
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    generate_unique_id_function=custom_generate_unique_id,
+)
+
+# Set all CORS enabled origins
+if settings.all_cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.all_cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+app.include_router(api_router, prefix=settings.API_V1_STR)

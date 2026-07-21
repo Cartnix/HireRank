@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+app.egg-info
+
+# Virtual environment
+.venv*
+
+# Testing & coverage
+.coverage
+htmlcov/
+.pytest_cache
+.mypy_cache
+.cache
+
+# Linters
+.ruff_cache
+
+# IDE
+.cursor
+
+# Migration
+app/alembic/
+
+# Lock
+uv.lock
+
+# Temp
+tmp*
+*.tmp
+*.log

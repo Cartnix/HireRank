@@ -5,11 +5,11 @@ info:
   version: 1.0.0
   description: |
     REST API контракт платформы HireAI (MVP).
-    
+
     **Multi-tenant**: каждый запрос изолирован по `enterprise_id`, который берётся из JWT-токена.
-    
+
     **RBAC**: роли `administrator`, `hr_operator`, `manager`, `candidate`.
-    
+
     **Auth**: Bearer JWT. Получить токен через `POST /auth/login`.
 
     **Business rules**:
@@ -24,7 +24,7 @@ info:
 servers:
   - url: http://localhost:8000/api/v1
     description: Local dev
-  - url: https://api.hireai.example.com/v1
+  - url: https://api.hireai.mrx.com/v1
     description: Production
 
 tags:
