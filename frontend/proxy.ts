@@ -7,11 +7,21 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthPage = pathname.startsWith("/auth");
   const isOnboardingPage = pathname.startsWith("/onboarding");
-  const isProtectedRoute = pathname.startsWith("/dashboard") || isOnboardingPage;
+  const isProtectedRoute =
+    pathname.startsWith("/dashboard") || isOnboardingPage;
 
   if (!user) {
     if (isProtectedRoute) {
       return NextResponse.redirect(new URL("/auth", request.url));
+    }
+    return response;
+  }
+
+  const isHRemail = user?.email?.endsWith("@tou.edu.kz");
+
+  if (!isHRemail) {
+    if (isProtectedRoute || isAuthPage) {
+      return NextResponse.redirect(new URL("/careers", request.url));
     }
     return response;
   }
@@ -31,7 +41,7 @@ export async function proxy(request: NextRequest) {
 
   if (isAuthPage) {
     return NextResponse.redirect(
-      new URL(isOnboarded ? "/dashboard" : "/onboarding", request.url)
+      new URL(isOnboarded ? "/dashboard" : "/onboarding", request.url),
     );
   }
 
