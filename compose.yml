@@ -15,9 +15,9 @@ services:
       - .env
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
-      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-local}
+      - POSTGRES_USER=${POSTGRES_USER:-local}
+      - POSTGRES_DB=${POSTGRES_DB:-local}
 
   adminer:
     image: adminer
@@ -33,17 +33,17 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
       - traefik.constraint-label=traefik-public
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.rule=Host(`adminer.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.entrypoints=http
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.middlewares=https-redirect
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.rule=Host(`adminer.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.entrypoints=https
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls=true
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls.certresolver=le
-      - traefik.http.services.${STACK_NAME?Variable not set}-adminer.loadbalancer.server.port=8080
+      - traefik.http.routers.${STACK_NAME:-local}-adminer-http.rule=Host(`adminer.${DOMAIN:-local}`)
+      - traefik.http.routers.${STACK_NAME:-local}-adminer-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME:-local}-adminer-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME:-local}-adminer-https.rule=Host(`adminer.${DOMAIN:-local}`)
+      - traefik.http.routers.${STACK_NAME:-local}-adminer-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME:-local}-adminer-https.tls=true
+      - traefik.http.routers.${STACK_NAME:-local}-adminer-https.tls.certresolver=le
+      - traefik.http.services.${STACK_NAME:-local}-adminer.loadbalancer.server.port=8080
 
   prestart:
-    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    image: '${DOCKER_IMAGE_BACKEND:-local}:${TAG-latest}'
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -59,12 +59,12 @@ services:
       - .env
     environment:
       - DOMAIN=${DOMAIN}
-      - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+      - FRONTEND_HOST=${FRONTEND_HOST:-local}
       - ENVIRONMENT=${ENVIRONMENT}
       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
-      - SECRET_KEY=${SECRET_KEY?Variable not set}
-      - FIRST_SUPERUSER=${FIRST_SUPERUSER?Variable not set}
-      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
+      - SECRET_KEY=${SECRET_KEY:-local}
+      - FIRST_SUPERUSER=${FIRST_SUPERUSER:-local}
+      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD:-local}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
@@ -72,12 +72,12 @@ services:
       - POSTGRES_SERVER=db
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER:-local}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-local}
       - SENTRY_DSN=${SENTRY_DSN}
 
   backend:
-    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    image: '${DOCKER_IMAGE_BACKEND:-local}:${TAG-latest}'
     restart: always
     networks:
       - traefik-public
@@ -92,12 +92,12 @@ services:
       - .env
     environment:
       - DOMAIN=${DOMAIN}
-      - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+      - FRONTEND_HOST=${FRONTEND_HOST:-local}
       - ENVIRONMENT=${ENVIRONMENT}
       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
-      - SECRET_KEY=${SECRET_KEY?Variable not set}
-      - FIRST_SUPERUSER=${FIRST_SUPERUSER?Variable not set}
-      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
+      - SECRET_KEY=${SECRET_KEY:-local}
+      - FIRST_SUPERUSER=${FIRST_SUPERUSER:-local}
+      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD:-local}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
@@ -105,8 +105,8 @@ services:
       - POSTGRES_SERVER=db
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER:-local}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-local}
       - SENTRY_DSN=${SENTRY_DSN}
 
     healthcheck:
@@ -123,21 +123,21 @@ services:
       - traefik.docker.network=traefik-public
       - traefik.constraint-label=traefik-public
 
-      - traefik.http.services.${STACK_NAME?Variable not set}-backend.loadbalancer.server.port=8000
+      - traefik.http.services.${STACK_NAME:-local}-backend.loadbalancer.server.port=8000
 
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.rule=Host(`api.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME:-local}-backend-http.rule=Host(`api.${DOMAIN:-local}`)
+      - traefik.http.routers.${STACK_NAME:-local}-backend-http.entrypoints=http
 
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.rule=Host(`api.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.entrypoints=https
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.tls=true
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.tls.certresolver=le
+      - traefik.http.routers.${STACK_NAME:-local}-backend-https.rule=Host(`api.${DOMAIN:-local}`)
+      - traefik.http.routers.${STACK_NAME:-local}-backend-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME:-local}-backend-https.tls=true
+      - traefik.http.routers.${STACK_NAME:-local}-backend-https.tls.certresolver=le
 
       # Enable redirection for HTTP and HTTPS
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME:-local}-backend-http.middlewares=https-redirect
 
   frontend:
-    image: '${DOCKER_IMAGE_FRONTEND?Variable not set}:${TAG-latest}'
+    image: '${DOCKER_IMAGE_FRONTEND:-local}:${TAG-latest}'
     restart: always
     networks:
       - traefik-public
@@ -150,24 +150,24 @@ services:
       args:
         - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
         - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
-        - NEXT_PUBLIC_API_URL=https://api.${DOMAIN?Variable not set}
+        - NEXT_PUBLIC_API_URL=https://api.${DOMAIN:-local}
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
       - traefik.constraint-label=traefik-public
 
-      - traefik.http.services.${STACK_NAME?Variable not set}-frontend.loadbalancer.server.port=3000
+      - traefik.http.services.${STACK_NAME:-local}-frontend.loadbalancer.server.port=3000
 
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.rule=Host(`dashboard.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME:-local}-frontend-http.rule=Host(`dashboard.${DOMAIN:-local}`)
+      - traefik.http.routers.${STACK_NAME:-local}-frontend-http.entrypoints=http
 
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.rule=Host(`dashboard.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.entrypoints=https
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.tls=true
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.tls.certresolver=le
+      - traefik.http.routers.${STACK_NAME:-local}-frontend-https.rule=Host(`dashboard.${DOMAIN:-local}`)
+      - traefik.http.routers.${STACK_NAME:-local}-frontend-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME:-local}-frontend-https.tls=true
+      - traefik.http.routers.${STACK_NAME:-local}-frontend-https.tls.certresolver=le
 
       # Enable redirection for HTTP and HTTPS
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME:-local}-frontend-http.middlewares=https-redirect
 volumes:
   app-db-data:
 
