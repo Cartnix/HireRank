@@ -48,7 +48,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - run: docker compose docker compose -f compose.yml -f compose.ci.yml build
+      - run: docker compose -f compose.yml -f compose.ci.yml build
       - run: docker compose down -v --remove-orphans
       - run: docker compose -f compose.yml -f compose.ci.yml up -d --wait backend frontend adminer
       - name: Test backend is up
