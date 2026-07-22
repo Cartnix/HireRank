@@ -6,6 +6,8 @@ set -x
 # Let the DB start
 python app/backend_pre_start.py
 
+cd backend
+
 # Run migrations
 alembic upgrade head
 

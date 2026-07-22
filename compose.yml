@@ -54,7 +54,7 @@ services:
         restart: true
     command: bash scripts/prestart.sh
     environment:
-      - DOMAIN=${DOMAIN}
+      - DOMAIN=${DOMAIN?Variable not set}
       - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
       - ENVIRONMENT=${ENVIRONMENT}
       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
@@ -85,7 +85,7 @@ services:
       prestart:
         condition: service_completed_successfully
     environment:
-      - DOMAIN=${DOMAIN}
+      - DOMAIN=${DOMAIN?Variable not set}
       - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
       - ENVIRONMENT=${ENVIRONMENT}
       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
