@@ -14,8 +14,9 @@ jobs:
     env:
       POSTGRES_PORT: 5432
       DOMAIN: localhost
-      ENVIRONMENT: test
+      ENVIRONMENT: local
       STACK_NAME: ${{ secrets.STACK_NAME }}
+      PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
       BACKEND_CORS_ORIGINS: ${{ secrets.BACKEND_CORS_ORIGINS }}
       EMAILS_FROM_EMAIL: noreply@example.com
 
