@@ -11,6 +11,27 @@ on:
 
 jobs:
   test-backend:
+    env:
+      POSTGRES_PORT: 5432
+      DOMAIN: localhost
+      ENVIRONMENT: test
+      BACKEND_CORS_ORIGINS: ${{ secrets.BACKEND_CORS_ORIGINS }}
+      EMAILS_FROM_EMAIL: noreply@example.com
+
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -18,7 +39,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.14"
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - run: docker compose down -v --remove-orphans

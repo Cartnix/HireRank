@@ -21,3 +21,6 @@ yarn-error.log*
 *.tmp
 .venv
 .github/copilot-instructions.md
+
+package-lock.json
+package.json
