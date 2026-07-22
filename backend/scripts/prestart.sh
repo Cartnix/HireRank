@@ -9,7 +9,7 @@ python app/backend_pre_start.py
 cd backend
 
 # Run migrations
-alembic upgrade head
+alembic -c alembic.ini upgrade head
 
 # Create initial data in DB
 python app/initial_data.py
