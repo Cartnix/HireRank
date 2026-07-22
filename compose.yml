@@ -54,6 +54,7 @@ services:
         restart: true
     command: bash scripts/prestart.sh
     environment:
+      - PROJECT_NAME=${PROJECT_NAME?Variable not set}
       - DOMAIN=${DOMAIN?Variable not set}
       - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
       - ENVIRONMENT=${ENVIRONMENT}
