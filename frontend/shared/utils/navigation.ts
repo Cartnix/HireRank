@@ -13,7 +13,6 @@ export type View =
   | "candidates"
   | "calendar"
   | "analytics"
-  | "settings";
 
 export const navItems: {
   id: View;
@@ -26,5 +25,4 @@ export const navItems: {
   { id: "candidates", label: "Кандидаты", icon: Users, href: "/dashboard/candidates" },
   { id: "calendar", label: "Календарь", icon: CalendarDays, href: "/dashboard/calendar" },
   { id: "analytics", label: "Аналитика", icon: BarChart3, href: "/dashboard/analytics" },
-  { id: "settings", label: "Настройки", icon: SettingsIcon, href: "/dashboard/settings" },
 ];

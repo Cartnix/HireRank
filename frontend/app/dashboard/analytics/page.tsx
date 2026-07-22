@@ -1,8 +1,8 @@
 import { ArrowUpRight } from "lucide-react";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 import { Card } from "@/shared/ui/Card";
-import { ConversionFunnel } from "@/widgets/analytics-charts/ConversionFunnel";
-import { SourcesChart } from "@/widgets/analytics-charts/SourcesChart";
+import { ConversionFunnel } from "@/widgets/analytics-charts/ui/ConversionFunnel";
+import { SourcesChart } from "@/widgets/analytics-charts/ui/SourcesChart";
 
 export default function AnalyticsPage() {
   return (

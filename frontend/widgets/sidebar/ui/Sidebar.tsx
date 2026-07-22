@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Avatar } from "@/shared/ui/Avatar";
 import { navItems } from "@/shared/utils/navigation";
@@ -6,11 +6,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/features/auth/useAuth";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { signOut } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    const error = await signOut();
+    if (!error) {
+      router.push("/auth");
+    }
+  };
 
   return (
     <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border bg-background-elevated px-3 py-5">
@@ -58,8 +72,8 @@ export function Sidebar() {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem 
-            onClick={() => signOut()}
+          <DropdownMenuItem
+            onClick={handleSignOut}
             className="text-red-600 focus:text-red-600 cursor-pointer"
           >
             <LogOut size={16} className="mr-2" />

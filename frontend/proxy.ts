@@ -17,7 +17,7 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  const isHRemail = user?.email?.endsWith("@tou.edu.kz");
+  const isHRemail = user?.email?.endsWith("tou.edu.kz");
 
   if (!isHRemail) {
     if (isProtectedRoute || isAuthPage) {

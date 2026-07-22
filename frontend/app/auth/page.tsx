@@ -1,8 +1,6 @@
-"use client";
-
 import { AuthModal } from "@/widgets/auth-modal/ui/AuthModal";
 
-export default function AuthForm() {
+export default function Page() {
     return (
         <main className="min-h-screen w-full flex items-center justify-center p-4 bg-background relative overflow-hidden">
             <div
