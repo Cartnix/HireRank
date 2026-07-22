@@ -21,9 +21,6 @@ htmlcov/
 # IDE
 .cursor
 
-# Migration
-app/alembic/
-
 # Lock
 uv.lock
 
