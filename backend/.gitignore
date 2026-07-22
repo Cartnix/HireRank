@@ -21,9 +21,6 @@ htmlcov/
 # IDE
 .cursor
 
-# Lock
-uv.lock
-
 # Temp
 tmp*
 *.tmp
