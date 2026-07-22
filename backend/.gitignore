@@ -27,3 +27,4 @@ tmp*
 *.log
 
 TODO.md
+.todo
