@@ -1,1 +1,0 @@
-"""Candidate service layer."""

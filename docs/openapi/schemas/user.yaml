@@ -20,7 +20,7 @@ User:
     email:
       type: string
       format: email
-      example: ivan@company.kz
+      example: ivan@mrxcompany.kz
     role:
       $ref: '#/UserRole'
     first_name:

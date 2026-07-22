@@ -1,0 +1,17 @@
+services:
+  backend:
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - fastapi
+      - run
+      - "app/main.py"
+
+  frontend:
+    command: npm run dev -- --hostname 0.0.0.0
+
+
+networks:
+  traefik-public:
+    external: false

@@ -26,7 +26,7 @@ RegisterRequest:
     email:
       type: string
       format: email
-      example: ivan@company.kz
+      example: ivan@mrxcompany.kz
     password:
       type: string
       format: password
@@ -55,7 +55,7 @@ LoginRequest:
     email:
       type: string
       format: email
-      example: ivan@company.kz
+      example: ivan@mrxcompany.kz
     password:
       type: string
       format: password
