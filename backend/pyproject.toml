@@ -75,6 +75,12 @@ dynamic_context = "test_function"
 [tool.coverage.report]
 show_missing = true
 sort = "-Cover"
+omit = [
+    "app/initial_data.py",
+    "app/backend_pre_start.py",
+    "app/tests_pre_start.py",
+    "app/alembic/*",
+]
 
 [tool.coverage.html]
 show_contexts = true
