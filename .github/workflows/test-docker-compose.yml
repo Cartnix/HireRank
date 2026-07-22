@@ -51,17 +51,17 @@ jobs:
       - run: docker compose -f compose.yml -f compose.ci.yml build
       - run: docker compose down -v --remove-orphans
 
-      - run: docker compose -f compose.yml -f compose.ci.yml up -d backend frontend adminer
+      # - run: docker compose -f compose.yml -f compose.ci.yml up -d backend frontend adminer
 
-      - name: Debug
-        if: always()
-        run: |
-          docker compose -f compose.yml -f compose.ci.yml ps
-          docker compose -f compose.yml -f compose.ci.yml logs backend --tail=200
-          docker inspect $(docker compose -f compose.yml -f compose.ci.yml ps -q backend) \
-            --format='{{json .State.Health}}'
-          docker compose -f compose.yml -f compose.ci.yml exec backend \
-          curl -v http://localhost:8000/api/v1/utils/health-check/
+      # - name: Debug
+      #   if: always()
+      #   run: |
+      #     docker compose -f compose.yml -f compose.ci.yml ps
+      #     docker compose -f compose.yml -f compose.ci.yml logs backend --tail=200
+      #     docker inspect $(docker compose -f compose.yml -f compose.ci.yml ps -q backend) \
+      #       --format='{{json .State.Health}}'
+      #     docker compose -f compose.yml -f compose.ci.yml exec backend \
+      #     curl -v http://localhost:8000/api/v1/utils/health-check/
 
       - name: Wait
         run: docker compose -f compose.yml -f compose.ci.yml wait backend frontend adminer
