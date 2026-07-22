@@ -51,6 +51,8 @@ jobs:
       - run: docker compose -f compose.yml -f compose.ci.yml build
       - run: docker compose down -v --remove-orphans
 
+      - run: docker compose -f compose.yml -f compose.ci.yml up -d backend frontend adminer
+
       # TODO: remove after debug
       - run: docker compose ps
       - run: docker compose logs backend --tail=200
