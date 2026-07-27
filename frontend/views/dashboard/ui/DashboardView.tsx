@@ -19,7 +19,7 @@ export type DashboardPageViewProps = {
 
 export function DashboardPageView(props: DashboardPageViewProps) {
   return (
-    <div>
+   <div>
       <SectionTitle title="Главная" subtitle="Обзор рекрутинга на сегодня" />
 
       <StatsWidgets

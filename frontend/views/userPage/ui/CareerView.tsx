@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { useAuth } from "@/features/auth/useAuth";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export const CareerView = () => {
   const mockVacancies = [
@@ -52,7 +52,7 @@ export const CareerView = () => {
           </div>
 
           <MainButton
-            onClick={signOut}
+            onClick={handleSignOut}
             title="Выйти"
             className="w-full sm:w-auto"
           />
