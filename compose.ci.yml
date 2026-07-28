@@ -6,6 +6,9 @@ services:
   frontend:
     ports:
       - "3000:3000"
+    build:
+      target: dev
+    command: npm run dev
 
 networks:
   traefik-public:
