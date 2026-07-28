@@ -102,10 +102,11 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://localhost:8000
+      target: deps
     command: npm run dev
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - frontend-node_modules:/app/node_modules
       - /app/.next
     develop:
       watch:
@@ -115,6 +116,9 @@ services:
           ignore:
             - ./frontend/node_modules
             - ./frontend/.next
+
+volumes:
+  frontend-node_modules:
 
 networks:
   traefik-public:
