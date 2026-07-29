@@ -2,25 +2,8 @@
 
 CandidateStatus:
   type: string
-  enum: [unassigned, assigned]
+  enum: [unassigned, assigned, pending_hitl, action_applied]
   example: unassigned
-
-VacancyMatchScore:
-  type: object
-  required: [vacancy_id, vacancy_title, score]
-  properties:
-    vacancy_id:
-      type: string
-      format: uuid
-    vacancy_title:
-      type: string
-      example: Backend Developer
-    score:
-      type: number
-      format: float
-      minimum: 0
-      maximum: 10
-      example: 8.7
 
 EducationEntry:
   type: object
@@ -132,13 +115,13 @@ Questionnaire:
 
 Candidate:
   type: object
-  required: [id, enterprise_id, status, created_at]
+  required: [id, tenant_id, status, created_at]
   properties:
     id:
       type: string
       format: uuid
       example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-    enterprise_id:
+    tenant_id:
       type: string
       format: uuid
     user_id:
@@ -154,18 +137,11 @@ Candidate:
       nullable: true
     questionnaire:
       $ref: '#/Questionnaire'
-    ai_score:
-      type: number
-      format: float
-      minimum: 0
-      maximum: 10
+    active_package_id:
+      type: string
+      format: uuid
       nullable: true
-      example: 7.4
-    ai_rankings:
-      type: array
-      items:
-        $ref: '#/VacancyMatchScore'
-      description: Скоры по всем вакансиям предприятия
+      description: Pending или последний AIDE decision package
     created_at:
       type: string
       format: date-time

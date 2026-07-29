@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HireRank
 
-## Getting Started
+**HireRank** is an on-premise ATS with **AIDE** (AI Decision Engine) — the organization’s nervous hiring system, not a resume calculator.
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```text
+HireRank intake → AIDE (scenarios) → Telegram HITL → FastMCP (`tenant_id`) → Precedent Memory
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> AIDE only **suggests**. A human picks a scenario in Telegram; MCP executes that choice and writes the Outcome. AI never auto-hires or auto-rejects.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Plane | Role |
+|-------|------|
+| **HireRank** | Domain ATS + storage + Admin |
+| **AIDE** | Vacancies + precedents → 2–3 scenarios ([AIDE.md](docs/AIDE.md)) |
+| **FastMCP** | Selected action only, under `tenant_id` |
+| **n8n** | Telegram / email delivery (not the decision engine) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Docs
 
-## Learn More
+| Doc | Purpose |
+|-----|---------|
+| [PASSPORT.md](docs/PASSPORT.md) | Product vision & goals |
+| [PRODUCT.md](docs/PRODUCT.md) | UVP, JTBD, anti-patterns |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | HireRank + AIDE + MCP + n8n planes |
+| [AIDE.md](docs/AIDE.md) | Decision engine lifecycle + strict gate |
+| [ROADMAP.md](docs/ROADMAP.md) | Delivery phases |
+| [FEATURESmd](docs/FEATURESmd) | Feature catalog |
+| [use-cases/](docs/use-cases/) | Behavioral specs |
+| [openapi/](docs/openapi/) | REST API contract |
+| [GDPR.md](docs/GDPR.md) | Privacy & sovereignty |
 
-To learn more about Next.js, take a look at the following resources:
+## Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Area | Tech |
+|------|------|
+| HireRank | Next.js, FastAPI, PostgreSQL, Redis, S3, Celery |
+| AIDE | Ollama + scenario orchestration |
+| Execution | FastMCP |
+| Delivery | n8n (Telegram, email, webhooks) |
+| Edge / ops | Traefik, Cloudflare, Compose |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Quick start
 
-## Deploy on Vercel
+```bash
+cp .env.example .env
+docker compose up --build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## MVP
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Phase 1: human ATS loop (tenant pool, vacancies, assignment). Phase 2: AIDE + Telegram HITL + MCP + Precedent Memory. See [ROADMAP.md](docs/ROADMAP.md).

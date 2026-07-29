@@ -50,6 +50,20 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    restart: "no"
+    ports:
+      - "6379:6379"
+
+  minio:
+    restart: "no"
+
+  n8n:
+    restart: "no"
+
+  qdrant:
+    restart: "no"
+
   adminer:
     restart: "no"
     ports:
@@ -87,6 +101,13 @@ services:
       SMTP_TLS: "false"
       EMAILS_FROM_EMAIL: "noreply@mrx.com"
 
+  prestart:
+    environment:
+      SMTP_HOST: "mailcatcher"
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      EMAILS_FROM_EMAIL: "noreply@mrx.com"
+
   mailcatcher:
     image: schickling/mailcatcher
     ports:
@@ -102,6 +123,8 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://localhost:8000
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
+        - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
       target: dev
     command: npm run dev
     volumes:
@@ -116,6 +139,10 @@ services:
           ignore:
             - ./frontend/node_modules
             - ./frontend/.next
+        - path: ./frontend/package.json
+          action: rebuild
+        - path: ./frontend/package-lock.json
+          action: rebuild
 
 networks:
   traefik-public:

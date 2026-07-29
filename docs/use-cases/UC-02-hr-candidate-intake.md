@@ -6,19 +6,19 @@ HR Operator
 Preconditions:
 - Authenticated
 - Role is `hr_operator`
-- Tenant is resolved from JWT `enterprise_id`
+- Tenant is resolved from JWT `tenant_id`
 
 Flow:
 1. HR Operator opens the candidate intake screen.
 2. HR Operator submits a JSON questionnaire.
-3. System validates the payload and enterprise scope.
+3. System validates the payload and tenant scope.
 4. Candidate profile is created.
-5. Candidate is added to the enterprise pool.
-6. AI ranking is requested.
+5. Candidate is added to the tenant pool.
+6. Intake event is published for AIDE (see UC-08).
 7. Notification is created.
 
 DoD:
 - Only authenticated HR Operator can perform the flow.
 - Payload is processed as JSON.
-- Candidate belongs to the same enterprise.
-- Ranking is recalculated after save.
+- Candidate belongs to the same tenant.
+- Intake event is published; AIDE may generate scenarios — no auto-disposition.

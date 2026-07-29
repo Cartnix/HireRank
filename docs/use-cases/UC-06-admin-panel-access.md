@@ -16,4 +16,4 @@ Flow:
 DoD:
 - Only Administrator can reach admin panel endpoints.
 - HR Operator, Manager, and Candidate are blocked.
-- Admin panel operates only on the current enterprise.
+- Admin panel operates only on the current tenant (`tenant_id`).

@@ -5,13 +5,13 @@ paths:
     get:
       tags: [Candidates]
       operationId: listCandidates
-      summary: Список кандидатов предприятия
+      summary: Список кандидатов tenant
       description: |
         Доступно: **administrator**, **hr_operator**, **manager**.
-        
-        Результаты отсортированы по `ai_score` убыванию (AI ranking).
-        
-        Manager видит только кандидатов, закреплённых за вакансиями.
+
+        Сортировка по `created_at` (новые сверху). Product-артефакт решений — AIDE scenarios / Outcomes, не ai_score.
+
+        Manager видит только кандидатов, закреплённых за вакансиями, плюс pending HITL своего tenant.
       parameters:
         - name: status
           in: query
@@ -58,8 +58,8 @@ paths:
       summary: Создать карточку кандидата из JSON анкеты
       description: |
         Используется **hr_operator** для ручного создания кандидата из JSON анкеты кадрового листа.
-        После создания кандидат попадает в пул предприятия со статусом `unassigned`.
-        Затем запускается AI ranking и создаются уведомления.
+        После создания кандидат попадает в пул tenant со статусом `unassigned`.
+        Публикуется intake-событие для AIDE; создаются уведомления. Auto-ranking/score не запускается.
       requestBody:
         required: true
         content:
@@ -68,7 +68,7 @@ paths:
               $ref: '../schemas/candidate.yaml#/CreateCandidateRequest'
       responses:
         '201':
-          description: Кандидат создан, AI-оценка поставлена в очередь
+          description: Кандидат создан, intake поставлен в очередь AIDE
           content:
             application/json:
               schema:
@@ -93,7 +93,7 @@ paths:
       summary: Карточка кандидата
       description: |
         Candidate видит только свою карточку.
-        HR Operator, Manager, Administrator видят любого кандидата своего предприятия.
+        HR Operator, Manager, Administrator видят любого кандидата своего tenant.
       responses:
         '200':
           description: Карточка кандидата
@@ -111,9 +111,9 @@ paths:
       operationId: updateCandidate
       summary: Обновить карточку кандидата
       description: |
-        Candidate может обновлять свою анкету до назначения.
+        Candidate может обновлять свою анкету до назначения / action_applied.
         HR Operator может редактировать любую карточку.
-        После обновления повторно запускается AI-оценка.
+        После существенного обновления может быть опубликован повторный intake для AIDE.
       requestBody:
         required: true
         content:
@@ -159,8 +159,9 @@ paths:
       operationId: assignCandidate
       summary: Закрепить кандидата за вакансией
       description: |
-        Доступно только **administrator**.
-        
+        Доступно только **administrator** (ручной путь).
+        Эквивалентный результат может дать MCP после HITL accept (см. `/aide/packages/{id}/accept`).
+
         После закрепления статус кандидата меняется на `assigned`.
         Менеджеры получают уведомление.
       requestBody:
@@ -214,8 +215,8 @@ paths:
       summary: Заполнить или обновить JSON-анкету кандидата
       description: |
         Candidate отправляет JSON-форму кадрового листа с фронтенда.
-        Если анкета заполнена впервые — кандидат попадает в пул `unassigned`.
-        После сохранения запускается AI ranking и создаются уведомления.
+        Если анкета заполнена впервые — кандидат попадает в пул `unassigned`
+        и публикуется intake-событие для AIDE.
       requestBody:
         required: true
         content:

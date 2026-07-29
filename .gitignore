@@ -19,6 +19,7 @@ yarn-error.log*
 .pnpm-debug.log*
 .cursor
 *.tmp
+tmp*
 .venv
 .github/copilot-instructions.md
 
