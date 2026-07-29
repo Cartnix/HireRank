@@ -21,7 +21,7 @@ TokenPair:
 
 RegisterRequest:
   type: object
-  required: [email, password, role, enterprise_id]
+  required: [email, password, role, tenant_id]
   properties:
     email:
       type: string
@@ -37,7 +37,7 @@ RegisterRequest:
       enum: [candidate, hr_operator, manager]
       description: Administrator создаётся вручную, не через этот endpoint
       example: hr_operator
-    enterprise_id:
+    tenant_id:
       type: string
       format: uuid
       example: 3fa85f64-5717-4562-b3fc-2c963f66afa6

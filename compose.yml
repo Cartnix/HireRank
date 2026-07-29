@@ -1,7 +1,150 @@
+x-n8n: &service-n8n
+  image: n8nio/n8n:latest
+  # default: talk to db/redis/etc; traefik-public: reach qdrant/ollama
+  networks:
+    - default
+    - traefik-public
+  environment:
+    - DB_TYPE=postgresdb
+    - DB_POSTGRESDB_HOST=db
+    - DB_POSTGRESDB_USER=${POSTGRES_USER}
+    - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+    - DB_POSTGRESDB_DATABASE=${POSTGRES_N8N_DB:-n8n}
+    - N8N_DIAGNOSTICS_ENABLED=false
+    - N8N_PERSONALIZATION_ENABLED=false
+    - N8N_ENCRYPTION_KEY
+    - N8N_USER_MANAGEMENT_JWT_SECRET
+    - N8N_DEFAULT_BINARY_DATA_MODE
+    - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
+  env_file:
+    - path: .env
+      required: true
+
+x-ollama: &service-ollama
+  image: ollama/ollama:latest
+  networks:
+    traefik-public:
+      aliases:
+        - ollama
+  restart: unless-stopped
+  ports:
+    - 11434:11434
+  volumes:
+    - app-ollama-storage:/root/.ollama
+
+x-init-ollama: &init-ollama
+  image: ollama/ollama:latest
+  networks:
+    traefik-public:
+      aliases:
+        - ollama-init
+  volumes:
+    - app-ollama-storage:/root/.ollama
+  entrypoint: /bin/sh
+  environment:
+    - OLLAMA_HOST=ollama:11434
+  command:
+    - "-c"
+    - "sleep 3; ollama pull llama3.2"
+
 services:
+  n8n-import:
+    <<: *service-n8n
+    hostname: n8n-import
+    entrypoint: /bin/sh
+    command:
+    - "-c"
+    - |
+      if [ -z "$(n8n list:workflow --onlyId)" ]; then
+        n8n import:credentials --separate --input=/demo-data/credentials && \
+        n8n import:workflow --separate --input=/demo-data/workflows
+      else
+        echo "Workflows exist, skipping import"
+      fi
+    volumes:
+      - app-n8n-storage:/home/node/.n8n
+      - ./n8n/demo-data:/demo-data
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+
+  n8n:
+    <<: *service-n8n
+    hostname: n8n
+    restart: unless-stopped
+    ports:
+      - 5678:5678
+    volumes:
+      - app-n8n-storage:/home/node/.n8n
+      - ./n8n/demo-data:/demo-data
+      - ./shared:/data/shared
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      n8n-import:
+        condition: service_completed_successfully
+
+  qdrant:
+    image: qdrant/qdrant
+    hostname: qdrant
+    networks:
+      - traefik-public
+      - default
+    restart: unless-stopped
+    ports:
+      - 6333:6333
+    volumes:
+      - app-qdrant-storage:/qdrant/storage
+
+  ollama-cpu:
+    profiles: ["cpu"]
+    <<: *service-ollama
+
+  ollama-gpu:
+    profiles: ["gpu-nvidia"]
+    <<: *service-ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ollama-gpu-amd:
+    profiles: ["gpu-amd"]
+    <<: *service-ollama
+    image: ollama/ollama:rocm
+    devices:
+      - "/dev/kfd"
+      - "/dev/dri"
+
+  ollama-pull-llama-cpu:
+    profiles: ["cpu"]
+    <<: *init-ollama
+    depends_on:
+      - ollama-cpu
+
+  ollama-pull-llama-gpu:
+    profiles: ["gpu-nvidia"]
+    <<: *init-ollama
+    depends_on:
+      - ollama-gpu
+
+  ollama-pull-llama-gpu-amd:
+    profiles: [gpu-amd]
+    <<: *init-ollama
+    image: ollama/ollama:rocm
+    depends_on:
+     - ollama-gpu-amd
 
   db:
     image: postgres:18
+    hostname: db
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -17,16 +160,42 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
 
+  # Create dedicated DB for n8n (must not share app schema — table name conflicts)
+  db-init:
+    image: postgres:18
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER?Variable not set}
+      PGPASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      PGDATABASE: ${POSTGRES_DB?Variable not set}
+      POSTGRES_N8N_DB: ${POSTGRES_N8N_DB:-n8n}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        exists=$$(psql -tAc "SELECT 1 FROM pg_database WHERE datname='$${POSTGRES_N8N_DB}'")
+        if [ "$$exists" = "1" ]; then
+          echo "Database $${POSTGRES_N8N_DB} already exists"
+        else
+          psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE \"$${POSTGRES_N8N_DB}\""
+          echo "Database $${POSTGRES_N8N_DB} created"
+        fi
+
   redis:
     image: redis:latest
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping"]
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
     environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-${REDIS_PASSWORD?Variable not set}}
+      - REDIS_PASSWORD=${REDIS_PASSWORD?Variable not set}
     command: >
       redis-server
       --requirepass ${REDIS_PASSWORD}
@@ -35,6 +204,39 @@ services:
       --maxmemory-policy allkeys-lru
     volumes:
       - app-redis-data:/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Console UI
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER?Variable not set}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD?Variable not set}
+    volumes:
+      - app-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      mc mb --ignore-existing myminio/$${MINIO_BUCKET_NAME};
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER?Variable not set}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD?Variable not set}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME?Variable not set}
 
   adminer:
     image: adminer
@@ -163,8 +365,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-        - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
+        - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
         - NEXT_PUBLIC_API_URL=https://api.${DOMAIN?Variable not set}
     labels:
       - traefik.enable=true
@@ -186,6 +388,10 @@ services:
 volumes:
   app-db-data:
   app-redis-data:
+  app-minio-data:
+  app-n8n-storage:
+  app-ollama-storage:
+  app-qdrant-storage:
 
 networks:
   traefik-public:

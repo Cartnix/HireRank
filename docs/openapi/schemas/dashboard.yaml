@@ -9,6 +9,10 @@ AdminDashboard:
     unassigned_candidates:
       type: integer
       example: 12
+    pending_hitl:
+      type: integer
+      example: 4
+      description: Кандидаты / packages в ожидании Telegram HITL
     total_vacancies:
       type: integer
       example: 8
@@ -21,22 +25,24 @@ AdminDashboard:
     unread_notifications:
       type: integer
       example: 3
-    top_candidates:
+    recent_pending_packages:
       type: array
-      description: Топ-5 кандидатов по ai_score
+      description: Недавние pending AIDE packages (не rank-score)
       items:
         type: object
         properties:
+          package_id:
+            type: string
+            format: uuid
           candidate_id:
             type: string
             format: uuid
           full_name:
             type: string
             example: Алибек Сейткали
-          ai_score:
-            type: number
-            format: float
-            example: 9.1
+          scenario_count:
+            type: integer
+            example: 3
 
 HRDashboard:
   type: object
@@ -60,6 +66,9 @@ ManagerDashboard:
     assigned_candidates:
       type: integer
       example: 4
+    pending_hitl:
+      type: integer
+      example: 2
     open_vacancies:
       type: integer
       example: 5
@@ -75,7 +84,7 @@ CandidateDashboard:
       example: true
     status:
       type: string
-      enum: [unassigned, assigned]
+      enum: [unassigned, assigned, pending_hitl, action_applied]
       example: unassigned
     assigned_vacancy:
       nullable: true

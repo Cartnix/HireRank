@@ -1,0 +1,186 @@
+# schemas/aide.yaml
+
+ScenarioActionType:
+  type: string
+  enum: [assign, interview, archive, forward, other]
+  example: assign
+
+ScenarioOption:
+  type: object
+  required: [id, title, action_type]
+  properties:
+    id:
+      type: string
+      format: uuid
+    title:
+      type: string
+      example: Назначить на Backend Developer
+    rationale:
+      type: string
+      description: Обоснование с опорой на прецеденты / вакансии
+      example: Похожий профиль утвержден в прошлом месяце на ту же роль
+    action_type:
+      $ref: '#/ScenarioActionType'
+    payload:
+      type: object
+      description: Параметры будущего MCP-действия (vacancy_id и т.д.)
+      additionalProperties: true
+
+DecisionPackageStatus:
+  type: string
+  enum: [pending_hitl, accepted, cancelled]
+  example: pending_hitl
+
+DecisionPackage:
+  type: object
+  required: [id, tenant_id, candidate_id, status, scenarios, created_at]
+  properties:
+    id:
+      type: string
+      format: uuid
+    tenant_id:
+      type: string
+      format: uuid
+    candidate_id:
+      type: string
+      format: uuid
+    status:
+      $ref: '#/DecisionPackageStatus'
+    scenarios:
+      type: array
+      minItems: 2
+      maxItems: 3
+      items:
+        $ref: '#/ScenarioOption'
+    selected_scenario_id:
+      type: string
+      format: uuid
+      nullable: true
+    created_at:
+      type: string
+      format: date-time
+    resolved_at:
+      type: string
+      format: date-time
+      nullable: true
+
+AcceptScenarioRequest:
+  type: object
+  required: [scenario_id]
+  properties:
+    scenario_id:
+      type: string
+      format: uuid
+      description: ID выбранной кнопки HITL (Telegram callback → API)
+    comment:
+      type: string
+      description: Опциональный комментарий менеджера
+      example: Согласен с назначением на собеседование
+
+AcceptScenarioResponse:
+  type: object
+  required: [package, outcome, mcp_action_id]
+  properties:
+    package:
+      $ref: '#/DecisionPackage'
+    outcome:
+      $ref: '#/Outcome'
+    mcp_action_id:
+      type: string
+      format: uuid
+      description: Идентификатор исполненного MCP-действия
+
+Outcome:
+  type: object
+  required: [id, tenant_id, candidate_id, package_id, scenario_id, action_type, created_at]
+  properties:
+    id:
+      type: string
+      format: uuid
+    tenant_id:
+      type: string
+      format: uuid
+    candidate_id:
+      type: string
+      format: uuid
+    package_id:
+      type: string
+      format: uuid
+    scenario_id:
+      type: string
+      format: uuid
+    action_type:
+      $ref: '#/ScenarioActionType'
+    comment:
+      type: string
+      nullable: true
+    decided_by:
+      type: string
+      format: uuid
+      description: user_id менеджера
+    mcp_action_id:
+      type: string
+      format: uuid
+    created_at:
+      type: string
+      format: date-time
+
+Precedent:
+  type: object
+  description: Запись Precedent Memory tenant (чтение AIDE)
+  required: [id, tenant_id, summary, created_at]
+  properties:
+    id:
+      type: string
+      format: uuid
+    tenant_id:
+      type: string
+      format: uuid
+    candidate_id:
+      type: string
+      format: uuid
+      nullable: true
+    summary:
+      type: string
+      example: Профиль backend-кандидата → interview выбран
+    action_type:
+      $ref: '#/ScenarioActionType'
+    outcome_id:
+      type: string
+      format: uuid
+    created_at:
+      type: string
+      format: date-time
+
+PagedDecisionPackageResponse:
+  type: object
+  required: [items, pagination]
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/DecisionPackage'
+    pagination:
+      $ref: './common.yaml#/Pagination'
+
+PagedOutcomeResponse:
+  type: object
+  required: [items, pagination]
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/Outcome'
+    pagination:
+      $ref: './common.yaml#/Pagination'
+
+PagedPrecedentResponse:
+  type: object
+  required: [items, pagination]
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/Precedent'
+    pagination:
+      $ref: './common.yaml#/Pagination'

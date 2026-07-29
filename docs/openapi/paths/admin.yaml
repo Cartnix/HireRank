@@ -3,10 +3,10 @@ paths:
     get:
       tags: [Admin]
       operationId: listAdminUsers
-      summary: Админ-панель — список пользователей предприятия
+      summary: Админ-панель — список пользователей tenant
       description: |
         Доступно только **administrator**.
-        Возвращает только пользователей текущего предприятия (`enterprise_id` из JWT).
+        Возвращает только пользователей текущего tenant (`tenant_id` из JWT).
       parameters:
         - name: role
           in: query
@@ -26,7 +26,7 @@ paths:
             maximum: 100
       responses:
         '200':
-          description: Список пользователей предприятия
+          description: Список пользователей tenant
           content:
             application/json:
               schema:
