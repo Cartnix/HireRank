@@ -52,9 +52,12 @@ After sign-in, the user can access only permitted functions.
 ### Supported roles
 
 * Administrator
-* HR Operator
+* HR
 * Manager
+* Recruiter
 * Candidate
+
+Permission matrix: [RBAC.md](RBAC.md).
 
 ---
 
@@ -63,6 +66,12 @@ After sign-in, the user can access only permitted functions.
 ## Description
 
 All data belongs to a specific tenant (`tenant_id`).
+
+**Core / self-hosted:** one enterprise per deploy. The app seeds a single default tenant
+and always binds requests to `TENANT_ID` from env (hidden multi-tenancy). Clients do not
+pass `tenant_id` on register. PostgreSQL RLS enforces row isolation.
+
+**Enterprise / SaaS (future):** resolve `tenant_id` from JWT / subdomain without schema change.
 
 Each user operates only inside their own tenant.
 

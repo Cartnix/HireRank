@@ -7,7 +7,7 @@ paths:
       operationId: listCandidates
       summary: Список кандидатов tenant
       description: |
-        Доступно: **administrator**, **hr_operator**, **manager**.
+        Доступно: **administrator**, **hr**, **manager**.
 
         Сортировка по `created_at` (новые сверху). Product-артефакт решений — AIDE scenarios / Outcomes, не ai_score.
 
@@ -57,7 +57,7 @@ paths:
       operationId: createCandidate
       summary: Создать карточку кандидата из JSON анкеты
       description: |
-        Используется **hr_operator** для ручного создания кандидата из JSON анкеты кадрового листа.
+        Используется **hr** для ручного создания кандидата из JSON анкеты кадрового листа.
         После создания кандидат попадает в пул tenant со статусом `unassigned`.
         Публикуется intake-событие для AIDE; создаются уведомления. Auto-ranking/score не запускается.
       requestBody:
@@ -76,7 +76,7 @@ paths:
         '400':
           description: Ошибка валидации анкеты
         '403':
-          description: Только hr_operator или administrator
+          description: Только hr или administrator
 
   /candidates/{id}:
     parameters:

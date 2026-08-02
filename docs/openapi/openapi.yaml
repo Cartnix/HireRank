@@ -10,18 +10,21 @@ info:
     FastMCP исполняет только выбранное действие под `tenant_id` и пишет Outcome в Precedent Memory.
     AI **не** делает auto-hire / auto-reject.
 
-    **Multi-tenant**: изоляция по `tenant_id` из JWT.
+    **Hidden multi-tenancy**: Core (self-hosted) — один enterprise на инстанс;
+    `tenant_id` в JWT/БД фиксирован через `TENANT_ID` (env). PostgreSQL RLS фильтрует строки.
+    SaaS позже снимет жёсткую привязку без смены схемы.
 
-    **RBAC**: роли `administrator`, `hr_operator`, `manager`, `candidate`.
+    **RBAC**: роли `administrator`, `hr`, `manager`, `recruiter`, `candidate`.
+    Матрица: [docs/RBAC.md](../RBAC.md).
 
     **Auth**: Bearer JWT. Получить токен через `POST /auth/login`.
 
     **Business rules**:
 
-    * кандидат и HR Operator загружают JSON-анкету кадрового листа;
+    * кандидат и recruiter загружают резюме; HR создаёт/ведёт вакансии;
     * кандидат после сохранения попадает в пул `unassigned` и публикуется intake-событие для AIDE;
     * AIDE генерирует 2–3 сценария → Telegram HITL → MCP → Outcome;
-    * Administrator управляет вакансиями и может вручную закреплять кандидатов;
+    * Administrator — админ-панель и управление пользователями; HR — vacancy CRUD;
     * Manager в web — read-only; решение по сценариям — кнопка в Telegram.
 
 servers:
