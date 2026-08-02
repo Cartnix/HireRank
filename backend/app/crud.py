@@ -46,6 +46,16 @@ def get_user_by_email(*, session: Session, email: str) -> User | None:
     return session_user
 
 
+def get_user_by_id(*, session: Session, user_id: uuid.UUID) -> User | None:
+    """Tenant-scoped PK lookup — prefer over session.get under FORCE RLS."""
+    return session.exec(
+        select(User).where(
+            User.id == user_id,
+            User.tenant_id == settings.TENANT_ID,
+        )
+    ).first()
+
+
 # Dummy hash to use for timing attack prevention when user is not found
 DUMMY_HASH = "$argon2id$v=19$m=65536,t=3,p=4$MjQyZWE1MzBjYjJlZTI0Yw$YTU4NGM5ZTZmYjE2NzZlZjY0ZWY3ZGRkY2U2OWFjNjk"
 

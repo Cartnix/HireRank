@@ -10,6 +10,7 @@ from sqlalchemy import event, text
 from sqlalchemy.engine import Connection
 from sqlmodel import Session
 
+from app import crud
 from app.auth.permissions import has_permission
 from app.core import security
 from app.core.config import settings
@@ -127,7 +128,7 @@ def get_current_user(session: SessionDep, creds: TokenDep) -> User:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
-    user = session.get(User, user_id)
+    user = crud.get_user_by_id(session=session, user_id=user_id)
     if not user:
         # Prefer 404 over 403 so cross-tenant probes cannot confirm foreign IDs
         raise HTTPException(status_code=404, detail="User not found")

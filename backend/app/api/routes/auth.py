@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -134,26 +134,54 @@ def login(session: SessionDep, body: LoginRequest) -> TokenPair:
     return _issue_token_pair(user)
 
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        401: {"model": ErrorResponse},
+        403: {"model": ErrorResponse},
+        422: {"description": "Missing refresh_token body"},
+    },
+)
 def logout(
     current_user: CurrentUser,
     creds: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-    body: Annotated[RefreshRequest | None, Body()] = None,
+    body: RefreshRequest,
 ) -> Response:
-    _ = current_user
+    """
+    Server-side logout: Bearer access authorizes the call; refresh_token in body
+    is hard-revoked so stolen refresh cannot mint new access tokens.
+    """
+    try:
+        payload = security.decode_token(body.refresh_token)
+        token_data = TokenPayload(**payload)
+    except (InvalidTokenError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token is invalid or expired",
+        )
+    if token_data.type != security.TOKEN_TYPE_REFRESH or not token_data.jti:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token is invalid or expired",
+        )
+    if token_data.sub != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token does not match current user",
+        )
+    if token_data.tenant_id and token_data.tenant_id != str(settings.TENANT_ID):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tenant mismatch",
+        )
+
+    get_token_store().revoke_refresh(
+        token_data.jti,
+        grace_seconds=None,
+        tenant_id=token_data.tenant_id or settings.TENANT_ID,
+    )
     _blacklist_access_from_creds(creds)
-    if body and body.refresh_token:
-        try:
-            payload = security.decode_token(body.refresh_token)
-            token_data = TokenPayload(**payload)
-            if token_data.jti:
-                get_token_store().revoke_refresh(
-                    token_data.jti,
-                    grace_seconds=None,
-                    tenant_id=token_data.tenant_id or settings.TENANT_ID,
-                )
-        except (InvalidTokenError, ValidationError):
-            pass
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -198,7 +226,7 @@ def refresh(session: SessionDep, body: RefreshRequest) -> TokenPair:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or expired",
         )
-    user = session.get(User, user_id)
+    user = crud.get_user_by_id(session=session, user_id=user_id)
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
