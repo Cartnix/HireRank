@@ -72,8 +72,9 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: str = ""
-    # memory | redis — memory used in unit tests without Redis
-    TOKEN_STORE: Literal["memory", "redis"] = "redis"
+    # memory | redis — Core default is memory (zero-ops self-host);
+    # set redis for multi-replica Enterprise / SaaS
+    TOKEN_STORE: Literal["memory", "redis"] = "memory"
     # Soft-revoke window after refresh rotation (parallel mobile retries)
     REFRESH_TOKEN_GRACE_SECONDS: int = 20
 

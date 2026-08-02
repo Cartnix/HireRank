@@ -54,7 +54,7 @@ No separate SECURITY.md. Controls live here, [GDPR.md](GDPR.md), and [RBAC.md](R
 
 - On-prem custody of personal data and precedents
 - RLS + `FORCE ROW LEVEL SECURITY` on tenant-scoped tables
-- Bearer JWT (access + refresh); refresh revocation via Redis
+- Bearer JWT (access + refresh); pluggable token store (`memory` Core default, `redis` for multi-replica / SaaS); tenant-prefixed keys
 - Human-gated MCP (Art. 22 meaningful involvement)
 - Audit trail: proposed scenarios → chosen button → MCP action → Outcome
 

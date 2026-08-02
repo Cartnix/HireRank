@@ -34,3 +34,22 @@ Manager scope and candidate “own” checks are enforced on domain endpoints (A
 ## Hidden multi-tenancy
 
 Core / Open Source deploys one enterprise per instance. `tenant_id` remains on rows and in JWT for schema compatibility; the app always binds to `TENANT_ID` from env (seeded default tenant). PostgreSQL RLS enforces `tenant_id = current_setting('app.current_tenant')`.
+
+## Auth tokens & session store
+
+Access and refresh JWTs carry `sub`, `role`, `tenant_id`, `jti`, `type`. Refresh jtis and access blacklists live in a pluggable `TokenStore`:
+
+| Mode | Env | Use when |
+|------|-----|----------|
+| Memory | `TOKEN_STORE=memory` (Core default) | Single FastAPI replica; self-host zero-ops |
+| Redis | `TOKEN_STORE=redis` | Multiple replicas, Enterprise, or SaaS |
+
+Contract (both implementations):
+
+- `store_refresh` / `get_refresh_user` / `revoke_refresh` (optional grace for parallel mobile refresh)
+- `blacklist_access` / `is_access_blacklisted` (TTL tied to JWT `exp`)
+- `revoke_tenant` — wipe `tenant:{id}:*` (SaaS company lockout)
+
+Redis key shape: `tenant:{tenant_id}:{refresh|grace|blacklist}:{jti}`. Memory uses the same tenant scoping so switching stores does not change call sites.
+
+Deploy guidance: [SELF-HOSTED.md](SELF-HOSTED.md). Product editions: [README](../README.md#core-enterprise--saas).

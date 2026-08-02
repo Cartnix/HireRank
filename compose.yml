@@ -296,7 +296,7 @@ services:
       - TENANT_ID=${TENANT_ID:-00000000-0000-4000-8000-000000000001}
       - TENANT_SLUG=${TENANT_SLUG:-default}
       - TENANT_NAME=${TENANT_NAME:-Default}
-      - TOKEN_STORE=${TOKEN_STORE:-redis}
+      - TOKEN_STORE=${TOKEN_STORE:-memory}
       - REDIS_HOST=redis
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_DB=${REDIS_DB:-0}
@@ -337,7 +337,7 @@ services:
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_DB=${REDIS_DB:-0}
       - REDIS_PASSWORD=${REDIS_PASSWORD?Variable not set}
-      - TOKEN_STORE=${TOKEN_STORE:-redis}
+      - TOKEN_STORE=${TOKEN_STORE:-memory}
       - TENANT_ID=${TENANT_ID:-00000000-0000-4000-8000-000000000001}
       - TENANT_SLUG=${TENANT_SLUG:-default}
       - TENANT_NAME=${TENANT_NAME:-Default}

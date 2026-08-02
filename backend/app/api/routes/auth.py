@@ -48,6 +48,7 @@ def _issue_token_pair(user: User) -> TokenPair:
         refresh_jti,
         str(user.id),
         ttl_seconds=int(refresh_expires.total_seconds()),
+        tenant_id=user.tenant_id,
     )
     return TokenPair(
         access_token=access_token,
@@ -73,7 +74,11 @@ def _blacklist_access_from_creds(
     ttl = 60
     if isinstance(exp, int):
         ttl = max(int(exp - datetime.now(UTC).timestamp()), 1)
-    get_token_store().blacklist_access(token_data.jti, ttl_seconds=ttl)
+    get_token_store().blacklist_access(
+        token_data.jti,
+        ttl_seconds=ttl,
+        tenant_id=token_data.tenant_id or settings.TENANT_ID,
+    )
 
 
 @router.post(
@@ -142,7 +147,11 @@ def logout(
             payload = security.decode_token(body.refresh_token)
             token_data = TokenPayload(**payload)
             if token_data.jti:
-                get_token_store().revoke_refresh(token_data.jti, grace_seconds=None)
+                get_token_store().revoke_refresh(
+                    token_data.jti,
+                    grace_seconds=None,
+                    tenant_id=token_data.tenant_id or settings.TENANT_ID,
+                )
         except (InvalidTokenError, ValidationError):
             pass
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -173,7 +182,8 @@ def refresh(session: SessionDep, body: RefreshRequest) -> TokenPair:
             detail="Refresh token is invalid or expired",
         )
     store = get_token_store()
-    stored_user_id = store.get_refresh_user(token_data.jti)
+    tenant_id = token_data.tenant_id or settings.TENANT_ID
+    stored_user_id = store.get_refresh_user(token_data.jti, tenant_id=tenant_id)
     if not stored_user_id or stored_user_id != token_data.sub:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -197,5 +207,6 @@ def refresh(session: SessionDep, body: RefreshRequest) -> TokenPair:
     store.revoke_refresh(
         token_data.jti,
         grace_seconds=settings.REFRESH_TOKEN_GRACE_SECONDS,
+        tenant_id=tenant_id,
     )
     return _issue_token_pair(user)

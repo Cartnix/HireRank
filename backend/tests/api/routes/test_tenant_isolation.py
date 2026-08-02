@@ -307,15 +307,11 @@ def test_superuser_bypassrls_pitfall_is_mitigated_by_app_role() -> None:
     """Document the pitfall: login role may BYPASSRLS; app role must not."""
     with Session(engine) as session:
         login_bypass = session.execute(
-            text(
-                "SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user"
-            )
+            text("SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user")
         ).scalar_one()
         session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
         app_bypass = session.execute(
-            text(
-                "SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user"
-            )
+            text("SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user")
         ).scalar_one()
     # Local/dev often connects as postgres (bypass=true); runtime role must be false.
     assert app_bypass is False

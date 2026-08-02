@@ -107,7 +107,10 @@ def get_current_user(session: SessionDep, creds: TokenDep) -> User:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
-    if get_token_store().is_access_blacklisted(token_data.jti):
+    if get_token_store().is_access_blacklisted(
+        token_data.jti,
+        tenant_id=token_data.tenant_id or settings.TENANT_ID,
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked",

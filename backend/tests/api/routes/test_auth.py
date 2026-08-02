@@ -65,9 +65,7 @@ def test_auth_register_login_me_refresh_logout(client: TestClient) -> None:
         settings.SECRET_KEY,
         algorithms=[security.ALGORITHM],
     )["jti"]
-    if hasattr(store, "_grace") and old_jti in store._grace:
-        with store._lock:
-            store._grace[old_jti] = (store._grace[old_jti][0], 0.0)
+    store.force_expire_grace(old_jti, tenant_id=settings.TENANT_ID)
 
     r = client.post(
         f"{settings.API_V1_STR}/auth/refresh",
