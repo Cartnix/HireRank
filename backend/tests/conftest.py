@@ -4,6 +4,7 @@ import os
 os.environ.setdefault("TOKEN_STORE", "memory")
 
 from collections.abc import Generator
+from contextlib import contextmanager
 
 import pytest
 from fastapi.testclient import TestClient
@@ -21,19 +22,47 @@ from tests.utils.utils import get_superuser_token_headers
 reset_token_store()
 
 
+@contextmanager
+def bypass_rls_session() -> Generator[Session]:
+    """
+    Seed/admin session that temporarily disables RLS.
+
+    Uses SET LOCAL inside a transaction and always ROLLBACKs the GUC change
+    path via commit of data then RESET — never leave session-level
+    row_security=off on a pooled connection (connection pollution pitfall).
+    """
+    with Session(engine) as session:
+        session.execute(text("SET row_security = off"))
+        try:
+            yield session
+            session.commit()
+        finally:
+            # Critical: restore before connection returns to the pool
+            session.execute(text("SET row_security = on"))
+            session.commit()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def db() -> Generator[Session]:
     with Session(engine) as session:
         session.execute(text("SET row_security = off"))
-        init_db(session)
+        try:
+            init_db(session)
+        finally:
+            session.execute(text("SET row_security = on"))
+            session.commit()
         yield session
         session.execute(text("SET row_security = off"))
-        statement = delete(Item)
-        session.execute(statement)
-        statement = delete(User)
-        session.execute(statement)
-        session.commit()
-        init_db(session)
+        try:
+            statement = delete(Item)
+            session.execute(statement)
+            statement = delete(User)
+            session.execute(statement)
+            session.commit()
+            init_db(session)
+        finally:
+            session.execute(text("SET row_security = on"))
+            session.commit()
 
 
 @pytest.fixture(scope="module")

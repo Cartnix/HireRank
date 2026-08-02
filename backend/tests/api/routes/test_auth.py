@@ -56,7 +56,19 @@ def test_auth_register_login_me_refresh_logout(client: TestClient) -> None:
     assert refreshed["access_token"]
     assert refreshed["refresh_token"] != pair["refresh_token"]
 
-    # Old refresh is rotated away
+    # Within grace window a twin refresh may still succeed; force-expire grace
+    from app.core.token_store import get_token_store
+
+    store = get_token_store()
+    old_jti = jwt.decode(
+        pair["refresh_token"],
+        settings.SECRET_KEY,
+        algorithms=[security.ALGORITHM],
+    )["jti"]
+    if hasattr(store, "_grace") and old_jti in store._grace:
+        with store._lock:
+            store._grace[old_jti] = (store._grace[old_jti][0], 0.0)
+
     r = client.post(
         f"{settings.API_V1_STR}/auth/refresh",
         json={"refresh_token": pair["refresh_token"]},

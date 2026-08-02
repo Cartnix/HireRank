@@ -9,12 +9,12 @@ from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
-    tenant_id = user_create.tenant_id or settings.TENANT_ID
+    # Core: always bind to singleton tenant — ignore any client/body override
     db_obj = User.model_validate(
         user_create,
         update={
             "hashed_password": get_password_hash(user_create.password),
-            "tenant_id": tenant_id,
+            "tenant_id": settings.TENANT_ID,
         },
     )
     session.add(db_obj)

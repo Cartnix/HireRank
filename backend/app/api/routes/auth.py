@@ -142,7 +142,7 @@ def logout(
             payload = security.decode_token(body.refresh_token)
             token_data = TokenPayload(**payload)
             if token_data.jti:
-                get_token_store().revoke_refresh(token_data.jti)
+                get_token_store().revoke_refresh(token_data.jti, grace_seconds=None)
         except (InvalidTokenError, ValidationError):
             pass
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -194,5 +194,8 @@ def refresh(session: SessionDep, body: RefreshRequest) -> TokenPair:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or expired",
         )
-    store.revoke_refresh(token_data.jti)
+    store.revoke_refresh(
+        token_data.jti,
+        grace_seconds=settings.REFRESH_TOKEN_GRACE_SECONDS,
+    )
     return _issue_token_pair(user)

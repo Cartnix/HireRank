@@ -28,6 +28,24 @@ def set_tenant_guc(connection: Connection, tenant_id: uuid.UUID | str) -> None:
     )
 
 
+def apply_rls_context(
+    connection: Connection, *, tenant_id: uuid.UUID | str | None = None
+) -> None:
+    """
+    Bind the session to the non-BYPASSRLS app role and set tenant GUC.
+
+    Superusers ignore FORCE RLS; SET LOCAL ROLE hirerank_app is required for
+    policies to take effect when the login role is postgres/owner.
+
+    Always re-enable row_security first: a pooled connection may still have
+    session-level `row_security=off` from seed/bypass helpers (pool pollution).
+    """
+    connection.execute(text("SET row_security = on"))
+    role = settings.RLS_APP_ROLE
+    connection.execute(text(f"SET LOCAL ROLE {role}"))
+    set_tenant_guc(connection, tenant_id or settings.TENANT_ID)
+
+
 def get_db() -> Generator[Session]:
     with Session(engine) as session:
         if settings.BYPASS_RLS:
@@ -47,11 +65,11 @@ def get_db() -> Generator[Session]:
             def _set_rls(
                 _sess: Session, _trans: object, connection: Connection
             ) -> None:
-                set_tenant_guc(connection, tenant_id)
+                apply_rls_context(connection, tenant_id=tenant_id)
 
             event.listen(session, "after_begin", _set_rls)
             try:
-                # Start a transaction so after_begin fires and GUC is set
+                # Start a transaction so after_begin fires and GUC/ROLE are set
                 session.execute(text("SELECT 1"))
                 yield session
             finally:
@@ -108,6 +126,7 @@ def get_current_user(session: SessionDep, creds: TokenDep) -> User:
         )
     user = session.get(User, user_id)
     if not user:
+        # Prefer 404 over 403 so cross-tenant probes cannot confirm foreign IDs
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")

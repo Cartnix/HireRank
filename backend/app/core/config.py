@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     TENANT_NAME: str = "Default"
     # When True, DB sessions skip SET LOCAL / use row_security=off (migrations, seed)
     BYPASS_RLS: bool = False
+    # Non-BYPASSRLS role; get_db does SET LOCAL ROLE so FORCE RLS actually applies
+    RLS_APP_ROLE: str = "hirerank_app"
 
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
@@ -72,6 +74,8 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str = ""
     # memory | redis — memory used in unit tests without Redis
     TOKEN_STORE: Literal["memory", "redis"] = "redis"
+    # Soft-revoke window after refresh rotation (parallel mobile retries)
+    REFRESH_TOKEN_GRACE_SECONDS: int = 20
 
     @computed_field  # type: ignore[prop-decorator]
     @property

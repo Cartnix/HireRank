@@ -14,7 +14,7 @@ class TokenStore(Protocol):
 
     def get_refresh_user(self, jti: str) -> str | None: ...
 
-    def revoke_refresh(self, jti: str) -> None: ...
+    def revoke_refresh(self, jti: str, *, grace_seconds: int | None = None) -> None: ...
 
     def blacklist_access(self, jti: str, ttl_seconds: int) -> None: ...
 
@@ -23,34 +23,49 @@ class TokenStore(Protocol):
 
 class MemoryTokenStore:
     def __init__(self) -> None:
+        # jti -> (user_id, expires_at)
         self._refresh: dict[str, tuple[str, float]] = {}
+        self._grace: dict[str, tuple[str, float]] = {}
         self._blacklist: dict[str, float] = {}
         self._lock = threading.Lock()
 
     def _purge(self) -> None:
         now = time.time()
         self._refresh = {k: v for k, v in self._refresh.items() if v[1] > now}
+        self._grace = {k: v for k, v in self._grace.items() if v[1] > now}
         self._blacklist = {k: exp for k, exp in self._blacklist.items() if exp > now}
 
     def store_refresh(self, jti: str, user_id: str, ttl_seconds: int) -> None:
         with self._lock:
             self._purge()
             self._refresh[jti] = (user_id, time.time() + ttl_seconds)
+            self._grace.pop(jti, None)
 
     def get_refresh_user(self, jti: str) -> str | None:
         with self._lock:
             self._purge()
-            entry = self._refresh.get(jti)
+            entry = self._refresh.get(jti) or self._grace.get(jti)
             return entry[0] if entry else None
 
-    def revoke_refresh(self, jti: str) -> None:
+    def revoke_refresh(self, jti: str, *, grace_seconds: int | None = None) -> None:
         with self._lock:
-            self._refresh.pop(jti, None)
+            self._purge()
+            entry = self._refresh.pop(jti, None)
+            if grace_seconds and grace_seconds > 0:
+                user_id = entry[0] if entry else None
+                if user_id is None and jti in self._grace:
+                    # already in grace — keep existing window
+                    return
+                if user_id is None:
+                    return
+                self._grace[jti] = (user_id, time.time() + grace_seconds)
+            else:
+                self._grace.pop(jti, None)
 
     def blacklist_access(self, jti: str, ttl_seconds: int) -> None:
         with self._lock:
             self._purge()
-            self._blacklist[jti] = time.time() + ttl_seconds
+            self._blacklist[jti] = time.time() + max(ttl_seconds, 1)
 
     def is_access_blacklisted(self, jti: str) -> bool:
         with self._lock:
@@ -65,19 +80,31 @@ class RedisTokenStore:
         self._client = redis.Redis.from_url(redis_url, decode_responses=True)
 
     def store_refresh(self, jti: str, user_id: str, ttl_seconds: int) -> None:
-        self._client.setex(f"refresh:{jti}", ttl_seconds, user_id)
+        pipe = self._client.pipeline()
+        pipe.setex(f"refresh:{jti}", ttl_seconds, user_id)
+        pipe.delete(f"grace:{jti}")
+        pipe.execute()
 
     def get_refresh_user(self, jti: str) -> str | None:
-        value = self._client.get(f"refresh:{jti}")
+        value = self._client.get(f"refresh:{jti}") or self._client.get(f"grace:{jti}")
         return str(value) if value else None
 
-    def revoke_refresh(self, jti: str) -> None:
-        self._client.delete(f"refresh:{jti}")
+    def revoke_refresh(self, jti: str, *, grace_seconds: int | None = None) -> None:
+        user_id = self._client.get(f"refresh:{jti}")
+        if grace_seconds and grace_seconds > 0:
+            if user_id:
+                pipe = self._client.pipeline()
+                pipe.setex(f"grace:{jti}", grace_seconds, str(user_id))
+                pipe.delete(f"refresh:{jti}")
+                pipe.execute()
+            return
+        pipe = self._client.pipeline()
+        pipe.delete(f"refresh:{jti}")
+        pipe.delete(f"grace:{jti}")
+        pipe.execute()
 
     def blacklist_access(self, jti: str, ttl_seconds: int) -> None:
-        if ttl_seconds <= 0:
-            ttl_seconds = 1
-        self._client.setex(f"blacklist:{jti}", ttl_seconds, "1")
+        self._client.setex(f"blacklist:{jti}", max(ttl_seconds, 1), "1")
 
     def is_access_blacklisted(self, jti: str) -> bool:
         return bool(self._client.exists(f"blacklist:{jti}"))
