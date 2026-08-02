@@ -2,7 +2,8 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlalchemy import desc
+from sqlmodel import col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate, Message
@@ -22,7 +23,7 @@ def read_items(
         count_statement = select(func.count()).select_from(Item)
         count = session.exec(count_statement).one()
         statement = (
-            select(Item).order_by(Item.created_at.desc()).offset(skip).limit(limit)
+            select(Item).order_by(desc(col(Item.created_at))).offset(skip).limit(limit)
         )
         items = session.exec(statement).all()
     else:
@@ -35,7 +36,7 @@ def read_items(
         statement = (
             select(Item)
             .where(Item.owner_id == current_user.id)
-            .order_by(Item.created_at.desc())
+            .order_by(desc(col(Item.created_at)))
             .offset(skip)
             .limit(limit)
         )

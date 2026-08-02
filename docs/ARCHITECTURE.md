@@ -33,7 +33,8 @@ flowchart TB
 
 ## Tenant boundary
 
-- Every mutation and read is scoped by `tenant_id` (JWT claim).
+- Every mutation and read is scoped by `tenant_id` (JWT claim + PostgreSQL RLS).
+- **Hidden multi-tenancy (Core):** one seeded tenant per deploy (`TENANT_ID` env); register does not accept client `tenant_id`; FastAPI sets `SET LOCAL app.current_tenant` on each DB session.
 - MCP tools refuse cross-tenant writes.
 - Precedent Memory is a per-tenant asset; it leaves only with the client’s data.
 
@@ -49,10 +50,11 @@ flowchart TB
 
 ## Security posture (summary)
 
-No separate SECURITY.md. Controls live here and in [GDPR.md](GDPR.md):
+No separate SECURITY.md. Controls live here, [GDPR.md](GDPR.md), and [RBAC.md](RBAC.md):
 
 - On-prem custody of personal data and precedents
-- RLS / strict `tenant_id` filtering
+- RLS + `FORCE ROW LEVEL SECURITY` on tenant-scoped tables
+- Bearer JWT (access + refresh); refresh revocation via Redis
 - Human-gated MCP (Art. 22 meaningful involvement)
 - Audit trail: proposed scenarios → chosen button → MCP action → Outcome
 

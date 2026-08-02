@@ -12,7 +12,7 @@ paths:
         | Роль | Тип ответа |
         |------|-----------|
         | `administrator` | `AdminDashboard` |
-        | `hr_operator` | `HRDashboard` |
+        | `hr` | `HRDashboard` |
         | `manager` | `ManagerDashboard` |
         | `candidate` | `CandidateDashboard` |
       responses:
@@ -38,8 +38,8 @@ paths:
                         candidate_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
                         full_name: Алибек Сейткали
                         scenario_count: 3
-                hr_operator:
-                  summary: Ответ для HR Operator
+                hr:
+                  summary: Ответ для HR
                   value:
                     candidates_created_by_me: 7
                     total_candidates: 34

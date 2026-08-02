@@ -1,44 +1,112 @@
-from collections.abc import Generator
+import uuid
+from collections.abc import Callable, Generator
 from typing import Annotated
 
-import jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
+from sqlalchemy import event, text
+from sqlalchemy.engine import Connection
 from sqlmodel import Session
 
+from app.auth.permissions import has_permission
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
-from app.models import TokenPayload, User
+from app.core.token_store import get_token_store
+from app.models import TokenPayload, User, UserRole, role_str
 
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/login/access-token"
-)
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def set_tenant_guc(connection: Connection, tenant_id: uuid.UUID | str) -> None:
+    """Inject tenant id into PostgreSQL session for RLS (transaction-local)."""
+    connection.execute(
+        text("SELECT set_config('app.current_tenant', :tenant, true)"),
+        {"tenant": str(tenant_id)},
+    )
 
 
 def get_db() -> Generator[Session]:
     with Session(engine) as session:
-        yield session
+        if settings.BYPASS_RLS:
+
+            def _bypass(_sess: Session, _trans: object, connection: Connection) -> None:
+                connection.execute(text("SET LOCAL row_security = off"))
+
+            event.listen(session, "after_begin", _bypass)
+            try:
+                session.execute(text("SELECT 1"))
+                yield session
+            finally:
+                event.remove(session, "after_begin", _bypass)
+        else:
+            tenant_id = settings.TENANT_ID
+
+            def _set_rls(
+                _sess: Session, _trans: object, connection: Connection
+            ) -> None:
+                set_tenant_guc(connection, tenant_id)
+
+            event.listen(session, "after_begin", _set_rls)
+            try:
+                # Start a transaction so after_begin fires and GUC is set
+                session.execute(text("SELECT 1"))
+                yield session
+            finally:
+                event.remove(session, "after_begin", _set_rls)
 
 
 SessionDep = Annotated[Session, Depends(get_db)]
-TokenDep = Annotated[str, Depends(reusable_oauth2)]
+TokenDep = Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)]
 
 
-def get_current_user(session: SessionDep, token: TokenDep) -> User:
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+def get_current_user(session: SessionDep, creds: TokenDep) -> User:
+    if creds is None or creds.scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
         )
+    token = creds.credentials
+    try:
+        payload = security.decode_token(token)
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if token_data.type != security.TOKEN_TYPE_ACCESS:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+        )
+    if not token_data.sub or not token_data.jti:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
-    user = session.get(User, token_data.sub)
+    if get_token_store().is_access_blacklisted(token_data.jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+        )
+    if token_data.tenant_id and token_data.tenant_id != str(settings.TENANT_ID):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tenant mismatch",
+        )
+    try:
+        user_id = uuid.UUID(token_data.sub)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+    user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
@@ -50,8 +118,20 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:
-    if not current_user.is_superuser:
+    if role_str(current_user.role) != UserRole.ADMINISTRATOR.value:
         raise HTTPException(
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+def require_permission(permission: str) -> Callable[..., User]:
+    def _checker(current_user: CurrentUser) -> User:
+        if not has_permission(current_user.role, permission):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+        return current_user
+
+    return _checker

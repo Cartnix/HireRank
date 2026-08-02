@@ -2,8 +2,8 @@
 
 UserRole:
   type: string
-  enum: [administrator, hr_operator, manager, candidate]
-  example: hr_operator
+  enum: [administrator, hr, manager, recruiter, candidate]
+  example: hr
 
 User:
   type: object

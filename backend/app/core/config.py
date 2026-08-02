@@ -1,4 +1,5 @@
 import secrets
+import uuid
 import warnings
 from typing import Annotated, Any, Literal, Self
 
@@ -12,6 +13,9 @@ from pydantic import (
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Stable default tenant for Core / self-hosted (hidden multi-tenancy)
+DEFAULT_TENANT_ID = uuid.UUID("00000000-0000-4000-8000-000000000001")
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -31,8 +35,8 @@ class Settings(BaseSettings):
     )
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
-    # 60 minutes * 24 hours * 8 days = 8 days
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 14
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
@@ -55,6 +59,20 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
 
+    # Hidden multi-tenancy (Core): single enterprise per deploy
+    TENANT_ID: uuid.UUID = DEFAULT_TENANT_ID
+    TENANT_SLUG: str = "default"
+    TENANT_NAME: str = "Default"
+    # When True, DB sessions skip SET LOCAL / use row_security=off (migrations, seed)
+    BYPASS_RLS: bool = False
+
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    REDIS_PASSWORD: str = ""
+    # memory | redis — memory used in unit tests without Redis
+    TOKEN_STORE: Literal["memory", "redis"] = "redis"
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
@@ -66,6 +84,12 @@ class Settings(BaseSettings):
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
         )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def REDIS_URL(self) -> str:
+        auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
+        return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False

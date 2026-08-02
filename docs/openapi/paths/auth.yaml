@@ -7,8 +7,9 @@ paths:
       operationId: registerUser
       summary: Регистрация нового пользователя
       description: |
-        Доступные роли при регистрации: `candidate`, `hr_operator`, `manager`.
+        Доступные роли при регистрации: `candidate`, `hr`, `manager`, `recruiter`.
         Роль `administrator` создаётся вручную через БД или seed-скрипт.
+        `tenant_id` не передаётся клиентом — подставляется singleton TENANT_ID (hidden multi-tenancy).
       security: []
       requestBody:
         required: true

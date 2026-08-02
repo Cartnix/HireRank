@@ -6,7 +6,7 @@ Aligned with [PASSPORT.md](PASSPORT.md). No Decision Maps phase.
 
 Human ATS loop inside the perimeter:
 
-- Auth, RBAC (administrator, hr_operator, manager, candidate)
+- Auth, RBAC (administrator, hr, manager, recruiter, candidate)
 - Candidate registration + JSON questionnaire → pool `Unassigned`
 - Vacancy CRUD, assignment, statuses, notifications, dashboards
 - Strict `tenant_id` isolation

@@ -1,8 +1,9 @@
 import uuid
 from datetime import UTC, datetime
+from enum import StrEnum
 
-from pydantic import EmailStr
-from sqlalchemy import DateTime
+from pydantic import EmailStr, field_validator
+from sqlalchemy import Column, DateTime, String, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -10,33 +11,84 @@ def get_datetime_utc() -> datetime:
     return datetime.now(UTC)
 
 
-# Shared properties
+class UserRole(StrEnum):
+    ADMINISTRATOR = "administrator"
+    HR = "hr"
+    MANAGER = "manager"
+    RECRUITER = "recruiter"
+    CANDIDATE = "candidate"
+
+
+REGISTERABLE_ROLES: frozenset[UserRole] = frozenset(
+    {
+        UserRole.HR,
+        UserRole.MANAGER,
+        UserRole.RECRUITER,
+        UserRole.CANDIDATE,
+    }
+)
+
+
+def role_str(role: UserRole | str) -> str:
+    return role.value if isinstance(role, UserRole) else str(role)
+
+
+class Tenant(SQLModel, table=True):
+    __tablename__ = "tenant"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    slug: str = Field(max_length=64, unique=True, index=True)
+    name: str = Field(max_length=255)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    users: list["User"] = Relationship(back_populates="tenant")
+
+
 class UserBase(SQLModel):
-    email: EmailStr = Field(unique=True, index=True, max_length=255)
+    email: EmailStr = Field(max_length=255, index=True)
     is_active: bool = True
-    is_superuser: bool = False
-    full_name: str | None = Field(default=None, max_length=255)
+    role: UserRole = Field(
+        default=UserRole.CANDIDATE,
+        sa_column=Column(String(32), nullable=False, server_default="candidate"),
+    )
+    first_name: str | None = Field(default=None, max_length=255)
+    last_name: str | None = Field(default=None, max_length=255)
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def _coerce_role(cls, value: object) -> object:
+        if isinstance(value, str):
+            return UserRole(value)
+        return value
 
 
-# Properties to receive via API on creation
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
+    tenant_id: uuid.UUID | None = None
 
 
 class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=128)
-    full_name: str | None = Field(default=None, max_length=255)
+    role: UserRole
+    first_name: str | None = Field(default=None, max_length=255)
+    last_name: str | None = Field(default=None, max_length=255)
 
 
-# Properties to receive via API on update, all are optional
-class UserUpdate(UserBase):
-    email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
+class UserUpdate(SQLModel):
+    email: EmailStr | None = Field(default=None, max_length=255)
     password: str | None = Field(default=None, min_length=8, max_length=128)
+    is_active: bool | None = None
+    role: UserRole | None = None
+    first_name: str | None = Field(default=None, max_length=255)
+    last_name: str | None = Field(default=None, max_length=255)
 
 
 class UserUpdateMe(SQLModel):
-    full_name: str | None = Field(default=None, max_length=255)
+    first_name: str | None = Field(default=None, max_length=255)
+    last_name: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
 
 
@@ -45,20 +97,30 @@ class UpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
-# Database model, database table inferred from class name
 class User(UserBase, table=True):
+    __tablename__ = "user"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "email", name="uq_user_tenant_email"),
+    )
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", index=True, nullable=False)
     hashed_password: str
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+    tenant: Tenant | None = Relationship(back_populates="users")
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
+    @property
+    def is_superuser(self) -> bool:
+        return role_str(self.role) == UserRole.ADMINISTRATOR.value
 
-# Properties to return via API, id is always required
+
 class UserPublic(UserBase):
     id: uuid.UUID
+    tenant_id: uuid.UUID
     created_at: datetime | None = None
 
 
@@ -67,23 +129,19 @@ class UsersPublic(SQLModel):
     count: int
 
 
-# Shared properties
 class ItemBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=255)
 
 
-# Properties to receive on item creation
 class ItemCreate(ItemBase):
     pass
 
 
-# Properties to receive on item update
 class ItemUpdate(ItemBase):
     title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
 
 
-# Database model, database table inferred from class name
 class Item(ItemBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at: datetime | None = Field(
@@ -96,7 +154,6 @@ class Item(ItemBase, table=True):
     owner: User | None = Relationship(back_populates="items")
 
 
-# Properties to return via API, id is always required
 class ItemPublic(ItemBase):
     id: uuid.UUID
     owner_id: uuid.UUID
@@ -108,22 +165,44 @@ class ItemsPublic(SQLModel):
     count: int
 
 
-# Generic message
 class Message(SQLModel):
     message: str
 
 
-# JSON payload containing access token
 class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
 
 
-# Contents of JWT token
+class TokenPair(SQLModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
+class LoginRequest(SQLModel):
+    email: EmailStr
+    password: str
+
+
+class RefreshRequest(SQLModel):
+    refresh_token: str
+
+
 class TokenPayload(SQLModel):
     sub: str | None = None
+    role: str | None = None
+    tenant_id: str | None = None
+    jti: str | None = None
+    type: str | None = None
 
 
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
+
+
+class ErrorResponse(SQLModel):
+    code: str
+    message: str
