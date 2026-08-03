@@ -5,6 +5,7 @@ import { StatsWidgets } from "@/widgets/dashboard-stats";
 import { HiringFunnel } from "@/widgets/hiring-panel";
 import { UpcomingPanel } from "@/widgets/upcoming-panel/ui/UpcomingPanel";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
+import CandidateGrowChart from "@/widgets/candidates-grow/ui/CandidatesGrowChart";
 
 export type DashboardPageViewProps = {
   activeJobsCount: number;
@@ -19,7 +20,7 @@ export type DashboardPageViewProps = {
 
 export function DashboardPageView(props: DashboardPageViewProps) {
   return (
-   <div>
+    <div>
       <SectionTitle title="Главная" subtitle="Обзор рекрутинга на сегодня" />
 
       <StatsWidgets
@@ -27,6 +28,8 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         inProgressCandidates={props.inProgressCandidates}
         todaysInterviewsCount={props.todaysInterviewsCount}
       />
+
+      <CandidateGrowChart />
 
       <div className="grid grid-cols-3 gap-4">
         <HiringFunnel
