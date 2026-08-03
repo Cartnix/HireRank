@@ -68,9 +68,40 @@ jobs:
         run: cp .env.example .env
       - run: docker compose build
       - run: docker compose down -v --remove-orphans
-      - run: docker compose up -d --wait backend frontend adminer
-      - name: Test backend is up
-        run: curl --fail --show-error --retry 5 --retry-delay 2 http://127.0.0.1:8000/api/v1/utils/health-check/
-      - name: Test frontend is up
-        run: curl --fail --show-error --retry 5 --retry-delay 2 http://127.0.0.1:3000
+      # Do not use --wait: Next first-compile can exceed compose wait while still starting
+      - run: docker compose up -d backend frontend adminer
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/api/v1/utils/health-check/; then
+              echo "backend healthy"
+              exit 0
+            fi
+            echo "backend not ready ($i/30)"
+            sleep 2
+          done
+          echo "Backend did not become healthy in time"
+          exit 1
+      - name: Wait for frontend health
+        run: |
+          for i in $(seq 1 45); do
+            code=$(curl -sS -o /tmp/frontend-body.html -w "%{http_code}" http://127.0.0.1:3000/ || echo "000")
+            echo "frontend attempt $i/45 http_code=$code"
+            if [ "$code" = "200" ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Frontend did not become healthy in time"
+          exit 1
+      - name: Dump compose diagnostics on failure
+        if: failure()
+        run: |
+          docker compose ps -a || true
+          docker inspect "$(docker compose ps -q backend)" --format '{{json .State.Health}}' || true
+          docker inspect "$(docker compose ps -q frontend)" --format '{{json .State.Health}}' || true
+          docker compose logs frontend --tail 200 || true
+          docker compose logs backend --tail 100 || true
+          head -c 2000 /tmp/frontend-body.html || true
       - run: docker compose down -v --remove-orphans
+        if: always()

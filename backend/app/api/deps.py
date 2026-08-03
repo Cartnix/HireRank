@@ -1,8 +1,8 @@
 import uuid
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Collection, Generator
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -29,8 +29,29 @@ def set_tenant_guc(connection: Connection, tenant_id: uuid.UUID | str) -> None:
     )
 
 
+def set_user_gucs(
+    connection: Connection,
+    *,
+    user_id: uuid.UUID | str,
+    role: str,
+) -> None:
+    """Inject user id/role for future resource-level RLS policies."""
+    connection.execute(
+        text("SELECT set_config('app.current_user_id', :user_id, true)"),
+        {"user_id": str(user_id)},
+    )
+    connection.execute(
+        text("SELECT set_config('app.current_user_role', :role, true)"),
+        {"role": role},
+    )
+
+
 def apply_rls_context(
-    connection: Connection, *, tenant_id: uuid.UUID | str | None = None
+    connection: Connection,
+    *,
+    tenant_id: uuid.UUID | str | None = None,
+    user_id: uuid.UUID | str | None = None,
+    role: str | None = None,
 ) -> None:
     """
     Bind the session to the non-BYPASSRLS app role and set tenant GUC.
@@ -40,11 +61,16 @@ def apply_rls_context(
 
     Always re-enable row_security first: a pooled connection may still have
     session-level `row_security=off` from seed/bypass helpers (pool pollution).
+
+    Optional user_id/role GUCs prepare future vacancy/candidate RLS without
+    changing the Python session lifecycle later.
     """
     connection.execute(text("SET row_security = on"))
-    role = settings.RLS_APP_ROLE
-    connection.execute(text(f"SET LOCAL ROLE {role}"))
+    app_role = settings.RLS_APP_ROLE
+    connection.execute(text(f"SET LOCAL ROLE {app_role}"))
     set_tenant_guc(connection, tenant_id or settings.TENANT_ID)
+    if user_id is not None and role is not None:
+        set_user_gucs(connection, user_id=user_id, role=role)
 
 
 def get_db() -> Generator[Session]:
@@ -81,7 +107,7 @@ SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)]
 
 
-def get_current_user(session: SessionDep, creds: TokenDep) -> User:
+def get_current_user(request: Request, session: SessionDep, creds: TokenDep) -> User:
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -134,6 +160,16 @@ def get_current_user(session: SessionDep, creds: TokenDep) -> User:
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+
+    # JWT permissions claim — O(1) require_permission; no DB matrix lookup
+    request.state.permissions = frozenset(token_data.permissions or [])
+
+    # Future RLS: bind actor identity into the current transaction
+    set_user_gucs(
+        session.connection(),
+        user_id=user.id,
+        role=role_str(user.role),
+    )
     return user
 
 
@@ -149,8 +185,11 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
 
 
 def require_permission(permission: str) -> Callable[..., User]:
-    def _checker(current_user: CurrentUser) -> User:
-        if not has_permission(current_user.role, permission):
+    def _checker(request: Request, current_user: CurrentUser) -> User:
+        permissions: Collection[str] = getattr(
+            request.state, "permissions", frozenset()
+        )
+        if not has_permission(permissions, permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",

@@ -261,6 +261,42 @@ def test_rls_force_enabled_on_user_and_tenant_tables() -> None:
     assert by_name["tenant"] == (True, True)
 
 
+def test_rls_policies_use_nullif_uuid_cast() -> None:
+    """Empty/missing GUC must not raise on ::uuid — policies use NULLIF."""
+    with Session(engine) as session:
+        quals = session.execute(
+            text(
+                """
+                SELECT tablename, qual
+                FROM pg_policies
+                WHERE schemaname = 'public'
+                  AND policyname IN (
+                    'tenant_isolation_policy', 'tenant_self_policy'
+                  )
+                """
+            )
+        ).all()
+    assert len(quals) == 2
+    for _table, qual in quals:
+        assert qual is not None
+        assert "NULLIF" in qual
+        assert "app.current_tenant" in qual
+        assert "::uuid" in qual or "::uuid" in qual.lower()
+
+
+def test_empty_tenant_guc_hides_all_rows_without_error() -> None:
+    """Best-practice fail-closed: empty GUC hides rows and must not error."""
+    with bypass_rls_session() as seed:
+        _seed_foreign_user(seed)
+
+    with Session(engine) as session:
+        session.execute(text("SET row_security = on"))
+        session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
+        session.execute(text("SELECT set_config('app.current_tenant', '', true)"))
+        ids = session.execute(text('SELECT id FROM "user"')).scalars().all()
+        assert ids == []
+
+
 def test_rls_guc_hides_foreign_rows_on_fresh_connection() -> None:
     with bypass_rls_session() as seed:
         foreign = _seed_foreign_user(seed)

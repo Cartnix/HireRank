@@ -27,6 +27,7 @@ def create_access_token(
     subject: str | UUID,
     role: str,
     tenant_id: str | UUID,
+    permissions: list[str] | None = None,
     expires_delta: timedelta | None = None,
     jti: str | None = None,
 ) -> tuple[str, str, datetime]:
@@ -42,6 +43,7 @@ def create_access_token(
         "sub": str(subject),
         "role": role,
         "tenant_id": str(tenant_id),
+        "permissions": list(permissions or []),
         "jti": token_jti,
         "type": TOKEN_TYPE_ACCESS,
     }

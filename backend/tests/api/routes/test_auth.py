@@ -1,10 +1,11 @@
 import jwt
 from fastapi.testclient import TestClient
+from sqlmodel import Session
 
+from app import crud
 from app.auth.permissions import has_permission
 from app.core import security
 from app.core.config import settings
-from app.models import UserRole
 from tests.utils.utils import random_email, random_lower_string
 
 
@@ -38,6 +39,7 @@ def test_auth_register_login_me_refresh_logout(client: TestClient) -> None:
     assert payload["tenant_id"] == str(settings.TENANT_ID)
     assert payload["type"] == "access"
     assert payload["jti"]
+    assert set(payload["permissions"]) == {"vacancy.read", "resume.upload"}
 
     headers = {"Authorization": f"Bearer {pair['access_token']}"}
     r = client.get(f"{settings.API_V1_STR}/auth/me", headers=headers)
@@ -55,6 +57,12 @@ def test_auth_register_login_me_refresh_logout(client: TestClient) -> None:
     refreshed = r.json()
     assert refreshed["access_token"]
     assert refreshed["refresh_token"] != pair["refresh_token"]
+    refreshed_payload = jwt.decode(
+        refreshed["access_token"],
+        settings.SECRET_KEY,
+        algorithms=[security.ALGORITHM],
+    )
+    assert set(refreshed_payload["permissions"]) == {"vacancy.read", "resume.upload"}
 
     # Within grace window a twin refresh may still succeed; force-expire grace
     from app.core.token_store import get_token_store
@@ -130,12 +138,6 @@ def test_auth_register_ignores_client_tenant(client: TestClient) -> None:
 def test_rbac_candidate_forbidden_on_users_manage(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
-    assert not has_permission(UserRole.CANDIDATE, "vacancy.create")
-    assert has_permission(UserRole.HR, "vacancy.create")
-    assert has_permission(UserRole.RECRUITER, "resume.upload")
-    assert has_permission(UserRole.RECRUITER, "vacancy.read")
-    assert not has_permission(UserRole.RECRUITER, "vacancy.create")
-
     r = client.get(
         f"{settings.API_V1_STR}/users/",
         headers=normal_user_token_headers,
@@ -144,8 +146,22 @@ def test_rbac_candidate_forbidden_on_users_manage(
     assert r.json()["detail"] == "Insufficient permissions"
 
 
-def test_rbac_permissions_matrix() -> None:
-    assert has_permission(UserRole.ADMINISTRATOR, "admin.panel")
-    assert has_permission(UserRole.MANAGER, "vacancy.read")
-    assert not has_permission(UserRole.MANAGER, "resume.upload")
-    assert not has_permission(UserRole.CANDIDATE, "users.manage")
+def test_rbac_permissions_matrix_from_db(db: Session) -> None:
+    admin = set(crud.get_permissions_for_role(session=db, role_name="administrator"))
+    hr = set(crud.get_permissions_for_role(session=db, role_name="hr"))
+    manager = set(crud.get_permissions_for_role(session=db, role_name="manager"))
+    recruiter = set(crud.get_permissions_for_role(session=db, role_name="recruiter"))
+    candidate = set(crud.get_permissions_for_role(session=db, role_name="candidate"))
+
+    assert "admin.panel" in admin
+    assert "users.manage" in admin
+    assert "vacancy.create" in hr
+    assert "vacancy.create" not in recruiter
+    assert "resume.upload" in recruiter
+    assert "vacancy.read" in manager
+    assert "resume.upload" not in manager
+    assert "users.manage" not in candidate
+    assert "candidate.read" in candidate
+
+    assert has_permission(admin, "admin.panel")
+    assert not has_permission(candidate, "users.manage")
