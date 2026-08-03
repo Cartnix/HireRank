@@ -33,6 +33,33 @@ def role_str(role: UserRole | str) -> str:
     return role.value if isinstance(role, UserRole) else str(role)
 
 
+class RolePermission(SQLModel, table=True):
+    __tablename__ = "role_permission"
+
+    role_id: uuid.UUID = Field(foreign_key="role.id", primary_key=True)
+    permission_id: uuid.UUID = Field(foreign_key="permission.id", primary_key=True)
+
+
+class Permission(SQLModel, table=True):
+    __tablename__ = "permission"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(max_length=64, unique=True, index=True)
+    roles: list["Role"] = Relationship(
+        back_populates="permissions", link_model=RolePermission
+    )
+
+
+class Role(SQLModel, table=True):
+    __tablename__ = "role"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(max_length=32, unique=True, index=True)
+    permissions: list[Permission] = Relationship(
+        back_populates="roles", link_model=RolePermission
+    )
+
+
 class Tenant(SQLModel, table=True):
     __tablename__ = "tenant"
 
@@ -196,6 +223,7 @@ class TokenPayload(SQLModel):
     tenant_id: str | None = None
     jti: str | None = None
     type: str | None = None
+    permissions: list[str] = []
 
 
 class NewPassword(SQLModel):

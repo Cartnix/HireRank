@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
+from sqlmodel import Session
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep, bearer_scheme
@@ -29,18 +30,21 @@ from app.models import (
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-def _issue_token_pair(user: User) -> TokenPair:
+def _issue_token_pair(session: Session, user: User) -> TokenPair:
     access_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    role = role_str(user.role)
+    permissions = crud.get_permissions_for_role(session=session, role_name=role)
     access_token, _, _ = security.create_access_token(
         subject=user.id,
-        role=role_str(user.role),
+        role=role,
         tenant_id=user.tenant_id,
+        permissions=permissions,
         expires_delta=access_expires,
     )
     refresh_token, refresh_jti, _ = security.create_refresh_token(
         subject=user.id,
-        role=role_str(user.role),
+        role=role,
         tenant_id=user.tenant_id,
         expires_delta=refresh_expires,
     )
@@ -111,7 +115,7 @@ def register(session: SessionDep, body: UserRegister) -> TokenPair:
         tenant_id=settings.TENANT_ID,
     )
     user = crud.create_user(session=session, user_create=user_create)
-    return _issue_token_pair(user)
+    return _issue_token_pair(session, user)
 
 
 @router.post(
@@ -131,7 +135,7 @@ def login(session: SessionDep, body: LoginRequest) -> TokenPair:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user",
         )
-    return _issue_token_pair(user)
+    return _issue_token_pair(session, user)
 
 
 @router.post(
@@ -237,4 +241,4 @@ def refresh(session: SessionDep, body: RefreshRequest) -> TokenPair:
         grace_seconds=settings.REFRESH_TOKEN_GRACE_SECONDS,
         tenant_id=tenant_id,
     )
-    return _issue_token_pair(user)
+    return _issue_token_pair(session, user)

@@ -18,6 +18,8 @@ Registerable roles: `candidate`, `hr`, `manager`, `recruiter`.
 
 ## Permission matrix (MVP)
 
+Stored in PostgreSQL tables `role`, `permission`, and `role_permission` (M2M). Seeded by Alembic; admins can change grants without redeploying application code.
+
 | Permission | administrator | hr | manager | recruiter | candidate |
 |------------|:-------------:|:--:|:-------:|:---------:|:---------:|
 | `admin.panel` | yes | no | no | no | no |
@@ -31,13 +33,21 @@ Registerable roles: `candidate`, `hr`, `manager`, `recruiter`.
 
 Manager scope and candidate “own” checks are enforced on domain endpoints (ABAC), not only by the static matrix.
 
+### Hybrid enforcement
+
+1. **Persistence** — role ↔ permission links live in Postgres.
+2. **Performance** — at login / refresh, permissions are loaded once and signed into the access JWT `permissions` claim. FastAPI `require_permission()` checks that claim in O(1) (no DB round-trip per request).
+3. **Future RLS** — authenticated sessions set `app.current_user_id` and `app.current_user_role` via `SET LOCAL` alongside existing `app.current_tenant`. Resource-level policies (vacancies, candidates) can be added in later migrations without changing the Python session lifecycle.
+
+Permission changes in the DB take effect on the next login or refresh (existing access tokens keep their claim until expiry).
+
 ## Hidden multi-tenancy
 
 Core / Open Source deploys one enterprise per instance. `tenant_id` remains on rows and in JWT for schema compatibility; the app always binds to `TENANT_ID` from env (seeded default tenant). PostgreSQL RLS enforces `tenant_id = current_setting('app.current_tenant')`.
 
 ## Auth tokens & session store
 
-Access and refresh JWTs carry `sub`, `role`, `tenant_id`, `jti`, `type`. Refresh jtis and access blacklists live in a pluggable `TokenStore`:
+Access and refresh JWTs carry `sub`, `role`, `tenant_id`, `jti`, `type`. Access tokens also carry `permissions` (list of strings). Refresh jtis and access blacklists live in a pluggable `TokenStore`:
 
 | Mode | Env | Use when |
 |------|-----|----------|

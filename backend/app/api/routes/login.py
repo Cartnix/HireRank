@@ -32,7 +32,7 @@ def login_access_token(
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    return _issue_token_pair(user)
+    return _issue_token_pair(session, user)
 
 
 @router.post("/login/test-token", response_model=UserPublic)

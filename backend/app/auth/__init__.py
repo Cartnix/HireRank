@@ -1,3 +1,3 @@
-from app.auth.permissions import ROLE_PERMISSIONS, has_permission
+from app.auth.permissions import has_permission
 
-__all__ = ["ROLE_PERMISSIONS", "has_permission"]
+__all__ = ["has_permission"]

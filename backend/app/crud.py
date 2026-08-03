@@ -1,11 +1,20 @@
 import uuid
 from typing import Any
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
+from app.models import (
+    Item,
+    ItemCreate,
+    Permission,
+    Role,
+    RolePermission,
+    User,
+    UserCreate,
+    UserUpdate,
+)
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -54,6 +63,18 @@ def get_user_by_id(*, session: Session, user_id: uuid.UUID) -> User | None:
             User.tenant_id == settings.TENANT_ID,
         )
     ).first()
+
+
+def get_permissions_for_role(*, session: Session, role_name: str) -> list[str]:
+    """Load permission names for a role slug from the M2M tables."""
+    statement = (
+        select(Permission.name)
+        .join(RolePermission, col(RolePermission.permission_id) == Permission.id)
+        .join(Role, col(Role.id) == RolePermission.role_id)
+        .where(Role.name == role_name)
+        .order_by(col(Permission.name))
+    )
+    return list(session.exec(statement).all())
 
 
 # Dummy hash to use for timing attack prevention when user is not found
