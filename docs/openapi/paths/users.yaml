@@ -42,10 +42,10 @@ paths:
     get:
       tags: [Users]
       operationId: listUsers
-      summary: Список пользователей предприятия
+      summary: Список пользователей tenant
       description: |
         Доступно только **administrator**.
-        Возвращает только пользователей текущего предприятия (`enterprise_id` из JWT).
+        Возвращает только пользователей текущего tenant (`tenant_id` из JWT).
       parameters:
         - name: role
           in: query

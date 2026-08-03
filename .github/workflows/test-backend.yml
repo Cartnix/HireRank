@@ -1,0 +1,91 @@
+name: Test Backend
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  test-backend:
+    env:
+      POSTGRES_PORT: 5432
+      DOMAIN: localhost
+      ENVIRONMENT: local
+
+      STACK_NAME: ${{ secrets.STACK_NAME }}
+      PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
+
+      BACKEND_CORS_ORIGINS: ${{ secrets.BACKEND_CORS_ORIGINS }}
+      EMAILS_FROM_EMAIL: noreply@example.com
+
+      FIRST_SUPERUSER: ${{ secrets.FIRST_SUPERUSER }}
+      FIRST_SUPERUSER_PASSWORD: ${{ secrets.FIRST_SUPERUSER_PASSWORD }}
+
+      POSTGRES_SERVER: ${{ secrets.POSTGRES_SERVER }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_N8N_DB: n8n
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      FRONTEND_HOST: ${{ secrets.FRONTEND_HOST }}
+
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_PASSWORD: ci-redis-password
+
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_BUCKET_NAME: hirerank-ci
+
+      N8N_ENCRYPTION_KEY: ci-n8n-encryption-key
+      N8N_USER_MANAGEMENT_JWT_SECRET: ci-n8n-jwt-secret
+      N8N_DEFAULT_BINARY_DATA_MODE: filesystem
+
+      DOCKER_IMAGE_BACKEND: ${{ secrets.DOCKER_IMAGE_BACKEND }}
+      DOCKER_IMAGE_FRONTEND: ${{ secrets.DOCKER_IMAGE_FRONTEND }}
+
+      SENTRY_DSN: ""
+
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      # compose.yml interpolates redis/minio/n8n even when only db starts
+      - name: Create .env for compose
+        run: cp .env.example .env
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - run: docker compose down -v --remove-orphans
+      - run: docker compose up -d db mailcatcher
+      - name: Migrate DB
+        run: uv run bash scripts/prestart.sh
+        working-directory: backend
+      - name: Run tests
+        run: uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+        working-directory: backend
+      - run: docker compose down -v --remove-orphans
+      - name: Store coverage files
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-html
+          path: backend/htmlcov
+          include-hidden-files: true
+      - name: Coverage report
+        run: uv run coverage report --fail-under=90
+        working-directory: backend

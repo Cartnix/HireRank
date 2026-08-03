@@ -1,46 +1,101 @@
-"""Shared pytest fixtures for the backend test suite."""
+import os
 
-from collections.abc import AsyncGenerator, Generator
-from typing import Any
+# Prefer in-memory token store for unit tests (no Redis required).
+# Override with TOKEN_STORE=redis to exercise the Redis-backed path (fakeredis).
+os.environ.setdefault("TOKEN_STORE", "memory")
+
+from collections.abc import Generator
+from contextlib import contextmanager
 
 import pytest
-import pytest_asyncio
-from fastapi import FastAPI
-from httpx import ASGITransport, AsyncClient
-from dotenv import load_dotenv
+from fastapi.testclient import TestClient
+from sqlalchemy import text
+from sqlmodel import Session, delete
 
-load_dotenv(".env.test", override=True)
-
-from app.main import app as fastapi_app
-
-
-@pytest.fixture(scope="session")
-def app() -> FastAPI:
-    """Return the FastAPI application under test."""
-
-    return fastapi_app
-
-
-@pytest.fixture
-def dependency_overrides(app: FastAPI) -> Generator[dict[Any, Any], None, None]:
-    """Placeholder for dependency overrides used in API tests."""
-
-    app.dependency_overrides = {}
-    yield app.dependency_overrides
-    app.dependency_overrides = {}
+from app.core import token_store as token_store_module
+from app.core.config import settings
+from app.core.db import engine, init_db
+from app.core.token_store import (
+    MemoryTokenStore,
+    RedisTokenStore,
+    TokenStore,
+    reset_token_store,
+)
+from app.main import app
+from app.models import Item, User
+from tests.utils.user import authentication_token_from_email
+from tests.utils.utils import get_superuser_token_headers
 
 
-@pytest_asyncio.fixture
-async def async_client(app: FastAPI, dependency_overrides: dict[Any, Any]) -> AsyncGenerator[AsyncClient, None]:
-    """Async HTTP client bound to the FastAPI app."""
+def _create_test_token_store() -> TokenStore:
+    """Never open a real Redis socket in pytest; use fakeredis for redis mode."""
+    if settings.TOKEN_STORE == "redis":
+        fakeredis = pytest.importorskip("fakeredis")
+        return RedisTokenStore(client=fakeredis.FakeRedis(decode_responses=True))
+    return MemoryTokenStore()
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-        yield client
+
+# Patch factory before any route hits get_token_store().
+token_store_module.create_token_store = _create_test_token_store
+reset_token_store()
 
 
-@pytest.fixture
-def database() -> None:
-    """Placeholder database fixture for future test isolation."""
+@contextmanager
+def bypass_rls_session() -> Generator[Session]:
+    """
+    Seed/admin session that temporarily disables RLS.
 
-    return None
+    Uses SET LOCAL inside a transaction and always ROLLBACKs the GUC change
+    path via commit of data then RESET — never leave session-level
+    row_security=off on a pooled connection (connection pollution pitfall).
+    """
+    with Session(engine) as session:
+        session.execute(text("SET row_security = off"))
+        try:
+            yield session
+            session.commit()
+        finally:
+            # Critical: restore before connection returns to the pool
+            session.execute(text("SET row_security = on"))
+            session.commit()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def db() -> Generator[Session]:
+    with Session(engine) as session:
+        session.execute(text("SET row_security = off"))
+        try:
+            init_db(session)
+        finally:
+            session.execute(text("SET row_security = on"))
+            session.commit()
+        yield session
+        session.execute(text("SET row_security = off"))
+        try:
+            statement = delete(Item)
+            session.execute(statement)
+            statement = delete(User)
+            session.execute(statement)
+            session.commit()
+            init_db(session)
+        finally:
+            session.execute(text("SET row_security = on"))
+            session.commit()
+
+
+@pytest.fixture(scope="module")
+def client() -> Generator[TestClient]:
+    with TestClient(app) as c:
+        yield c
+
+
+@pytest.fixture(scope="module")
+def superuser_token_headers(client: TestClient) -> dict[str, str]:
+    return get_superuser_token_headers(client)
+
+
+@pytest.fixture(scope="module")
+def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]:
+    return authentication_token_from_email(
+        client=client, email=settings.EMAIL_TEST_USER, db=db
+    )

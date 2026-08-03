@@ -2,25 +2,25 @@
 
 UserRole:
   type: string
-  enum: [administrator, hr_operator, manager, candidate]
-  example: hr_operator
+  enum: [administrator, hr, manager, recruiter, candidate]
+  example: hr
 
 User:
   type: object
-  required: [id, enterprise_id, email, role, created_at]
+  required: [id, tenant_id, email, role, created_at]
   properties:
     id:
       type: string
       format: uuid
       example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
-    enterprise_id:
+    tenant_id:
       type: string
       format: uuid
       example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
     email:
       type: string
       format: email
-      example: ivan@company.kz
+      example: ivan@mrxcompany.kz
     role:
       $ref: '#/UserRole'
     first_name:

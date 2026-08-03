@@ -1,84 +1,90 @@
-"""Security helpers."""
-
-from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from typing import Any
+from uuid import UUID, uuid4
 
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
+from pwdlib.hashers.bcrypt import BcryptHasher
 
-from app.core.config import get_settings
+from app.core.config import settings
 
-JWT_TOKEN_TYPE = "bearer"
-
-http_bearer = HTTPBearer(auto_error=False)
-
-
-@dataclass(frozen=True, slots=True)
-class SupabaseUserClaims:
-	"""Claims extracted from a Supabase access token."""
-
-	user_id: str
-	email: str | None
-	role: str | None
-	enterprise_id: str | None
-	raw_claims: dict[str, Any]
+password_hash = PasswordHash(
+    (
+        Argon2Hasher(),
+        BcryptHasher(),
+    )
+)
 
 
-def _decode_supabase_token(token: str) -> dict[str, Any]:
-	settings = get_settings()
-
-	if not settings.supabase_jwt_secret:
-		raise HTTPException(
-			status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-			detail="Supabase JWT secret is not configured.",
-		)
-
-	decode_options = {"require": ["exp", "sub"]}
-	if settings.supabase_jwt_audience:
-		decode_options["verify_aud"] = True
-	if settings.supabase_jwt_issuer:
-		decode_options["verify_iss"] = True
-
-	try:
-		return jwt.decode(
-			token,
-			settings.supabase_jwt_secret,
-			algorithms=["HS256"],
-			audience=settings.supabase_jwt_audience or None,
-			issuer=settings.supabase_jwt_issuer,
-			options=decode_options,
-		)
-	except jwt.PyJWTError as exc:
-		raise HTTPException(
-			status_code=status.HTTP_401_UNAUTHORIZED,
-			detail="Invalid Supabase access token.",
-			headers={"WWW-Authenticate": JWT_TOKEN_TYPE},
-		) from exc
+ALGORITHM = "HS256"
+TOKEN_TYPE_ACCESS = "access"
+TOKEN_TYPE_REFRESH = "refresh"
 
 
-def get_supabase_access_token(
-	credentials: HTTPAuthorizationCredentials | None = Depends(http_bearer),
-) -> str:
-	if credentials is None or credentials.scheme.lower() != JWT_TOKEN_TYPE:
-		raise HTTPException(
-			status_code=status.HTTP_401_UNAUTHORIZED,
-			detail="Missing bearer token.",
-			headers={"WWW-Authenticate": JWT_TOKEN_TYPE},
-		)
+def create_access_token(
+    *,
+    subject: str | UUID,
+    role: str,
+    tenant_id: str | UUID,
+    expires_delta: timedelta | None = None,
+    jti: str | None = None,
+) -> tuple[str, str, datetime]:
+    """Return (encoded_jwt, jti, expire_at)."""
+    expire = datetime.now(UTC) + (
+        expires_delta
+        if expires_delta
+        else timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    token_jti = jti or str(uuid4())
+    to_encode: dict[str, Any] = {
+        "exp": expire,
+        "sub": str(subject),
+        "role": role,
+        "tenant_id": str(tenant_id),
+        "jti": token_jti,
+        "type": TOKEN_TYPE_ACCESS,
+    }
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt, token_jti, expire
 
-	return credentials.credentials
+
+def create_refresh_token(
+    *,
+    subject: str | UUID,
+    role: str,
+    tenant_id: str | UUID,
+    expires_delta: timedelta | None = None,
+    jti: str | None = None,
+) -> tuple[str, str, datetime]:
+    """Return (encoded_jwt, jti, expire_at)."""
+    expire = datetime.now(UTC) + (
+        expires_delta
+        if expires_delta
+        else timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    )
+    token_jti = jti or str(uuid4())
+    to_encode: dict[str, Any] = {
+        "exp": expire,
+        "sub": str(subject),
+        "role": role,
+        "tenant_id": str(tenant_id),
+        "jti": token_jti,
+        "type": TOKEN_TYPE_REFRESH,
+    }
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt, token_jti, expire
 
 
-def get_current_supabase_user(token: str = Depends(get_supabase_access_token)) -> SupabaseUserClaims:
-	claims = _decode_supabase_token(token)
-	app_metadata = claims.get("app_metadata") or {}
-	user_metadata = claims.get("user_metadata") or {}
+def decode_token(token: str) -> dict[str, Any]:
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
 
-	return SupabaseUserClaims(
-		user_id=str(claims["sub"]),
-		email=claims.get("email"),
-		role=app_metadata.get("role") or claims.get("role"),
-		enterprise_id=app_metadata.get("enterprise_id") or user_metadata.get("enterprise_id"),
-		raw_claims=claims,
-	)
+
+def verify_password(
+    plain_password: str, hashed_password: str
+) -> tuple[bool, str | None]:
+    return password_hash.verify_and_update(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    return password_hash.hash(password)

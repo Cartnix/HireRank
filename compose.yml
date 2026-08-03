@@ -1,0 +1,417 @@
+x-n8n: &service-n8n
+  image: n8nio/n8n:latest
+  # default: talk to db/redis/etc; traefik-public: reach qdrant/ollama
+  networks:
+    - default
+    - traefik-public
+  environment:
+    - DB_TYPE=postgresdb
+    - DB_POSTGRESDB_HOST=db
+    - DB_POSTGRESDB_USER=${POSTGRES_USER}
+    - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+    - DB_POSTGRESDB_DATABASE=${POSTGRES_N8N_DB:-n8n}
+    - N8N_DIAGNOSTICS_ENABLED=false
+    - N8N_PERSONALIZATION_ENABLED=false
+    - N8N_ENCRYPTION_KEY
+    - N8N_USER_MANAGEMENT_JWT_SECRET
+    - N8N_DEFAULT_BINARY_DATA_MODE
+    - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
+  env_file:
+    - path: .env
+      required: true
+
+x-ollama: &service-ollama
+  image: ollama/ollama:latest
+  networks:
+    traefik-public:
+      aliases:
+        - ollama
+  restart: unless-stopped
+  ports:
+    - 11434:11434
+  volumes:
+    - app-ollama-storage:/root/.ollama
+
+x-init-ollama: &init-ollama
+  image: ollama/ollama:latest
+  networks:
+    traefik-public:
+      aliases:
+        - ollama-init
+  volumes:
+    - app-ollama-storage:/root/.ollama
+  entrypoint: /bin/sh
+  environment:
+    - OLLAMA_HOST=ollama:11434
+  command:
+    - "-c"
+    - "sleep 3; ollama pull llama3.2"
+
+services:
+  n8n-import:
+    <<: *service-n8n
+    hostname: n8n-import
+    entrypoint: /bin/sh
+    command:
+    - "-c"
+    - |
+      if [ -z "$(n8n list:workflow --onlyId)" ]; then
+        n8n import:credentials --separate --input=/demo-data/credentials && \
+        n8n import:workflow --separate --input=/demo-data/workflows
+      else
+        echo "Workflows exist, skipping import"
+      fi
+    volumes:
+      - app-n8n-storage:/home/node/.n8n
+      - ./n8n/demo-data:/demo-data
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+
+  n8n:
+    <<: *service-n8n
+    hostname: n8n
+    restart: unless-stopped
+    ports:
+      - 5678:5678
+    volumes:
+      - app-n8n-storage:/home/node/.n8n
+      - ./n8n/demo-data:/demo-data
+      - ./shared:/data/shared
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      n8n-import:
+        condition: service_completed_successfully
+
+  qdrant:
+    image: qdrant/qdrant
+    hostname: qdrant
+    networks:
+      - traefik-public
+      - default
+    restart: unless-stopped
+    ports:
+      - 6333:6333
+    volumes:
+      - app-qdrant-storage:/qdrant/storage
+
+  ollama-cpu:
+    profiles: ["cpu"]
+    <<: *service-ollama
+
+  ollama-gpu:
+    profiles: ["gpu-nvidia"]
+    <<: *service-ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ollama-gpu-amd:
+    profiles: ["gpu-amd"]
+    <<: *service-ollama
+    image: ollama/ollama:rocm
+    devices:
+      - "/dev/kfd"
+      - "/dev/dri"
+
+  ollama-pull-llama-cpu:
+    profiles: ["cpu"]
+    <<: *init-ollama
+    depends_on:
+      - ollama-cpu
+
+  ollama-pull-llama-gpu:
+    profiles: ["gpu-nvidia"]
+    <<: *init-ollama
+    depends_on:
+      - ollama-gpu
+
+  ollama-pull-llama-gpu-amd:
+    profiles: [gpu-amd]
+    <<: *init-ollama
+    image: ollama/ollama:rocm
+    depends_on:
+     - ollama-gpu-amd
+
+  db:
+    image: postgres:18
+    hostname: db
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+
+  # Create dedicated DB for n8n (must not share app schema — table name conflicts)
+  db-init:
+    image: postgres:18
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER?Variable not set}
+      PGPASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      PGDATABASE: ${POSTGRES_DB?Variable not set}
+      POSTGRES_N8N_DB: ${POSTGRES_N8N_DB:-n8n}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        exists=$$(psql -tAc "SELECT 1 FROM pg_database WHERE datname='$${POSTGRES_N8N_DB}'")
+        if [ "$$exists" = "1" ]; then
+          echo "Database $${POSTGRES_N8N_DB} already exists"
+        else
+          psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE \"$${POSTGRES_N8N_DB}\""
+          echo "Database $${POSTGRES_N8N_DB} created"
+        fi
+
+  redis:
+    image: redis:latest
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD?Variable not set}
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - app-redis-data:/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Console UI
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER?Variable not set}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD?Variable not set}
+    volumes:
+      - app-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      mc mb --ignore-existing myminio/$${MINIO_BUCKET_NAME};
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER?Variable not set}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD?Variable not set}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME?Variable not set}
+
+  adminer:
+    image: adminer
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      - db
+    environment:
+      - ADMINER_DESIGN=pepa-linha-dark
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.rule=Host(`adminer.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.rule=Host(`adminer.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls=true
+      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls.certresolver=le
+      - traefik.http.services.${STACK_NAME?Variable not set}-adminer.loadbalancer.server.port=8080
+
+  prestart:
+    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    command: bash scripts/prestart.sh
+    environment:
+      - PROJECT_NAME=${PROJECT_NAME?Variable not set}
+      - DOMAIN=${DOMAIN?Variable not set}
+      - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+      - ENVIRONMENT=${ENVIRONMENT}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+      - SECRET_KEY=${SECRET_KEY?Variable not set}
+      - FIRST_SUPERUSER=${FIRST_SUPERUSER?Variable not set}
+      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - SENTRY_DSN=${SENTRY_DSN}
+      - TENANT_ID=${TENANT_ID:-00000000-0000-4000-8000-000000000001}
+      - TENANT_SLUG=${TENANT_SLUG:-default}
+      - TENANT_NAME=${TENANT_NAME:-Default}
+      - TOKEN_STORE=${TOKEN_STORE:-memory}
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
+      - REDIS_PASSWORD=${REDIS_PASSWORD?Variable not set}
+
+  backend:
+    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      prestart:
+        condition: service_completed_successfully
+    environment:
+      - PROJECT_NAME=${PROJECT_NAME?Variable not set}
+      - DOMAIN=${DOMAIN?Variable not set}
+      - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+      - ENVIRONMENT=${ENVIRONMENT}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+      - SECRET_KEY=${SECRET_KEY?Variable not set}
+      - FIRST_SUPERUSER=${FIRST_SUPERUSER?Variable not set}
+      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - SENTRY_DSN=${SENTRY_DSN}
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
+      - REDIS_PASSWORD=${REDIS_PASSWORD?Variable not set}
+      - TOKEN_STORE=${TOKEN_STORE:-memory}
+      - TENANT_ID=${TENANT_ID:-00000000-0000-4000-8000-000000000001}
+      - TENANT_SLUG=${TENANT_SLUG:-default}
+      - TENANT_NAME=${TENANT_NAME:-Default}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - REFRESH_TOKEN_EXPIRE_DAYS=${REFRESH_TOKEN_EXPIRE_DAYS:-14}
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+
+      - traefik.http.services.${STACK_NAME?Variable not set}-backend.loadbalancer.server.port=8000
+
+      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.rule=Host(`api.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.entrypoints=http
+
+      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.rule=Host(`api.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.tls=true
+      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.tls.certresolver=le
+
+      # Enable redirection for HTTP and HTTPS
+      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.middlewares=https-redirect
+
+  frontend:
+    image: '${DOCKER_IMAGE_FRONTEND?Variable not set}:${TAG-latest}'
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      - backend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
+        - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
+        - NEXT_PUBLIC_API_URL=https://api.${DOMAIN?Variable not set}
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+
+      - traefik.http.services.${STACK_NAME?Variable not set}-frontend.loadbalancer.server.port=3000
+
+      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.rule=Host(`dashboard.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.entrypoints=http
+
+      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.rule=Host(`dashboard.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.tls=true
+      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.tls.certresolver=le
+
+      # Enable redirection for HTTP and HTTPS
+      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
+volumes:
+  app-db-data:
+  app-redis-data:
+  app-minio-data:
+  app-n8n-storage:
+  app-ollama-storage:
+  app-qdrant-storage:
+
+networks:
+  traefik-public:
+    # Allow setting it to false for testing
+    external: true

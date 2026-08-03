@@ -7,8 +7,9 @@ paths:
       operationId: registerUser
       summary: Регистрация нового пользователя
       description: |
-        Доступные роли при регистрации: `candidate`, `hr_operator`, `manager`.
+        Доступные роли при регистрации: `candidate`, `hr`, `manager`, `recruiter`.
         Роль `administrator` создаётся вручную через БД или seed-скрипт.
+        `tenant_id` не передаётся клиентом — подставляется singleton TENANT_ID (hidden multi-tenancy).
       security: []
       requestBody:
         required: true
@@ -72,12 +73,24 @@ paths:
     post:
       tags: [Auth]
       operationId: logoutUser
-      summary: Выход из системы (инвалидация refresh токена)
+      summary: Выход (обязательны Bearer access + refresh_token в body)
+      description: |
+        `Authorization: Bearer <access_token>` авторизует запрос.
+        `refresh_token` в JSON body обязателен и hard-revoke'ится в token store
+        (без grace), иначе украденный refresh продолжит выдавать access.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/auth.yaml#/RefreshRequest'
       responses:
         '204':
-          description: Успешный выход
+          description: Access в blacklist, refresh отозван
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Отсутствует refresh_token в body
 
   /auth/me:
     get:
