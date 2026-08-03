@@ -21,7 +21,7 @@ TokenPair:
 
 RegisterRequest:
   type: object
-  required: [email, password, role, enterprise_id]
+  required: [email, password, role]
   properties:
     email:
       type: string
@@ -34,13 +34,11 @@ RegisterRequest:
       example: Str0ngPass!
     role:
       type: string
-      enum: [candidate, hr_operator, manager]
-      description: Administrator создаётся вручную, не через этот endpoint
-      example: hr_operator
-    enterprise_id:
-      type: string
-      format: uuid
-      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+      enum: [candidate, hr, manager, recruiter]
+      description: |
+        Administrator создаётся вручную через seed / admin tooling.
+        `tenant_id` не передаётся — Core подставляет singleton TENANT_ID из env.
+      example: hr
     first_name:
       type: string
       example: Иван

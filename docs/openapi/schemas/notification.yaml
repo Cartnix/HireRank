@@ -6,6 +6,8 @@ NotificationType:
     - candidate_created
     - vacancy_created
     - candidate_assigned
+    - aide_scenarios_sent
+    - aide_scenario_accepted
   example: candidate_created
 
 NotificationChannel:
@@ -14,16 +16,17 @@ NotificationChannel:
     - in_app
     - email_smtp
     - email_outlook
+    - telegram
   example: in_app
 
 Notification:
   type: object
-  required: [id, enterprise_id, recipient_id, type, is_read, created_at]
+  required: [id, tenant_id, recipient_id, type, is_read, created_at]
   properties:
     id:
       type: string
       format: uuid
-    enterprise_id:
+    tenant_id:
       type: string
       format: uuid
     recipient_id:
@@ -41,7 +44,7 @@ Notification:
       example: Зарегистрирован новый кандидат — Алибек Сейткали.
     payload:
       type: object
-      description: Дополнительный контекст (candidate_id, vacancy_id и т.д.)
+      description: Дополнительный контекст (candidate_id, vacancy_id, package_id и т.д.)
       additionalProperties: true
       example:
         candidate_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890

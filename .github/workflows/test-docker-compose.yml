@@ -31,12 +31,26 @@ jobs:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_N8N_DB: n8n
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       FRONTEND_HOST: ${{ secrets.FRONTEND_HOST }}
 
       SMTP_HOST: ${{ secrets.SMTP_HOST }}
       SMTP_USER: ${{ secrets.SMTP_USER }}
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_PASSWORD: ci-redis-password
+
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_BUCKET_NAME: hirerank-ci
+
+      N8N_ENCRYPTION_KEY: ci-n8n-encryption-key
+      N8N_USER_MANAGEMENT_JWT_SECRET: ci-n8n-jwt-secret
+      N8N_DEFAULT_BINARY_DATA_MODE: filesystem
 
       DOCKER_IMAGE_BACKEND: ${{ secrets.DOCKER_IMAGE_BACKEND }}
       DOCKER_IMAGE_FRONTEND: ${{ secrets.DOCKER_IMAGE_FRONTEND }}
@@ -49,6 +63,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+      # n8n services declare env_file: .env (required); provide a CI stub
+      - name: Create .env for compose
+        run: cp .env.example .env
       - run: docker compose build
       - run: docker compose down -v --remove-orphans
       - run: docker compose up -d --wait backend frontend adminer

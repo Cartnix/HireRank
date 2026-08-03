@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HireRank
 
-## Getting Started
+**HireRank** is an on-premise ATS with **AIDE** (AI Decision Engine) — the organization’s nervous hiring system, not a resume calculator.
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```text
+HireRank intake → AIDE (scenarios) → Telegram HITL → FastMCP (`tenant_id`) → Precedent Memory
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> AIDE only **suggests**. A human picks a scenario in Telegram; MCP executes that choice and writes the Outcome. AI never auto-hires or auto-rejects.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Plane | Role |
+|-------|------|
+| **HireRank** | Domain ATS + storage + Admin |
+| **AIDE** | Vacancies + precedents → 2–3 scenarios ([AIDE.md](docs/AIDE.md)) |
+| **FastMCP** | Selected action only, under `tenant_id` |
+| **n8n** | Telegram / email delivery (not the decision engine) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Core, Enterprise & SaaS
 
-## Learn More
+This repository is **Core** (Open Source self-host). Enterprise and SaaS reuse the same auth abstractions and swap infrastructure via config — not forks.
 
-To learn more about Next.js, take a look at the following resources:
+| | **Core** (this repo) | **Enterprise** (self-host at scale) | **SaaS** (your cloud) |
+|--|----------------------|-------------------------------------|------------------------|
+| Who | SMB, developers, one company | Large corp / bank in own K8s | Many companies on HireRank cloud |
+| Tenancy | Hidden: one `TENANT_ID` per instance | Same Core schema; scale replicas | True multi-tenant; keys & RLS per company |
+| Auth sessions | `TOKEN_STORE=memory` (default) | `TOKEN_STORE=redis` + corporate Redis | Always Redis, tenant-prefixed keys |
+| When memory is OK | Single FastAPI replica | Never if N>1 replicas | Never |
+| Background work | In-process / `BackgroundTasks` | Celery (or equivalent workers) | Celery / managed queues |
+| File storage | Local volume | Shared FS or S3 | S3 (or compatible) |
+| Extra product | — | SSO/SAML, audit (commercial) | Billing, provisioning, lockout |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Auth sessions:** one company + one backend process → memory is fine. Several FastAPI copies behind a balancer → Redis, or refresh/logout desync. SaaS always Redis with keys like `tenant:{tenant_id}:refresh:{jti}` so one company can be locked out without touching others.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See [SELF-HOSTED.md](docs/SELF-HOSTED.md) and [RBAC.md](docs/RBAC.md).
 
-## Deploy on Vercel
+## Docs
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Doc | Purpose |
+|-----|---------|
+| [PASSPORT.md](docs/PASSPORT.md) | Product vision & goals |
+| [PRODUCT.md](docs/PRODUCT.md) | UVP, JTBD, anti-patterns |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | HireRank + AIDE + MCP + n8n planes |
+| [SELF-HOSTED.md](docs/SELF-HOSTED.md) | Core deploy defaults & token store |
+| [RBAC.md](docs/RBAC.md) | Roles, JWT, token store |
+| [AIDE.md](docs/AIDE.md) | Decision engine lifecycle + strict gate |
+| [ROADMAP.md](docs/ROADMAP.md) | Delivery phases |
+| [FEAUTERS.md](docs/FEAUTERS.md) | Feature catalog |
+| [use-cases/](docs/use-cases/) | Behavioral specs |
+| [openapi/](docs/openapi/) | REST API contract |
+| [GDPR.md](docs/GDPR.md) | Privacy & sovereignty |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Stack
+
+| Area | Tech |
+|------|------|
+| HireRank | Next.js, FastAPI, PostgreSQL, Redis (optional for Core auth), S3, Celery |
+| AIDE | Ollama + scenario orchestration |
+| Execution | FastMCP |
+| Delivery | n8n (Telegram, email, webhooks) |
+| Edge / ops | Traefik, Cloudflare, Compose |
+
+## Quick start
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Core auth defaults to `TOKEN_STORE=memory`. Set `TOKEN_STORE=redis` when you scale backend replicas.
+
+## MVP
+
+Phase 1: human ATS loop (tenant pool, vacancies, assignment). Phase 2: AIDE + Telegram HITL + MCP + Precedent Memory. See [ROADMAP.md](docs/ROADMAP.md).

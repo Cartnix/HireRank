@@ -1,31 +1,37 @@
 openapi: 3.1.0
 
 info:
-  title: HireAI API
+  title: HireRank API
   version: 1.0.0
   description: |
-    REST API контракт платформы HireAI (MVP).
+    REST API контракт платформы **HireRank** (HIRERANK) с **AIDE** (AI Decision Engine).
 
-    **Multi-tenant**: каждый запрос изолирован по `enterprise_id`, который берётся из JWT-токена.
+    Канон: PASSPORT — AIDE предлагает 2–3 сценария; человек выбирает в Telegram;
+    FastMCP исполняет только выбранное действие под `tenant_id` и пишет Outcome в Precedent Memory.
+    AI **не** делает auto-hire / auto-reject.
 
-    **RBAC**: роли `administrator`, `hr_operator`, `manager`, `candidate`.
+    **Hidden multi-tenancy**: Core (self-hosted) — один enterprise на инстанс;
+    `tenant_id` в JWT/БД фиксирован через `TENANT_ID` (env). PostgreSQL RLS фильтрует строки.
+    SaaS позже снимет жёсткую привязку без смены схемы.
+
+    **RBAC**: роли `administrator`, `hr`, `manager`, `recruiter`, `candidate`.
+    Матрица: [docs/RBAC.md](../RBAC.md).
 
     **Auth**: Bearer JWT. Получить токен через `POST /auth/login`.
 
     **Business rules**:
 
-    * кандидат и HR Operator загружают JSON-анкету кадрового листа;
-    * кандидат после сохранения попадает в пул `Unassigned`;
-    * AI ranking рассчитывается локально на Qwen 2.5 и возвращает score от 0 до 10;
-    * Administrator управляет вакансиями и закрепляет кандидатов за вакансиями;
-    * Manager только просматривает вакансии, закрепления и уведомления;
-    * enterprise isolation enforced by `enterprise_id` for all actors.
+    * кандидат и recruiter загружают резюме; HR создаёт/ведёт вакансии;
+    * кандидат после сохранения попадает в пул `unassigned` и публикуется intake-событие для AIDE;
+    * AIDE генерирует 2–3 сценария → Telegram HITL → MCP → Outcome;
+    * Administrator — админ-панель и управление пользователями; HR — vacancy CRUD;
+    * Manager в web — read-only; решение по сценариям — кнопка в Telegram.
 
 servers:
   - url: http://localhost:8000/api/v1
     description: Local dev
-  - url: https://api.hireai.mrx.com/v1
-    description: Production
+  - url: https://api.hirerank.local/v1
+    description: On-prem / production
 
 tags:
   - name: Auth
@@ -35,13 +41,15 @@ tags:
   - name: Candidates
     description: Кандидаты, анкеты, назначение на вакансию
   - name: Vacancies
-    description: Вакансии предприятия
+    description: Вакансии tenant
   - name: Notifications
     description: Уведомления
   - name: Dashboard
     description: Сводные данные по ролям
   - name: Admin
     description: Админ-панель, управление пользователями и правами доступа
+  - name: AIDE
+    description: Decision packages, scenarios, HITL accept, precedents / outcomes
 
 security:
   - BearerAuth: []
@@ -110,3 +118,15 @@ paths:
     $ref: './paths/admin.yaml#/paths/~1admin~1users'
   /admin/users/{id}:
     $ref: './paths/admin.yaml#/paths/~1admin~1users~1{id}'
+
+  # AIDE
+  /aide/packages:
+    $ref: './paths/aide.yaml#/paths/~1aide~1packages'
+  /aide/packages/{id}:
+    $ref: './paths/aide.yaml#/paths/~1aide~1packages~1{id}'
+  /aide/packages/{id}/accept:
+    $ref: './paths/aide.yaml#/paths/~1aide~1packages~1{id}~1accept'
+  /aide/outcomes:
+    $ref: './paths/aide.yaml#/paths/~1aide~1outcomes'
+  /aide/precedents:
+    $ref: './paths/aide.yaml#/paths/~1aide~1precedents'
