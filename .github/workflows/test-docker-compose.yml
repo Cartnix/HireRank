@@ -72,5 +72,15 @@ jobs:
       - name: Test backend is up
         run: curl --fail --show-error --retry 5 --retry-delay 2 http://127.0.0.1:8000/api/v1/utils/health-check/
       - name: Test frontend is up
-        run: curl --fail --show-error --retry 5 --retry-delay 2 http://127.0.0.1:3000
+        run: |
+          curl --fail --show-error --retry 5 --retry-delay 2 \
+            --write-out "\nhttp_code=%{http_code}\n" \
+            http://127.0.0.1:3000/
+      - name: Dump compose logs on failure
+        if: failure()
+        run: |
+          docker compose ps -a || true
+          docker compose logs frontend --tail 200 || true
+          docker compose logs backend --tail 100 || true
       - run: docker compose down -v --remove-orphans
+        if: always()

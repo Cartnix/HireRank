@@ -8,7 +8,26 @@ services:
       - "3000:3000"
     build:
       target: dev
-    command: npm run dev
+    # Explicit bind — reliable for published ports in CI
+    command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
+    environment:
+      # GH Actions / Docker often have broken IPv6; next/font/google then 500s on first compile
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+      # Runtime NEXT_PUBLIC_* (dev target does not bake build-args into the image)
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://placeholder.supabase.co}
+      - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder}
+    healthcheck:
+      # Wait until Next has compiled / and returns 200 (not just process up)
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null --timeout=5 http://127.0.0.1:3000/ || exit 1",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 18
+      start_period: 20s
 
 networks:
   traefik-public:
