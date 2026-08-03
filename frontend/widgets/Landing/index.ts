@@ -1,6 +1,0 @@
-export { CTA } from './CTA'
-export { Features } from './Features'
-export { Hero } from './Hero'
-export { HowItWorks } from './HowItWorks'
-export { Stats } from './Stats'
-export { Testimonial } from './Testimonial'
