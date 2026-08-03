@@ -41,6 +41,18 @@ Manager scope and candidate “own” checks are enforced on domain endpoints (A
 
 Permission changes in the DB take effect on the next login or refresh (existing access tokens keep their claim until expiry).
 
+### RLS in Alembic
+
+Tenant isolation (`ENABLE`/`FORCE ROW LEVEL SECURITY` + policies) lives in Alembic migrations — never applied by hand after deploy. Policies use:
+
+```sql
+tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid
+```
+
+so a missing/empty GUC fails closed (no rows) without raising on `''::uuid`. Runtime sessions `SET LOCAL ROLE hirerank_app` (NOBYPASSRLS) so FORCE RLS applies even when the login role is a superuser.
+
+Policy definitions are also registered with [alembic_utils](https://github.com/olirice/alembic_utils) (`app/db/rls_policies.py`) so `alembic revision --autogenerate` can detect policy drift. Register with `entity_types=[PGPolicy]` only — otherwise alembic_utils emits DropOps for every unregistered GRANT/extension. `ENABLE`/`FORCE` remain hand-written SQL (not covered by `PGPolicy`).
+
 ## Hidden multi-tenancy
 
 Core / Open Source deploys one enterprise per instance. `tenant_id` remains on rows and in JWT for schema compatibility; the app always binds to `TENANT_ID` from env (seeded default tenant). PostgreSQL RLS enforces `tenant_id = current_setting('app.current_tenant')`.

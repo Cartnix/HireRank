@@ -18,10 +18,17 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 # target_metadata = None
 
-from app.models import SQLModel  # noqa
-from app.core.config import settings # noqa
+from app.models import SQLModel  # noqa: E402
+from app.core.config import settings  # noqa: E402
+from app.db.rls_policies import RLS_POLICIES  # noqa: E402
+from alembic_utils.pg_policy import PGPolicy  # noqa: E402
+from alembic_utils.replaceable_entity import register_entities  # noqa: E402
 
 target_metadata = SQLModel.metadata
+
+# Only track PGPolicy — without entity_types, alembic_utils treats every
+# unregistered GRANT/extension in the DB as a DropOp (dangerous noise).
+register_entities(RLS_POLICIES, entity_types=[PGPolicy])
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

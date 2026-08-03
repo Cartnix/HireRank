@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 
 from pydantic import EmailStr, field_validator
-from sqlalchemy import Column, DateTime, String, UniqueConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, String, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -78,7 +78,12 @@ class UserBase(SQLModel):
     is_active: bool = True
     role: UserRole = Field(
         default=UserRole.CANDIDATE,
-        sa_column=Column(String(32), nullable=False, server_default="candidate"),
+        sa_column=Column(
+            String(32),
+            ForeignKey("role.name"),
+            nullable=False,
+            server_default="candidate",
+        ),
     )
     first_name: str | None = Field(default=None, max_length=255)
     last_name: str | None = Field(default=None, max_length=255)
