@@ -1,10 +1,14 @@
 import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Any
 
 from pydantic import EmailStr, field_validator
-from sqlalchemy import Column, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, String, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import INET, JSONB
 from sqlmodel import Field, Relationship, SQLModel
+
+from app.audit.schemas import new_event_id
 
 
 def get_datetime_utc() -> datetime:
@@ -71,6 +75,41 @@ class Tenant(SQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     users: list["User"] = Relationship(back_populates="tenant")
+
+
+class AuditLog(SQLModel, table=True):
+    """Append-only auth/business audit row (schema audit, monthly partitions)."""
+
+    __tablename__ = "audit_log"
+    __table_args__ = {"schema": "audit"}
+
+    id: uuid.UUID = Field(default_factory=new_event_id, primary_key=True)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        primary_key=True,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        nullable=False,
+    )
+    tenant_id: uuid.UUID = Field(nullable=False, index=True)
+    user_id: uuid.UUID | None = Field(default=None, nullable=True)
+    action: str = Field(max_length=100, nullable=False, index=True)
+    entity_type: str = Field(default="user", max_length=100, nullable=False)
+    entity_id: uuid.UUID | None = Field(default=None, nullable=True)
+    ip_address: str | None = Field(
+        default=None,
+        sa_column=Column(INET, nullable=True),
+    )
+    user_agent: str | None = Field(default=None, nullable=True)
+    # `metadata` is reserved on SQLAlchemy declarative; map to column "metadata"
+    metadata_: dict[str, Any] = Field(
+        default_factory=dict,
+        sa_column=Column(
+            "metadata",
+            JSONB,
+            nullable=False,
+            server_default=text("'{}'::jsonb"),
+        ),
+    )
 
 
 class UserBase(SQLModel):

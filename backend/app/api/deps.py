@@ -2,6 +2,7 @@ import uuid
 from collections.abc import Callable, Collection, Generator
 from typing import Annotated
 
+import structlog
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
@@ -14,6 +15,7 @@ from app import crud
 from app.auth.permissions import has_permission
 from app.core import security
 from app.core.config import settings
+from app.core.context import set_tenant_id, set_user_id, set_user_role
 from app.core.db import engine
 from app.core.token_store import get_token_store
 from app.models import TokenPayload, User, UserRole, role_str
@@ -169,6 +171,15 @@ def get_current_user(request: Request, session: SessionDep, creds: TokenDep) -> 
         session.connection(),
         user_id=user.id,
         role=role_str(user.role),
+    )
+    # Request-scoped contextvars for Audit Trail / structlog (JWT lifecycle)
+    set_tenant_id(user.tenant_id)
+    set_user_id(user.id)
+    set_user_role(role_str(user.role))
+    structlog.contextvars.bind_contextvars(
+        tenant_id=str(user.tenant_id),
+        user_id=str(user.id),
+        user_role=role_str(user.role),
     )
     return user
 

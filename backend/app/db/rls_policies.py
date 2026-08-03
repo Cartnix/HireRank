@@ -30,7 +30,18 @@ as PERMISSIVE for ALL to public using ((id = {_TENANT})) with check ((id = {_TEN
 """,
 )
 
+# Append-only audit: SELECT/INSERT under tenant; UPDATE/DELETE revoked at GRANT level.
+tenant_isolation_on_audit_log = PGPolicy(
+    schema="audit",
+    signature="tenant_isolation_policy",
+    on_entity="audit.audit_log",
+    definition=f"""
+as PERMISSIVE for ALL to public using ((tenant_id = {_TENANT})) with check ((tenant_id = {_TENANT}))
+""",
+)
+
 RLS_POLICIES: list[PGPolicy] = [
     tenant_isolation_on_user,
     tenant_self_on_tenant,
+    tenant_isolation_on_audit_log,
 ]
