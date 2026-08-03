@@ -9,7 +9,10 @@ interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
-    ({ type, placeholder, label, error, onFocus, onBlur, className, ...props }, ref) => {
+    function InputField(
+        { type, placeholder, label, error, onFocus, onBlur, className, ...props },
+        ref,
+    ) {
         const id = useId();
         const [focused, setFocused] = useState(false);
         const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +37,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
                         <motion.label
                             htmlFor={id}
                             animate={floated ? { top: "8px", fontSize: "11px" } : { top: "50%", fontSize: "15px" }}
-                            className={cn("absolute left-4 pointer-events-none font-medium origin-left", 
+                            className={cn("absolute left-4 pointer-events-none font-medium origin-left",
                                 error ? "text-danger" : focused ? "text-brand-primary" : "text-foreground-secondary"
                             )}
                         >
@@ -81,4 +84,5 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
                 </AnimatePresence>
             </div>
         );
-});
+    },
+);

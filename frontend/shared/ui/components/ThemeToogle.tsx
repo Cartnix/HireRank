@@ -1,15 +1,19 @@
 "use client"
 
 import { useTheme } from "next-themes"
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Sun, Moon } from "lucide-react"
 
+const emptySubscribe = () => () => {}
+
+function useIsClient() {
+    return useSyncExternalStore(emptySubscribe, () => true, () => false)
+}
+
 export function ThemeToggle() {
     const { theme, setTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => setMounted(true), [])
+    const mounted = useIsClient()
 
     if (!mounted) {
         return <div className="h-12 w-12 rounded-full bg-background-elevated border border-border" />
