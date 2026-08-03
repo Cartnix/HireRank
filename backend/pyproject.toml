@@ -23,6 +23,8 @@ dependencies = [
     "celery>=5.6.3",
     "redis>=5.0.0",
     "alembic-utils>=0.8.8",
+    "structlog>=26.1.0",
+    "uuid-utils>=0.17.0",
 ]
 
 [dependency-groups]

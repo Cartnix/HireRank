@@ -2,7 +2,15 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 from fastapi.security import HTTPAuthorizationCredentials
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -10,6 +18,8 @@ from sqlmodel import Session
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep, bearer_scheme
+from app.audit.emit import email_hash_metadata, emit_auth_audit
+from app.audit.schemas import AuditAction
 from app.core import security
 from app.core.config import settings
 from app.core.token_store import get_token_store
@@ -94,7 +104,12 @@ def _blacklist_access_from_creds(
         400: {"model": ErrorResponse},
     },
 )
-def register(session: SessionDep, body: UserRegister) -> TokenPair:
+def register(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    body: UserRegister,
+) -> TokenPair:
     if body.role not in REGISTERABLE_ROLES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -115,7 +130,17 @@ def register(session: SessionDep, body: UserRegister) -> TokenPair:
         tenant_id=settings.TENANT_ID,
     )
     user = crud.create_user(session=session, user_create=user_create)
-    return _issue_token_pair(session, user)
+    pair = _issue_token_pair(session, user)
+    emit_auth_audit(
+        request=request,
+        background_tasks=background_tasks,
+        action=AuditAction.REGISTER,
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        entity_id=user.id,
+        metadata={"reason": "register"},
+    )
+    return pair
 
 
 @router.post(
@@ -123,19 +148,51 @@ def register(session: SessionDep, body: UserRegister) -> TokenPair:
     response_model=TokenPair,
     responses={401: {"model": ErrorResponse}},
 )
-def login(session: SessionDep, body: LoginRequest) -> TokenPair:
+def login(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    body: LoginRequest,
+) -> TokenPair:
     user = crud.authenticate(session=session, email=body.email, password=body.password)
     if not user:
+        emit_auth_audit(
+            request=request,
+            background_tasks=background_tasks,
+            action=AuditAction.LOGIN_FAILURE,
+            metadata=email_hash_metadata(body.email, reason="bad_credentials"),
+            force_sync=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email or password is incorrect",
         )
     if not user.is_active:
+        emit_auth_audit(
+            request=request,
+            background_tasks=background_tasks,
+            action=AuditAction.LOGIN_FAILURE,
+            tenant_id=user.tenant_id,
+            user_id=user.id,
+            entity_id=user.id,
+            metadata={"reason": "inactive_user"},
+            force_sync=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user",
         )
-    return _issue_token_pair(session, user)
+    pair = _issue_token_pair(session, user)
+    emit_auth_audit(
+        request=request,
+        background_tasks=background_tasks,
+        action=AuditAction.LOGIN_SUCCESS,
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        entity_id=user.id,
+        metadata={"reason": "login"},
+    )
+    return pair
 
 
 @router.post(
@@ -148,6 +205,8 @@ def login(session: SessionDep, body: LoginRequest) -> TokenPair:
     },
 )
 def logout(
+    request: Request,
+    background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     creds: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     body: RefreshRequest,
@@ -186,6 +245,15 @@ def logout(
         tenant_id=token_data.tenant_id or settings.TENANT_ID,
     )
     _blacklist_access_from_creds(creds)
+    emit_auth_audit(
+        request=request,
+        background_tasks=background_tasks,
+        action=AuditAction.LOGOUT,
+        tenant_id=current_user.tenant_id,
+        user_id=current_user.id,
+        entity_id=current_user.id,
+        metadata={"reason": "logout"},
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -199,16 +267,35 @@ def me(current_user: CurrentUser) -> Any:
     response_model=TokenPair,
     responses={401: {"model": ErrorResponse}},
 )
-def refresh(session: SessionDep, body: RefreshRequest) -> TokenPair:
+def refresh(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    body: RefreshRequest,
+) -> TokenPair:
     try:
         payload = security.decode_token(body.refresh_token)
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
+        emit_auth_audit(
+            request=request,
+            background_tasks=background_tasks,
+            action=AuditAction.LOGIN_FAILURE,
+            metadata={"reason": "refresh_invalid"},
+            force_sync=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or expired",
         )
     if token_data.type != security.TOKEN_TYPE_REFRESH or not token_data.jti:
+        emit_auth_audit(
+            request=request,
+            background_tasks=background_tasks,
+            action=AuditAction.LOGIN_FAILURE,
+            metadata={"reason": "refresh_invalid_type"},
+            force_sync=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or expired",
@@ -217,6 +304,13 @@ def refresh(session: SessionDep, body: RefreshRequest) -> TokenPair:
     tenant_id = token_data.tenant_id or settings.TENANT_ID
     stored_user_id = store.get_refresh_user(token_data.jti, tenant_id=tenant_id)
     if not stored_user_id or stored_user_id != token_data.sub:
+        emit_auth_audit(
+            request=request,
+            background_tasks=background_tasks,
+            action=AuditAction.LOGIN_FAILURE,
+            metadata={"reason": "refresh_revoked"},
+            force_sync=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or expired",
@@ -232,6 +326,13 @@ def refresh(session: SessionDep, body: RefreshRequest) -> TokenPair:
         )
     user = crud.get_user_by_id(session=session, user_id=user_id)
     if not user or not user.is_active:
+        emit_auth_audit(
+            request=request,
+            background_tasks=background_tasks,
+            action=AuditAction.LOGIN_FAILURE,
+            metadata={"reason": "refresh_user_inactive"},
+            force_sync=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or expired",
@@ -241,4 +342,14 @@ def refresh(session: SessionDep, body: RefreshRequest) -> TokenPair:
         grace_seconds=settings.REFRESH_TOKEN_GRACE_SECONDS,
         tenant_id=tenant_id,
     )
-    return _issue_token_pair(session, user)
+    pair = _issue_token_pair(session, user)
+    emit_auth_audit(
+        request=request,
+        background_tasks=background_tasks,
+        action=AuditAction.REFRESH,
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        entity_id=user.id,
+        metadata={"reason": "refresh"},
+    )
+    return pair

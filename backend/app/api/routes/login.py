@@ -1,12 +1,14 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.api.routes.auth import _issue_token_pair
+from app.audit.emit import email_hash_metadata, emit_auth_audit
+from app.audit.schemas import AuditAction
 from app.models import Message, NewPassword, TokenPair, UserPublic, UserUpdate
 from app.utils import (
     generate_password_reset_token,
@@ -20,7 +22,10 @@ router = APIRouter(tags=["login"])
 
 @router.post("/login/access-token", response_model=TokenPair)
 def login_access_token(
-    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> TokenPair:
     """
     OAuth2 form-compatible login (Swagger). Prefer POST /auth/login (JSON).
@@ -29,10 +34,37 @@ def login_access_token(
         session=session, email=form_data.username, password=form_data.password
     )
     if not user:
+        emit_auth_audit(
+            request=request,
+            background_tasks=background_tasks,
+            action=AuditAction.LOGIN_FAILURE,
+            metadata=email_hash_metadata(form_data.username, reason="bad_credentials"),
+            force_sync=True,
+        )
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
+        emit_auth_audit(
+            request=request,
+            background_tasks=background_tasks,
+            action=AuditAction.LOGIN_FAILURE,
+            tenant_id=user.tenant_id,
+            user_id=user.id,
+            entity_id=user.id,
+            metadata={"reason": "inactive_user"},
+            force_sync=True,
+        )
         raise HTTPException(status_code=400, detail="Inactive user")
-    return _issue_token_pair(session, user)
+    pair = _issue_token_pair(session, user)
+    emit_auth_audit(
+        request=request,
+        background_tasks=background_tasks,
+        action=AuditAction.LOGIN_SUCCESS,
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        entity_id=user.id,
+        metadata={"reason": "login"},
+    )
+    return pair
 
 
 @router.post("/login/test-token", response_model=UserPublic)
