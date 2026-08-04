@@ -1,4 +1,4 @@
-import { CTA, Features, Hero, HowItWorks, Stats, Testimonial } from "@/widgets/landing"
+import { CTA, Features, Hero, HowItWorks, Stats, Testimonial } from "@/widgets/Landing"
 
 export default function Landing() {
     return (
