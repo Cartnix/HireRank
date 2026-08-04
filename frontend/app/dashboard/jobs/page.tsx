@@ -6,9 +6,11 @@ export default async function Page() {
   const [candidates, jobs] = await Promise.all([getCandidates(), getJobs()]);
 
   return (
-    <JobsPageClient
-      initialCandidates={candidates as any[]}
-      initialJobs={jobs as Job[]}
-    />
+    <>
+      <JobsPageClient
+        initialCandidates={candidates as any[]}
+        initialJobs={jobs as Job[]}
+      />
+    </>
   );
 }
