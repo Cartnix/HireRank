@@ -9,7 +9,8 @@ paths:
       description: |
         Доступно: **administrator**, **hr**, **manager**.
 
-        Сортировка по `created_at` (новые сверху). Product-артефакт решений — AIDE scenarios / Outcomes, не ai_score.
+        Сортировка по `created_at` (новые сверху). Product-артефакт решений — Automation options /
+        Outcomes в Memory ([MEMORY.md](../../MEMORY.md)), не ai_score.
 
         Manager видит только кандидатов, закреплённых за вакансиями, плюс pending HITL своего tenant.
       parameters:
@@ -59,7 +60,7 @@ paths:
       description: |
         Используется **hr** для ручного создания кандидата из JSON анкеты кадрового листа.
         После создания кандидат попадает в пул tenant со статусом `unassigned`.
-        Публикуется intake-событие для AIDE; создаются уведомления. Auto-ranking/score не запускается.
+        Публикуется `resume.uploaded` для Automation; создаются уведомления. Auto-ranking/score не запускается.
       requestBody:
         required: true
         content:
@@ -68,7 +69,7 @@ paths:
               $ref: '../schemas/candidate.yaml#/CreateCandidateRequest'
       responses:
         '201':
-          description: Кандидат создан, intake поставлен в очередь AIDE
+          description: Кандидат создан, `resume.uploaded` поставлен в очередь Automation
           content:
             application/json:
               schema:
@@ -113,7 +114,7 @@ paths:
       description: |
         Candidate может обновлять свою анкету до назначения / action_applied.
         HR Operator может редактировать любую карточку.
-        После существенного обновления может быть опубликован повторный intake для AIDE.
+        После существенного обновления может быть опубликован повторный `resume.uploaded` для Automation.
       requestBody:
         required: true
         content:
@@ -160,7 +161,7 @@ paths:
       summary: Закрепить кандидата за вакансией
       description: |
         Доступно только **administrator** (ручной путь).
-        Эквивалентный результат может дать MCP после HITL accept (см. `/aide/packages/{id}/accept`).
+        Эквивалентный результат может дать MCP после HITL accept (см. `/automations/packages/{id}/accept`).
 
         После закрепления статус кандидата меняется на `assigned`.
         Менеджеры получают уведомление.
@@ -216,7 +217,7 @@ paths:
       description: |
         Candidate отправляет JSON-форму кадрового листа с фронтенда.
         Если анкета заполнена впервые — кандидат попадает в пул `unassigned`
-        и публикуется intake-событие для AIDE.
+        и публикуется `resume.uploaded` для Automation.
       requestBody:
         required: true
         content:

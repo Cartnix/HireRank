@@ -18,5 +18,5 @@ DoD:
 - All tenant-scoped entities are filtered by `tenant_id`.
 - A user cannot read or modify another tenant's data.
 - Candidate cannot access vacancies from another tenant.
-- Precedent Memory and Outcomes are tenant-scoped.
+- [Memory](../MEMORY.md) (Outcomes and other run memory) is tenant-scoped.
 - Cross-tenant requests fail with `403` or `404` depending on the endpoint.

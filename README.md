@@ -1,19 +1,19 @@
 # HireRank
 
-**HireRank** is an on-premise ATS with **AIDE** (AI Decision Engine) — the organization’s nervous hiring system, not a resume calculator.
+**HireRank** is an on-premise ATS with **HireRank Automation** (*ATS AI-native Automation*) — the organization’s nervous hiring system, not a resume calculator.
 
 ```text
-HireRank intake → AIDE (scenarios) → Telegram HITL → FastMCP (`tenant_id`) → Precedent Memory
+HireRank intake → Automation (MCP options) → Telegram HITL → FastMCP (`tenant_id`) → Memory (MEMORY.md)
 ```
 
-> AIDE only **suggests**. A human picks a scenario in Telegram; MCP executes that choice and writes the Outcome. AI never auto-hires or auto-rejects.
+> Automation only **suggests**. A human picks an option in Telegram; MCP executes that choice and writes the **Outcome** (option-choice history) into [Memory](docs/MEMORY.md). AI never auto-hires or auto-rejects.
 
 | Plane | Role |
 |-------|------|
 | **HireRank** | Domain ATS + storage + Admin |
-| **AIDE** | Vacancies + precedents → 2–3 scenarios ([AIDE.md](docs/AIDE.md)) |
+| **Automation** | Event-driven HITL: vacancies + precedents + MCP schemas → 2–3 options ([AUTOMATION.md](docs/AUTOMATION.md)) |
 | **FastMCP** | Selected action only, under `tenant_id` |
-| **n8n** | Telegram / email delivery (not the decision engine) |
+| **n8n** | Telegram / email delivery (not the automation brain) |
 
 ## Core, Enterprise & SaaS
 
@@ -39,10 +39,11 @@ See [SELF-HOSTED.md](docs/SELF-HOSTED.md) and [RBAC.md](docs/RBAC.md).
 |-----|---------|
 | [PASSPORT.md](docs/PASSPORT.md) | Product vision & goals |
 | [PRODUCT.md](docs/PRODUCT.md) | UVP, JTBD, anti-patterns |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | HireRank + AIDE + MCP + n8n planes |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | HireRank + Automation + MCP + n8n planes |
 | [SELF-HOSTED.md](docs/SELF-HOSTED.md) | Core deploy defaults & token store |
 | [RBAC.md](docs/RBAC.md) | Roles, JWT, token store |
-| [AIDE.md](docs/AIDE.md) | Decision engine lifecycle + strict gate |
+| [AUTOMATION.md](docs/AUTOMATION.md) | Event-driven Automation lifecycle + strict gate |
+| [MEMORY.md](docs/MEMORY.md) | Decision history (Outcomes) + other run memory |
 | [ROADMAP.md](docs/ROADMAP.md) | Delivery phases |
 | [FEAUTERS.md](docs/FEAUTERS.md) | Feature catalog |
 | [use-cases/](docs/use-cases/) | Behavioral specs |
@@ -54,7 +55,7 @@ See [SELF-HOSTED.md](docs/SELF-HOSTED.md) and [RBAC.md](docs/RBAC.md).
 | Area | Tech |
 |------|------|
 | HireRank | Next.js, FastAPI, PostgreSQL, Redis (optional for Core auth), S3, Celery |
-| AIDE | Ollama + scenario orchestration |
+| Automation | Ollama + event worker / agent run orchestration |
 | Execution | FastMCP |
 | Delivery | n8n (Telegram, email, webhooks) |
 | Edge / ops | Traefik, Cloudflare, Compose |
@@ -70,4 +71,4 @@ Core auth defaults to `TOKEN_STORE=memory`. Set `TOKEN_STORE=redis` when you sca
 
 ## MVP
 
-Phase 1: human ATS loop (tenant pool, vacancies, assignment). Phase 2: AIDE + Telegram HITL + MCP + Precedent Memory. See [ROADMAP.md](docs/ROADMAP.md).
+Phase 1: human ATS loop (tenant pool, vacancies, assignment). Phase 2: Automation + Telegram HITL + MCP + [Memory](docs/MEMORY.md). See [ROADMAP.md](docs/ROADMAP.md).

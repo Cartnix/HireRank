@@ -4,10 +4,12 @@ info:
   title: HireRank API
   version: 1.0.0
   description: |
-    REST API контракт платформы **HireRank** (HIRERANK) с **AIDE** (AI Decision Engine).
+    REST API контракт платформы **HireRank** (HIRERANK) с **HireRank Automation**
+    (event-driven AI-native Automation + HITL).
 
-    Канон: PASSPORT — AIDE предлагает 2–3 сценария; человек выбирает в Telegram;
-    FastMCP исполняет только выбранное действие под `tenant_id` и пишет Outcome в Precedent Memory.
+    Канон: PASSPORT — Automation предлагает 2–3 MCP-backed опции; человек выбирает в Telegram;
+    FastMCP исполняет только выбранное действие под `tenant_id` и пишет Outcome
+    (история выбора опции) в Memory — канон [MEMORY.md](../MEMORY.md).
     AI **не** делает auto-hire / auto-reject.
 
     **Hidden multi-tenancy**: Core (self-hosted) — один enterprise на инстанс;
@@ -22,10 +24,10 @@ info:
     **Business rules**:
 
     * кандидат и recruiter загружают резюме; HR создаёт/ведёт вакансии;
-    * кандидат после сохранения попадает в пул `unassigned` и публикуется intake-событие для AIDE;
-    * AIDE генерирует 2–3 сценария → Telegram HITL → MCP → Outcome;
+    * кандидат после сохранения попадает в пул `unassigned` и публикуется `resume.uploaded` для Automation;
+    * Automation генерирует 2–3 опции → Telegram HITL → MCP → Outcome в Memory ([MEMORY.md](../MEMORY.md));
     * Administrator — админ-панель и управление пользователями; HR — vacancy CRUD;
-    * Manager в web — read-only; решение по сценариям — кнопка в Telegram.
+    * Manager в web — read-only; решение по опциям — кнопка в Telegram.
 
 servers:
   - url: http://localhost:8000/api/v1
@@ -48,8 +50,8 @@ tags:
     description: Сводные данные по ролям
   - name: Admin
     description: Админ-панель, управление пользователями и правами доступа
-  - name: AIDE
-    description: Decision packages, scenarios, HITL accept, precedents / outcomes
+  - name: Automations
+    description: Decision packages, HITL options, accept; Outcomes/Memory ([MEMORY.md](../MEMORY.md))
 
 security:
   - BearerAuth: []
@@ -119,14 +121,14 @@ paths:
   /admin/users/{id}:
     $ref: './paths/admin.yaml#/paths/~1admin~1users~1{id}'
 
-  # AIDE
-  /aide/packages:
-    $ref: './paths/aide.yaml#/paths/~1aide~1packages'
-  /aide/packages/{id}:
-    $ref: './paths/aide.yaml#/paths/~1aide~1packages~1{id}'
-  /aide/packages/{id}/accept:
-    $ref: './paths/aide.yaml#/paths/~1aide~1packages~1{id}~1accept'
-  /aide/outcomes:
-    $ref: './paths/aide.yaml#/paths/~1aide~1outcomes'
-  /aide/precedents:
-    $ref: './paths/aide.yaml#/paths/~1aide~1precedents'
+  # Automations
+  /automations/packages:
+    $ref: './paths/automation.yaml#/paths/~1automations~1packages'
+  /automations/packages/{id}:
+    $ref: './paths/automation.yaml#/paths/~1automations~1packages~1{id}'
+  /automations/packages/{id}/accept:
+    $ref: './paths/automation.yaml#/paths/~1automations~1packages~1{id}~1accept'
+  /automations/outcomes:
+    $ref: './paths/automation.yaml#/paths/~1automations~1outcomes'
+  /automations/precedents:
+    $ref: './paths/automation.yaml#/paths/~1automations~1precedents'

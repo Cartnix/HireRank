@@ -17,7 +17,7 @@ Flow:
 6. Notification is created for the tenant.
 
 Notes:
-- The same assignment result may be produced by MCP after a human-selected AIDE scenario (UC-08). Manual admin assignment remains valid.
+- The same assignment result may be produced by MCP after a human-selected Automation option (UC-08). Manual admin assignment remains valid.
 
 DoD:
 - Assignment is allowed only for Administrator (manual path).

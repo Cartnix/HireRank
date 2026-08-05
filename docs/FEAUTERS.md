@@ -2,9 +2,9 @@
 
 ## Overview
 
-This document describes the functional capabilities of the **HireRank** (HIRERANK) platform with **AIDE** (AI Decision Engine).
+This document describes the functional capabilities of the **HireRank** (HIRERANK) platform with **HireRank Automation** (*ATS AI-native Automation*).
 
-Product canon: [PASSPORT.md](PASSPORT.md). Engine: [AIDE.md](AIDE.md). Delivery: [ROADMAP.md](ROADMAP.md).
+Product canon: [PASSPORT.md](PASSPORT.md). Automation: [AUTOMATION.md](AUTOMATION.md). Delivery: [ROADMAP.md](ROADMAP.md).
 
 It does not include technical implementation details and is used as a requirements source for development.
 
@@ -109,14 +109,14 @@ The questionnaire follows the personnel record form structure (personal sheet / 
 * save questionnaire;
 * edit questionnaire before submit;
 * view entered data;
-* publish an intake event for AIDE after save.
+* publish `resume.uploaded` for Automation after save.
 
 ### DoD
 
 * questionnaire accepted as a JSON payload;
 * candidate profile created or updated after save;
 * candidate status set to `Unassigned`;
-* candidate placed in the tenant pool and AIDE cycle initiated (see F-020).
+* candidate placed in the tenant pool and Automation cycle initiated (see F-020).
 
 ---
 
@@ -132,7 +132,7 @@ Used when the candidate is present in person and HR transfers data from a paper 
 
 * system accepts questionnaire JSON;
 * candidate record enters the tenant pool;
-* intake event published for AIDE;
+* `resume.uploaded` published for Automation;
 * notification created.
 
 ---
@@ -153,7 +153,7 @@ Unassigned
 * search;
 * filtering;
 * open candidate card;
-* view pending AIDE scenarios / selected Outcome (no silent rank-score as hero UX).
+* view pending Automation options / selected Outcome in [Memory](MEMORY.md) (no silent rank-score as hero UX).
 
 ---
 
@@ -193,7 +193,7 @@ Manager and HR Operator see only their own tenant’s data.
 
 ## Description
 
-Administrator assigns a candidate to a vacancy (manual path). The same effect may occur via MCP after the manager selects an AIDE scenario.
+Administrator assigns a candidate to a vacancy (manual path). The same effect may occur via MCP after the manager selects an Automation option.
 
 After assignment, the candidate status is updated.
 
@@ -209,7 +209,7 @@ After assignment, the candidate status is updated.
 * assignment available to administrator **or** via MCP after HITL;
 * cannot assign a candidate from another tenant;
 * managers are notified;
-* Outcome written to Precedent Memory when via the AIDE path.
+* Outcome (option-choice history) written to [Memory](MEMORY.md) when via the Automation path.
 
 ---
 
@@ -241,8 +241,8 @@ The system notifies tenant staff about events.
 * new candidate created;
 * vacancy created;
 * candidate assigned to vacancy;
-* AIDE sent scenarios to Telegram;
-* manager selected a scenario / MCP applied the action.
+* Automation sent options to Telegram;
+* manager selected an option / MCP applied the action.
 
 ### Recipients
 
@@ -280,7 +280,7 @@ Only users with the Administrator role can access the admin panel.
 * view users;
 * view notifications;
 * access admin panel;
-* overview of pending AIDE packages / tenant Outcomes.
+* overview of pending Automation packages / tenant Outcomes in [Memory](MEMORY.md).
 
 ---
 
@@ -303,7 +303,7 @@ Only users with the Administrator role can access the admin panel.
 * view vacancies;
 * view assigned candidates;
 * view notifications;
-* view pending / resolved AIDE scenarios (read);
+* view pending / resolved Automation options (read);
 * web is read-only; decision is a Telegram button.
 
 ---
@@ -332,22 +332,24 @@ Each user has a personal profile.
 
 ---
 
-# F-020 AIDE Decision Cycle
+# F-020 Automation HITL Cycle
 
 ## Description
 
-**AIDE** (AI Decision Engine) is a co-pilot cycle — not a black box and not a score dashboard.
+**HireRank Automation** is an event-driven co-pilot cycle — not a black box, not a standing decision engine, and not a score dashboard.
 
-After intake, AIDE reads open vacancies and the tenant’s Precedent Memory, generates **2–3 action scenarios**, delivers them to the manager in Telegram as a HITL captcha, and only after a human selection executes the chosen action via MCP under `tenant_id`, writing the Outcome to memory.
+On `resume.uploaded`, a short-lived agent run loads the automation definition, builds context (resume JSON, open vacancies, [Memory](MEMORY.md), MCP tool schemas), generates **2–3 MCP-backed action options**, notifies managers by email and delivers options in Telegram as a HITL captcha, and only after a human selection executes the chosen tool via MCP under `tenant_id`, writing the **Outcome** (option-choice history) into [Memory](MEMORY.md).
 
 ### Capabilities
 
-* trigger on questionnaire save (candidate or HR);
-* read tenant vacancies and precedents;
-* generate 2–3 scenarios with rationale (local LLM / Ollama);
-* deliver to Telegram via n8n (delivery plane);
-* execute **only** the selected scenario via FastMCP;
-* write Outcome → Precedent / Case Memory.
+* trigger on `resume.uploaded` (candidate or HR intake);
+* load automation definition (prompt + tools + model + tenant scope);
+* read resume JSON, tenant vacancies, [Memory](MEMORY.md), and MCP schemas;
+* generate 2–3 options with rationale (local LLM / Ollama);
+* SMTP awareness + Telegram delivery via n8n (delivery plane);
+* execute **only** the selected option via FastMCP;
+* write Outcome → [Memory](MEMORY.md) (decision history; other run memory TBD);
+* destroy the agent run after completion.
 
 ### Ban
 
@@ -357,25 +359,25 @@ After intake, AIDE reads open vacancies and the tenant’s Precedent Memory, gen
 
 ### DoD (strict gate)
 
-1. Precedent context exists, or an explicit path to build it.
-2. Telegram HITL with ≥2 scenarios.
+1. [Memory](MEMORY.md) context exists, or an explicit path to build it.
+2. Telegram HITL with ≥2 MCP-backed options.
 3. Execution only after a human.
-4. Outcome recorded in tenant memory.
+4. Outcome recorded in tenant [Memory](MEMORY.md).
 
 ---
 
-# F-021 Precedent Memory
+# F-021 Memory
 
 ## Description
 
-Tenant decision history: who approved/rejected which profile, which scenario was chosen, short comment.
+Tenant [Memory](MEMORY.md): history of HITL **Outcomes** (which option was chosen) and other Automation run memory. Storage shape TBD; product canon is the markdown doc.
 
 A digital org asset; it does not leave with HR turnover.
 
 ### Capabilities
 
-* write Outcome after MCP;
-* AIDE reads precedents when generating scenarios;
+* write Outcome after MCP into [Memory](MEMORY.md);
+* Automation reads [Memory](MEMORY.md) when generating options;
 * isolation strictly by `tenant_id`;
 * export / erase on controller request (see GDPR).
 
@@ -409,7 +411,7 @@ Candidate card contains personnel information.
 * completed questionnaire;
 * current status;
 * assigned vacancy;
-* related AIDE scenarios / Outcomes (if any).
+* related Automation options / Outcomes in [Memory](MEMORY.md) (if any).
 
 ---
 
@@ -461,11 +463,11 @@ Without access, the user is redirected to the sign-in page.
 
 ---
 
-# Feature Roadmap (Post–AIDE core)
+# Feature Roadmap (Post–Automation core)
 
-The following capabilities are **not** in AIDE core (Phase 2); they belong to Phase 3 / later:
+The following capabilities are **not** in Automation core (Phase 2); they belong to Phase 3 / later:
 
-* deeper Precedent Memory and decision-graph analytics;
+* deeper [Memory](MEMORY.md) and decision-graph analytics;
 * multi-channel HITL beyond Telegram primary (rich email panels);
 * entity change history (full audit UI);
 * analytics panel for CHRO;
