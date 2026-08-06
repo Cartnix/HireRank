@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "jest"
+    "test": "jest",
+    "generate:api-types": "openapi-typescript ../docs/openapi/openapi.yaml -o shared/api/schema.d.ts",
+    "openapi:check": "openapi-typescript ../docs/openapi/openapi.yaml -o /tmp/hirerank-schema-check.d.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -35,6 +37,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

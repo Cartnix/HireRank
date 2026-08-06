@@ -106,7 +106,7 @@ async def test_role_escalation_with_wrong_signing_key_is_401(
             "type": security.TOKEN_TYPE_ACCESS,
             "exp": datetime.now(UTC) + timedelta(minutes=15),
         },
-        "not-the-server-secret",
+        "not-the-server-secret-key-32bytes!!",
         algorithm=security.ALGORITHM,
     )
     r = await client.get(USERS_URL, headers={"Authorization": f"Bearer {forged}"})

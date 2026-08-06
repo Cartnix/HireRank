@@ -30,6 +30,11 @@ Stored in PostgreSQL tables `role`, `permission`, and `role_permission` (M2M). S
 | `vacancy.read` | yes | yes | yes | yes | yes |
 | `resume.upload` | yes | yes | no | yes | yes |
 | `candidate.read` | yes (all) | yes (all) | scoped | no | own |
+| `candidate.create` | yes | yes | no | no | no |
+| `candidate.update` | yes | yes | no | no | own (ABAC) |
+| `candidate.delete` | yes | no | no | no | no |
+| `application.assign` | yes | no | no | no | no |
+| `application.read` | yes | yes | yes | no | no |
 
 Manager scope and candidate “own” checks are enforced on domain endpoints (ABAC), not only by the static matrix.
 

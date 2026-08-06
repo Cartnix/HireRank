@@ -1,4 +1,4 @@
-# schemas/user.yaml
+# schemas/user.yaml — aligned to FastAPI UserPublic / UsersPublic / UpdatePassword
 
 UserRole:
   type: string
@@ -7,7 +7,7 @@ UserRole:
 
 User:
   type: object
-  required: [id, tenant_id, email, role, created_at]
+  required: [id, tenant_id, email, role, is_active]
   properties:
     id:
       type: string
@@ -25,9 +25,11 @@ User:
       $ref: '#/UserRole'
     first_name:
       type: string
+      nullable: true
       example: Ivan
     last_name:
       type: string
+      nullable: true
       example: Petrov
     is_active:
       type: boolean
@@ -35,6 +37,7 @@ User:
     created_at:
       type: string
       format: date-time
+      nullable: true
       example: "2025-06-01T10:00:00Z"
     legal_policy_version:
       type: string
@@ -56,36 +59,91 @@ User:
 
 UpdateUserRequest:
   type: object
+  description: PATCH /users/me body (UserUpdateMe)
   properties:
     first_name:
       type: string
-      example: Ivan
+      nullable: true
     last_name:
       type: string
-      example: Petrov
+      nullable: true
     email:
       type: string
       format: email
 
+CreateUserRequest:
+  type: object
+  description: POST /users/ (administrator). tenant_id is ignored / forced server-side.
+  required: [email, role]
+  additionalProperties: false
+  properties:
+    email:
+      type: string
+      format: email
+    password:
+      type: string
+      format: password
+      minLength: 8
+      maxLength: 128
+      nullable: true
+    role:
+      $ref: '#/UserRole'
+    first_name:
+      type: string
+      nullable: true
+    last_name:
+      type: string
+      nullable: true
+    is_active:
+      type: boolean
+      default: true
+
+AdminUpdateUserRequest:
+  type: object
+  description: PATCH /users/{id} (UserUpdate)
+  properties:
+    email:
+      type: string
+      format: email
+    password:
+      type: string
+      format: password
+      minLength: 8
+      maxLength: 128
+    is_active:
+      type: boolean
+    role:
+      $ref: '#/UserRole'
+    first_name:
+      type: string
+      nullable: true
+    last_name:
+      type: string
+      nullable: true
+
 ChangePasswordRequest:
   type: object
-  required: [old_password, new_password]
+  description: PATCH /users/me/password (UpdatePassword)
+  required: [current_password, new_password]
   properties:
-    old_password:
+    current_password:
       type: string
       format: password
     new_password:
       type: string
       format: password
       minLength: 8
+      maxLength: 128
 
-PagedUserResponse:
+UsersPublic:
   type: object
-  required: [items, pagination]
+  description: GET /users/ response (skip/limit pagination)
+  required: [data, count]
   properties:
-    items:
+    data:
       type: array
       items:
         $ref: '#/User'
-    pagination:
-      $ref: './common.yaml#/Pagination'
+    count:
+      type: integer
+      example: 42

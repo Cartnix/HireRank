@@ -64,7 +64,7 @@ PagedNotificationResponse:
       items:
         $ref: '#/Notification'
     pagination:
-      $ref: './common.yaml#/Pagination'
+      $ref: '../../schemas/common.yaml#/Pagination'
     unread_count:
       type: integer
       example: 5

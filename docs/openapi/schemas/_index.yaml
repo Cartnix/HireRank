@@ -1,46 +1,78 @@
-ErrorResponse: './common.yaml#/ErrorResponse'
-ValidationError: './common.yaml#/ValidationError'
-Pagination: './common.yaml#/Pagination'
-TokenPair: './auth.yaml#/TokenPair'
-AuthSession: './auth.yaml#/AuthSession'
-RegisterRequest: './auth.yaml#/RegisterRequest'
-LoginRequest: './auth.yaml#/LoginRequest'
-RefreshRequest: './auth.yaml#/RefreshRequest'
-UserRole: './user.yaml#/UserRole'
-User: './user.yaml#/User'
-UpdateUserRequest: './user.yaml#/UpdateUserRequest'
-ChangePasswordRequest: './user.yaml#/ChangePasswordRequest'
-PagedUserResponse: './user.yaml#/PagedUserResponse'
-CandidateStatus: './candidate.yaml#/CandidateStatus'
-EducationEntry: './candidate.yaml#/EducationEntry'
-Questionnaire: './candidate.yaml#/Questionnaire'
-Candidate: './candidate.yaml#/Candidate'
-CreateCandidateRequest: './candidate.yaml#/CreateCandidateRequest'
-UpdateQuestionnaireRequest: './candidate.yaml#/UpdateQuestionnaireRequest'
-AssignCandidateRequest: './candidate.yaml#/AssignCandidateRequest'
-PagedCandidateResponse: './candidate.yaml#/PagedCandidateResponse'
-VacancyStatus: './vacancy.yaml#/VacancyStatus'
-Vacancy: './vacancy.yaml#/Vacancy'
-CreateVacancyRequest: './vacancy.yaml#/CreateVacancyRequest'
-UpdateVacancyRequest: './vacancy.yaml#/UpdateVacancyRequest'
-PagedVacancyResponse: './vacancy.yaml#/PagedVacancyResponse'
-NotificationType: './notification.yaml#/NotificationType'
-NotificationChannel: './notification.yaml#/NotificationChannel'
-Notification: './notification.yaml#/Notification'
-PagedNotificationResponse: './notification.yaml#/PagedNotificationResponse'
-AdminDashboard: './dashboard.yaml#/AdminDashboard'
-HRDashboard: './dashboard.yaml#/HRDashboard'
-ManagerDashboard: './dashboard.yaml#/ManagerDashboard'
-CandidateDashboard: './dashboard.yaml#/CandidateDashboard'
-DashboardResponse: './dashboard.yaml#/DashboardResponse'
-ScenarioActionType: './automation.yaml#/ScenarioActionType'
-ScenarioOption: './automation.yaml#/ScenarioOption'
-DecisionPackageStatus: './automation.yaml#/DecisionPackageStatus'
-DecisionPackage: './automation.yaml#/DecisionPackage'
-AcceptScenarioRequest: './automation.yaml#/AcceptScenarioRequest'
-AcceptScenarioResponse: './automation.yaml#/AcceptScenarioResponse'
-Outcome: './automation.yaml#/Outcome'
-Precedent: './automation.yaml#/Precedent'
-PagedDecisionPackageResponse: './automation.yaml#/PagedDecisionPackageResponse'
-PagedOutcomeResponse: './automation.yaml#/PagedOutcomeResponse'
-PagedPrecedentResponse: './automation.yaml#/PagedPrecedentResponse'
+ErrorResponse:
+  $ref: './common.yaml#/ErrorResponse'
+ValidationError:
+  $ref: './common.yaml#/ValidationError'
+Pagination:
+  $ref: './common.yaml#/Pagination'
+Message:
+  $ref: './common.yaml#/Message'
+TokenPair:
+  $ref: './auth.yaml#/TokenPair'
+AuthSession:
+  $ref: './auth.yaml#/AuthSession'
+RegisterRequest:
+  $ref: './auth.yaml#/RegisterRequest'
+LoginRequest:
+  $ref: './auth.yaml#/LoginRequest'
+RefreshRequest:
+  $ref: './auth.yaml#/RefreshRequest'
+ConsentGrant:
+  $ref: './auth.yaml#/ConsentGrant'
+ConsentPublic:
+  $ref: './auth.yaml#/ConsentPublic'
+OAuthStartRequest:
+  $ref: './auth.yaml#/OAuthStartRequest'
+UserRole:
+  $ref: './user.yaml#/UserRole'
+User:
+  $ref: './user.yaml#/User'
+UpdateUserRequest:
+  $ref: './user.yaml#/UpdateUserRequest'
+CreateUserRequest:
+  $ref: './user.yaml#/CreateUserRequest'
+AdminUpdateUserRequest:
+  $ref: './user.yaml#/AdminUpdateUserRequest'
+ChangePasswordRequest:
+  $ref: './user.yaml#/ChangePasswordRequest'
+UsersPublic:
+  $ref: './user.yaml#/UsersPublic'
+CandidateStatus:
+  $ref: './candidate.yaml#/CandidateStatus'
+EducationEntry:
+  $ref: './candidate.yaml#/EducationEntry'
+Questionnaire:
+  $ref: './candidate.yaml#/Questionnaire'
+Candidate:
+  $ref: './candidate.yaml#/Candidate'
+CreateCandidateRequest:
+  $ref: './candidate.yaml#/CreateCandidateRequest'
+UpdateQuestionnaireRequest:
+  $ref: './candidate.yaml#/UpdateQuestionnaireRequest'
+AssignCandidateRequest:
+  $ref: './candidate.yaml#/AssignCandidateRequest'
+ResumeUrlResponse:
+  $ref: './candidate.yaml#/ResumeUrlResponse'
+PagedCandidateResponse:
+  $ref: './candidate.yaml#/PagedCandidateResponse'
+VacancyStatus:
+  $ref: './vacancy.yaml#/VacancyStatus'
+PipelineStage:
+  $ref: './vacancy.yaml#/PipelineStage'
+Vacancy:
+  $ref: './vacancy.yaml#/Vacancy'
+CreateVacancyRequest:
+  $ref: './vacancy.yaml#/CreateVacancyRequest'
+UpdateVacancyRequest:
+  $ref: './vacancy.yaml#/UpdateVacancyRequest'
+PagedVacancyResponse:
+  $ref: './vacancy.yaml#/PagedVacancyResponse'
+AdminDashboard:
+  $ref: './dashboard.yaml#/AdminDashboard'
+HRDashboard:
+  $ref: './dashboard.yaml#/HRDashboard'
+ManagerDashboard:
+  $ref: './dashboard.yaml#/ManagerDashboard'
+CandidateDashboard:
+  $ref: './dashboard.yaml#/CandidateDashboard'
+DashboardResponse:
+  $ref: './dashboard.yaml#/DashboardResponse'

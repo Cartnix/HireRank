@@ -103,7 +103,7 @@ paths:
         '204':
           description: Access blacklisted, refresh revoked, cookies cleared
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '../components/responses.yaml#/Unauthorized'
         '403':
           description: CSRF Token missing or invalid
 
@@ -123,7 +123,7 @@ paths:
               schema:
                 $ref: '../schemas/user.yaml#/User'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '../components/responses.yaml#/Unauthorized'
 
   /auth/check-email:
     post:
@@ -182,7 +182,7 @@ paths:
         '400':
           description: Consent required when account processing expired
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '../components/responses.yaml#/Unauthorized'
         '403':
           description: CSRF Token missing or invalid
 
@@ -206,7 +206,7 @@ paths:
               schema:
                 $ref: '../schemas/auth.yaml#/AuthSession'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '../components/responses.yaml#/Unauthorized'
 
   /auth/oauth/{provider}/start:
     post:
@@ -249,7 +249,7 @@ paths:
               schema:
                 $ref: '../schemas/auth.yaml#/ConsentPublic'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '../components/responses.yaml#/Unauthorized'
     patch:
       tags: [Auth]
       operationId: updateConsent
@@ -264,7 +264,7 @@ paths:
         '400':
           description: Invalid consent combination
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '../components/responses.yaml#/Unauthorized'
 
   /auth/forget-me:
     post:
@@ -275,7 +275,7 @@ paths:
         '204':
           description: Consents revoked, identity anonymized, cookies cleared
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '../components/responses.yaml#/Unauthorized'
         '403':
           description: Administrators cannot self-erase via this endpoint
 

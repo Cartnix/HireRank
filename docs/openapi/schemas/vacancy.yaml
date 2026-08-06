@@ -8,9 +8,23 @@ VacancyStatus:
   enum: [open, closed, draft]
   example: open
 
+PipelineStage:
+  type: object
+  required: [id, stage_name, sort_order]
+  properties:
+    id:
+      type: string
+      format: uuid
+    stage_name:
+      type: string
+      example: Applied
+    sort_order:
+      type: integer
+      example: 0
+
 Vacancy:
   type: object
-  required: [id, tenant_id, title, status, created_at]
+  required: [id, tenant_id, title, status, created_by]
   properties:
     id:
       type: string
@@ -24,9 +38,11 @@ Vacancy:
       example: Backend Developer
     department:
       type: string
+      nullable: true
       example: Engineering
     description:
       type: string
+      nullable: true
       example: |
         Looking for an experienced Backend developer to work on core services.
         Requirements: Python 3.10+, FastAPI, PostgreSQL.
@@ -42,6 +58,11 @@ Vacancy:
       items:
         type: string
         format: uuid
+    stages:
+      type: array
+      items:
+        $ref: '#/PipelineStage'
+      description: Default pipeline on create — Applied, Screen, Interview, Offer
     created_by:
       type: string
       format: uuid
@@ -49,38 +70,47 @@ Vacancy:
     created_at:
       type: string
       format: date-time
+      nullable: true
     updated_at:
       type: string
       format: date-time
+      nullable: true
 
 CreateVacancyRequest:
   type: object
-  required: [title, status]
+  required: [title]
+  additionalProperties: false
   properties:
     title:
       type: string
       example: Backend Developer
     department:
       type: string
+      nullable: true
       example: Engineering
     description:
       type: string
+      nullable: true
     requirements:
       type: array
       items:
         type: string
     status:
       $ref: '#/VacancyStatus'
+      default: draft
 
 UpdateVacancyRequest:
   type: object
+  additionalProperties: false
   properties:
     title:
       type: string
     department:
       type: string
+      nullable: true
     description:
       type: string
+      nullable: true
     requirements:
       type: array
       items:

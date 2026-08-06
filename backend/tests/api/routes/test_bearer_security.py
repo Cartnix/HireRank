@@ -96,7 +96,10 @@ async def test_signature_tampering_wrong_secret(client: AsyncClient) -> None:
         settings.SECRET_KEY,
         algorithms=[security.ALGORITHM],
     )["sub"]
-    tampered = _forge(sub=sub, secret="attacker-secret-key-not-ours")
+    tampered = _forge(
+        sub=sub,
+        secret="attacker-secret-key-not-ours-32b-min!!",
+    )
     r = await client.get(PROTECTED, headers={"Authorization": f"Bearer {tampered}"})
     assert r.status_code == 401
 
