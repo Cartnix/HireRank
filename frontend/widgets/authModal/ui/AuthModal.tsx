@@ -22,7 +22,7 @@ import { checkEmail, startOAuth } from "@/shared/api/auth";
 
 const consentDefaults = {
   role: "candidate" as const,
-  consent_account_processing: false as const,
+  consent_account_processing: false,
   consent_talent_pool: false,
   consent_cross_border: false,
   consent_cross_border_countries: "",

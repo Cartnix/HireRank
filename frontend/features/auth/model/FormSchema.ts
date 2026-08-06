@@ -30,8 +30,9 @@ export const ConsentSchema = z
   });
 
 const registerConsentFields = {
-  consent_account_processing: z.literal(true, {
-    errorMap: () => ({ message: REQUIRED_CONSENT_MSG }),
+  // boolean (not z.literal(true)) so RHF defaultValues may start unchecked
+  consent_account_processing: z.boolean().refine((v) => v === true, {
+    message: REQUIRED_CONSENT_MSG,
   }),
   consent_talent_pool: z.boolean(),
   consent_cross_border: z.boolean(),
