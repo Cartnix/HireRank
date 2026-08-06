@@ -28,10 +28,10 @@ info:
 
     **Business rules**:
 
-    * кандидат и recruiter загружают резюме; HR создаёт/ведёт вакансии;
+    * кандидат заполняет анкету, HR создаёт карточку кандидата из JSON-анкеты, recruiter остаётся role-only до отдельного use-case;
     * кандидат после сохранения попадает в пул `unassigned` и публикуется `resume.uploaded` для Automation;
     * Automation генерирует 2–3 опции → Telegram HITL → MCP → Outcome в Memory ([MEMORY.md](../MEMORY.md));
-    * Administrator — админ-панель и управление пользователями; HR — vacancy CRUD;
+    * Administrator — админ-панель, управление пользователями и vacancy CRUD;
     * Manager в web — read-only; решение по опциям — кнопка в Telegram.
 
 servers:
