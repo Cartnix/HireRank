@@ -165,7 +165,7 @@ PagedDecisionPackageResponse:
       items:
         $ref: '#/DecisionPackage'
     pagination:
-      $ref: './common.yaml#/Pagination'
+      $ref: '../../schemas/common.yaml#/Pagination'
 
 PagedOutcomeResponse:
   type: object
@@ -176,7 +176,7 @@ PagedOutcomeResponse:
       items:
         $ref: '#/Outcome'
     pagination:
-      $ref: './common.yaml#/Pagination'
+      $ref: '../../schemas/common.yaml#/Pagination'
 
 PagedPrecedentResponse:
   type: object
@@ -187,4 +187,4 @@ PagedPrecedentResponse:
       items:
         $ref: '#/Precedent'
     pagination:
-      $ref: './common.yaml#/Pagination'
+      $ref: '../../schemas/common.yaml#/Pagination'

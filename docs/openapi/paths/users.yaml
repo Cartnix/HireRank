@@ -1,4 +1,4 @@
-# paths/users.yaml
+# paths/users.yaml — matches backend/app/api/routes/users.py
 
 paths:
   /users/me:
@@ -33,8 +33,48 @@ paths:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/User'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Email already exists
+
+    delete:
+      tags: [Users]
+      operationId: deleteMyAccount
+      summary: Delete own account
+      description: Administrators cannot delete themselves.
+      responses:
+        '200':
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/Message'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Administrators cannot self-delete
+
+  /users/me/password:
+    patch:
+      tags: [Users]
+      operationId: changeMyPassword
+      summary: Change own password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/user.yaml#/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password updated
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/Message'
         '400':
-          description: Validation error
+          description: Incorrect password or OAuth-only account
         '401':
           description: Unauthorized
 
@@ -44,23 +84,21 @@ paths:
       operationId: listUsers
       summary: List tenant users
       description: |
-        Available only to **administrator**.
-        Returns only users of the current tenant (`tenant_id` from JWT).
+        Requires `users.manage` (administrator).
+        Offset pagination via `skip` / `limit` (backend UsersPublic).
       parameters:
-        - name: role
-          in: query
-          schema:
-            $ref: '../schemas/user.yaml#/UserRole'
-        - name: page
+        - name: skip
           in: query
           schema:
             type: integer
-            default: 1
-        - name: page_size
+            default: 0
+            minimum: 0
+        - name: limit
           in: query
           schema:
             type: integer
-            default: 20
+            default: 100
+            minimum: 1
             maximum: 100
       responses:
         '200':
@@ -68,7 +106,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../schemas/user.yaml#/PagedUserResponse'
+                $ref: '../schemas/user.yaml#/UsersPublic'
+        '403':
+          description: Insufficient permissions
+
+    post:
+      tags: [Users]
+      operationId: createUser
+      summary: Create user (administrator)
+      description: Requires `users.manage`. `tenant_id` is always `settings.TENANT_ID`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/user.yaml#/CreateUserRequest'
+      responses:
+        '200':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '400':
+          description: Email already exists
         '403':
           description: Insufficient permissions
 
@@ -85,7 +146,7 @@ paths:
       tags: [Users]
       operationId: getUserById
       summary: Get user by ID
-      description: Available only to **administrator**.
+      description: Self or administrator.
       responses:
         '200':
           description: User found
@@ -95,5 +156,47 @@ paths:
                 $ref: '../schemas/user.yaml#/User'
         '403':
           description: Insufficient permissions
+        '404':
+          description: User not found
+
+    patch:
+      tags: [Users]
+      operationId: updateUserById
+      summary: Update user (administrator)
+      description: Requires `users.manage`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/user.yaml#/AdminUpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '403':
+          description: Insufficient permissions
+        '404':
+          description: User not found
+        '409':
+          description: Email conflict
+
+    delete:
+      tags: [Users]
+      operationId: deleteUserById
+      summary: Delete user (administrator)
+      description: Requires `users.manage`. Cannot delete self.
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/Message'
+        '403':
+          description: Insufficient permissions or self-delete
         '404':
           description: User not found

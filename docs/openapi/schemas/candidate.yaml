@@ -134,6 +134,14 @@ Candidate:
       nullable: true
     status:
       $ref: '#/CandidateStatus'
+    email:
+      type: string
+      format: email
+      nullable: true
+    resume_url:
+      type: string
+      nullable: true
+      description: Opaque object key or URL (presign via resume-url)
     assigned_vacancy_id:
       type: string
       format: uuid
@@ -144,25 +152,36 @@ Candidate:
       type: string
       format: uuid
       nullable: true
-      description: Pending or latest Automation decision package
+      description: Pending or latest Automation decision package (when automation ships)
     created_at:
       type: string
       format: date-time
+      nullable: true
     updated_at:
       type: string
       format: date-time
+      nullable: true
 
 CreateCandidateRequest:
   type: object
   description: Used by HR Operator to manually create a candidate card
   required: [questionnaire]
+  additionalProperties: false
   properties:
     questionnaire:
       $ref: '#/Questionnaire'
+    email:
+      type: string
+      format: email
+      nullable: true
+    resume_url:
+      type: string
+      nullable: true
 
 UpdateQuestionnaireRequest:
   type: object
   required: [questionnaire]
+  additionalProperties: false
   properties:
     questionnaire:
       $ref: '#/Questionnaire'
@@ -170,11 +189,25 @@ UpdateQuestionnaireRequest:
 AssignCandidateRequest:
   type: object
   required: [vacancy_id]
+  additionalProperties: false
   properties:
     vacancy_id:
       type: string
       format: uuid
       example: b2c3d4e5-f6a7-8901-bcde-f23456789012
+
+ResumeUrlResponse:
+  type: object
+  required: [url, expires_in]
+  properties:
+    url:
+      type: string
+      description: Short-lived opaque/presigned URL (stub until real S3)
+      example: https://presign.local/candidates/a1b2/resume?exp=900
+    expires_in:
+      type: integer
+      description: Seconds until URL expires
+      example: 900
 
 PagedCandidateResponse:
   type: object

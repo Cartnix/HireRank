@@ -11,7 +11,7 @@ paths:
         - name: role
           in: query
           schema:
-            $ref: '../schemas/user.yaml#/UserRole'
+            $ref: '../../schemas/user.yaml#/UserRole'
           description: Filter by role
         - name: page
           in: query
@@ -30,7 +30,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../schemas/user.yaml#/PagedUserResponse'
+                $ref: '../../schemas/user.yaml#/UsersPublic'
         '401':
           description: Unauthorized
         '403':
@@ -56,7 +56,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../schemas/user.yaml#/User'
+                $ref: '../../schemas/user.yaml#/User'
         '401':
           description: Unauthorized
         '403':
