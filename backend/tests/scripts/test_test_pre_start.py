@@ -1,12 +1,13 @@
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from sqlmodel import select
 
 from app.tests_pre_start import init, logger
 
 
-def test_init_successful_connection() -> None:
+@pytest.mark.asyncio
+async def test_init_successful_connection() -> None:
     engine_mock = MagicMock()
 
     session_mock = AsyncMock()
@@ -24,7 +25,7 @@ def test_init_successful_connection() -> None:
         patch.object(logger, "warn"),
     ):
         try:
-            asyncio.run(init(engine_mock))
+            await init(engine_mock)
             connection_successful = True
         except Exception:
             connection_successful = False

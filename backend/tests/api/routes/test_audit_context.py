@@ -6,8 +6,9 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
+import pytest
 from fastapi import BackgroundTasks
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from sqlmodel import col, select
 from structlog.testing import capture_logs
 
@@ -29,38 +30,42 @@ from tests.conftest import bypass_rls_session
 from tests.utils.utils import random_email, random_lower_string
 
 
-def test_middleware_binds_request_meta_and_default_tenant(
-    client: TestClient,
+@pytest.mark.asyncio
+async def test_middleware_binds_request_meta_and_default_tenant(
+    client: AsyncClient,
 ) -> None:
     """Unauthenticated hit still seeds tenant + UA into audit via middleware/emit."""
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/login",
         json={"email": random_email(), "password": "x"},
         headers={"User-Agent": "Context-Middleware-Test/1.0"},
     )
     assert r.status_code == 401
-    with bypass_rls_session() as session:
-        row = session.exec(
-            select(AuditLog)
-            .where(AuditLog.action == AuditAction.LOGIN_FAILURE)
-            .order_by(col(AuditLog.created_at).desc())
+    async with bypass_rls_session() as session:
+        row = (
+            await session.exec(
+                select(AuditLog)
+                .where(AuditLog.action == AuditAction.LOGIN_FAILURE)
+                .order_by(col(AuditLog.created_at).desc())
+            )
         ).first()
         assert row is not None
         assert row.tenant_id == settings.TENANT_ID
         assert row.user_agent == "Context-Middleware-Test/1.0"
 
 
-def test_authenticated_me_binds_user_contextvars(client: TestClient) -> None:
+@pytest.mark.asyncio
+async def test_authenticated_me_binds_user_contextvars(client: AsyncClient) -> None:
     """JWT /me must bind user_id into contextvars for the request (via deps)."""
     email = random_email()
     password = random_lower_string()
-    reg = client.post(
+    reg = await client.post(
         f"{settings.API_V1_STR}/auth/register",
         json={"email": email, "password": password, "role": "recruiter"},
     )
     assert reg.status_code == 201
     pair = reg.json()
-    r = client.get(
+    r = await client.get(
         f"{settings.API_V1_STR}/auth/me",
         headers={"Authorization": f"Bearer {pair['access_token']}"},
     )
@@ -68,24 +73,27 @@ def test_authenticated_me_binds_user_contextvars(client: TestClient) -> None:
     user_id = uuid.UUID(r.json()["id"])
 
     # Logout path binds CurrentUser then writes audit with that user_id
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/logout",
         headers={"Authorization": f"Bearer {pair['access_token']}"},
         json={"refresh_token": pair["refresh_token"]},
     )
     assert r.status_code == 204
-    with bypass_rls_session() as session:
-        row = session.exec(
-            select(AuditLog)
-            .where(AuditLog.action == AuditAction.LOGOUT)
-            .order_by(col(AuditLog.created_at).desc())
+    async with bypass_rls_session() as session:
+        row = (
+            await session.exec(
+                select(AuditLog)
+                .where(AuditLog.action == AuditAction.LOGOUT)
+                .order_by(col(AuditLog.created_at).desc())
+            )
         ).first()
         assert row is not None
         assert row.user_id == user_id
         assert row.tenant_id == settings.TENANT_ID
 
 
-def test_audit_service_log_reads_contextvars_without_explicit_ids() -> None:
+@pytest.mark.asyncio
+async def test_audit_service_log_reads_contextvars_without_explicit_ids() -> None:
     clear_security_context()
     set_tenant_id(settings.TENANT_ID)
     uid = uuid.uuid4()
@@ -94,27 +102,27 @@ def test_audit_service_log_reads_contextvars_without_explicit_ids() -> None:
     entity = uuid.uuid4()
 
     service = get_audit_service()
-    with bypass_rls_session() as session:
-        session.run(
-            service.log(
-                background_tasks=None,
-                action="candidate.cv.download",
-                entity_type="candidate",
-                entity_id=entity,
-                payload={
-                    "reason": "Manual export by recruiter",
-                    "field": "cv",
-                    "changed": True,
-                },
-                force_sync=True,
-            )
+    async with bypass_rls_session() as session:
+        await service.log(
+            background_tasks=None,
+            action="candidate.cv.download",
+            entity_type="candidate",
+            entity_id=entity,
+            payload={
+                "reason": "Manual export by recruiter",
+                "field": "cv",
+                "changed": True,
+            },
+            force_sync=True,
         )
 
-    with bypass_rls_session() as session:
-        row = session.exec(
-            select(AuditLog)
-            .where(AuditLog.action == "candidate.cv.download")
-            .order_by(col(AuditLog.created_at).desc())
+    async with bypass_rls_session() as session:
+        row = (
+            await session.exec(
+                select(AuditLog)
+                .where(AuditLog.action == "candidate.cv.download")
+                .order_by(col(AuditLog.created_at).desc())
+            )
         ).first()
         assert row is not None
         assert row.tenant_id == settings.TENANT_ID
@@ -128,7 +136,8 @@ def test_audit_service_log_reads_contextvars_without_explicit_ids() -> None:
         assert "password" not in row.metadata_
 
 
-def test_audit_service_snapshots_context_before_background_clears() -> None:
+@pytest.mark.asyncio
+async def test_audit_service_snapshots_context_before_background_clears() -> None:
     """
     Pitfall: reading ContextVars inside BG task after request ends loses tenant.
     Service must snapshot at schedule time.
@@ -147,15 +156,13 @@ def test_audit_service_snapshots_context_before_background_clears() -> None:
 
     bg = _FakeBG()
     service = AuditLogService()
-    with bypass_rls_session() as session:
-        session.run(
-            service.log(
-                background_tasks=bg,
-                action="vacancy.status.changed",
-                entity_type="vacancy",
-                entity_id=uuid.uuid4(),
-                payload={"reason": "closed", "updated_fields": ["status"]},
-            )
+    async with bypass_rls_session() as session:
+        await service.log(
+            background_tasks=bg,
+            action="vacancy.status.changed",
+            entity_type="vacancy",
+            entity_id=uuid.uuid4(),
+            payload={"reason": "closed", "updated_fields": ["status"]},
         )
     assert len(captured) == 1
 
@@ -165,14 +172,16 @@ def test_audit_service_snapshots_context_before_background_clears() -> None:
     assert user_id_ctx.get() is None
 
     func, args, kwargs = captured[0]
-    with bypass_rls_session() as session:
-        session.run(func(*args, **kwargs))
+    async with bypass_rls_session() as session:
+        await func(*args, **kwargs)
 
-    with bypass_rls_session() as session:
-        row = session.exec(
-            select(AuditLog)
-            .where(AuditLog.action == "vacancy.status.changed")
-            .order_by(col(AuditLog.created_at).desc())
+    async with bypass_rls_session() as session:
+        row = (
+            await session.exec(
+                select(AuditLog)
+                .where(AuditLog.action == "vacancy.status.changed")
+                .order_by(col(AuditLog.created_at).desc())
+            )
         ).first()
         assert row is not None
         assert row.tenant_id == settings.TENANT_ID
@@ -193,9 +202,10 @@ def test_snapshot_security_context_copies_values() -> None:
     assert snap["user_agent"] == "snap"
 
 
-def test_structlog_binds_tenant_from_middleware(client: TestClient) -> None:
+@pytest.mark.asyncio
+async def test_structlog_binds_tenant_from_middleware(client: AsyncClient) -> None:
     with capture_logs() as cap:
-        client.post(
+        await client.post(
             f"{settings.API_V1_STR}/auth/login",
             json={"email": random_email(), "password": "nope"},
         )
