@@ -5,31 +5,31 @@ paths:
     get:
       tags: [Candidates]
       operationId: listCandidates
-      summary: Список кандидатов tenant
+      summary: List tenant candidates
       description: |
-        Доступно: **administrator**, **hr**, **manager**.
+        Available to: **administrator**, **hr**, **manager**.
 
-        Сортировка по `created_at` (новые сверху). Product-артефакт решений — Automation options /
-        Outcomes в Memory ([MEMORY.md](../../MEMORY.md)), не ai_score.
+        Sorted by `created_at` (newest first). Decision product artifact — Automation options /
+        Outcomes in Memory ([MEMORY.md](../../MEMORY.md)), not ai_score.
 
-        Manager видит только кандидатов, закреплённых за вакансиями, плюс pending HITL своего tenant.
+        Manager sees only candidates assigned to vacancies, plus pending HITL for their tenant.
       parameters:
         - name: status
           in: query
           schema:
             $ref: '../schemas/candidate.yaml#/CandidateStatus'
-          description: Фильтр по статусу
+          description: Filter by status
         - name: vacancy_id
           in: query
           schema:
             type: string
             format: uuid
-          description: Фильтр по вакансии
+          description: Filter by vacancy
         - name: search
           in: query
           schema:
             type: string
-          description: Поиск по ФИО или должности
+          description: Search by full name or job title
         - name: page
           in: query
           schema:
@@ -43,24 +43,24 @@ paths:
             maximum: 100
       responses:
         '200':
-          description: Список кандидатов с пагинацией
+          description: Paginated candidate list
           content:
             application/json:
               schema:
                 $ref: '../schemas/candidate.yaml#/PagedCandidateResponse'
         '401':
-          description: Не авторизован
+          description: Unauthorized
         '403':
-          description: Недостаточно прав
+          description: Insufficient permissions
 
     post:
       tags: [Candidates]
       operationId: createCandidate
-      summary: Создать карточку кандидата из JSON анкеты
+      summary: Create candidate card from JSON questionnaire
       description: |
-        Используется **hr** для ручного создания кандидата из JSON анкеты кадрового листа.
-        После создания кандидат попадает в пул tenant со статусом `unassigned`.
-        Публикуется `resume.uploaded` для Automation; создаются уведомления. Auto-ranking/score не запускается.
+        Used by **hr** to manually create a candidate from a personnel questionnaire JSON.
+        After creation the candidate enters the tenant pool with status `unassigned`.
+        Publishes `resume.uploaded` for Automation; notifications are created. Auto-ranking/score is not started.
       requestBody:
         required: true
         content:
@@ -69,15 +69,15 @@ paths:
               $ref: '../schemas/candidate.yaml#/CreateCandidateRequest'
       responses:
         '201':
-          description: Кандидат создан, `resume.uploaded` поставлен в очередь Automation
+          description: Candidate created; `resume.uploaded` queued for Automation
           content:
             application/json:
               schema:
                 $ref: '../schemas/candidate.yaml#/Candidate'
         '400':
-          description: Ошибка валидации анкеты
+          description: Questionnaire validation error
         '403':
-          description: Только hr или administrator
+          description: Only hr or administrator
 
   /candidates/{id}:
     parameters:
@@ -91,30 +91,30 @@ paths:
     get:
       tags: [Candidates]
       operationId: getCandidateById
-      summary: Карточка кандидата
+      summary: Candidate card
       description: |
-        Candidate видит только свою карточку.
-        HR Operator, Manager, Administrator видят любого кандидата своего tenant.
+        Candidate sees only their own card.
+        HR Operator, Manager, Administrator see any candidate in their tenant.
       responses:
         '200':
-          description: Карточка кандидата
+          description: Candidate card
           content:
             application/json:
               schema:
                 $ref: '../schemas/candidate.yaml#/Candidate'
         '403':
-          description: Нет доступа
+          description: Access denied
         '404':
-          description: Кандидат не найден
+          description: Candidate not found
 
     patch:
       tags: [Candidates]
       operationId: updateCandidate
-      summary: Обновить карточку кандидата
+      summary: Update candidate card
       description: |
-        Candidate может обновлять свою анкету до назначения / action_applied.
-        HR Operator может редактировать любую карточку.
-        После существенного обновления может быть опубликован повторный `resume.uploaded` для Automation.
+        Candidate may update their questionnaire until assignment / action_applied.
+        HR Operator may edit any card.
+        After a substantial update, a repeat `resume.uploaded` may be published for Automation.
       requestBody:
         required: true
         content:
@@ -123,28 +123,28 @@ paths:
               $ref: '../schemas/candidate.yaml#/UpdateQuestionnaireRequest'
       responses:
         '200':
-          description: Карточка обновлена
+          description: Card updated
           content:
             application/json:
               schema:
                 $ref: '../schemas/candidate.yaml#/Candidate'
         '403':
-          description: Нет доступа
+          description: Access denied
         '404':
-          description: Кандидат не найден
+          description: Candidate not found
 
     delete:
       tags: [Candidates]
       operationId: deleteCandidate
-      summary: Удалить кандидата
-      description: Доступно только **administrator**.
+      summary: Delete candidate
+      description: Available only to **administrator**.
       responses:
         '204':
-          description: Кандидат удалён
+          description: Candidate deleted
         '403':
-          description: Только administrator
+          description: Only administrator
         '404':
-          description: Кандидат не найден
+          description: Candidate not found
 
   /candidates/{id}/assign:
     parameters:
@@ -158,13 +158,13 @@ paths:
     post:
       tags: [Candidates]
       operationId: assignCandidate
-      summary: Закрепить кандидата за вакансией
+      summary: Assign candidate to vacancy
       description: |
-        Доступно только **administrator** (ручной путь).
-        Эквивалентный результат может дать MCP после HITL accept (см. `/automations/packages/{id}/accept`).
+        Available only to **administrator** (manual path).
+        An equivalent result may come from MCP after HITL accept (see `/automations/packages/{id}/accept`).
 
-        После закрепления статус кандидата меняется на `assigned`.
-        Менеджеры получают уведомление.
+        After assignment the candidate status becomes `assigned`.
+        Managers receive a notification.
       requestBody:
         required: true
         content:
@@ -173,17 +173,17 @@ paths:
               $ref: '../schemas/candidate.yaml#/AssignCandidateRequest'
       responses:
         '200':
-          description: Кандидат закреплён за вакансией
+          description: Candidate assigned to vacancy
           content:
             application/json:
               schema:
                 $ref: '../schemas/candidate.yaml#/Candidate'
         '403':
-          description: Только administrator
+          description: Only administrator
         '404':
-          description: Кандидат или вакансия не найдены
+          description: Candidate or vacancy not found
         '409':
-          description: Кандидат уже закреплён за этой вакансией
+          description: Candidate already assigned to this vacancy
 
   /candidates/{id}/questionnaire:
     parameters:
@@ -197,27 +197,27 @@ paths:
     get:
       tags: [Candidates]
       operationId: getQuestionnaire
-      summary: Получить анкету кандидата
+      summary: Get candidate questionnaire
       responses:
         '200':
-          description: Анкета кандидата
+          description: Candidate questionnaire
           content:
             application/json:
               schema:
                 $ref: '../schemas/candidate.yaml#/Questionnaire'
         '403':
-          description: Нет доступа
+          description: Access denied
         '404':
-          description: Анкета не найдена
+          description: Questionnaire not found
 
     put:
       tags: [Candidates]
       operationId: updateQuestionnaire
-      summary: Заполнить или обновить JSON-анкету кандидата
+      summary: Fill or update candidate JSON questionnaire
       description: |
-        Candidate отправляет JSON-форму кадрового листа с фронтенда.
-        Если анкета заполнена впервые — кандидат попадает в пул `unassigned`
-        и публикуется `resume.uploaded` для Automation.
+        Candidate submits the personnel questionnaire JSON form from the frontend.
+        On first fill — the candidate enters the `unassigned` pool
+        and `resume.uploaded` is published for Automation.
       requestBody:
         required: true
         content:
@@ -226,12 +226,12 @@ paths:
               $ref: '../schemas/candidate.yaml#/UpdateQuestionnaireRequest'
       responses:
         '200':
-          description: Анкета сохранена
+          description: Questionnaire saved
           content:
             application/json:
               schema:
                 $ref: '../schemas/candidate.yaml#/Candidate'
         '403':
-          description: Нет доступа (не владелец анкеты или статус не позволяет)
+          description: Access denied (not questionnaire owner or status does not allow)
         '404':
-          description: Кандидат не найден
+          description: Candidate not found

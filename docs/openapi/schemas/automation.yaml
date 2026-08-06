@@ -14,16 +14,16 @@ ScenarioOption:
       format: uuid
     title:
       type: string
-      example: Назначить на Backend Developer
+      example: Assign to Backend Developer
     rationale:
       type: string
-      description: Обоснование с опорой на прецеденты / вакансии
-      example: Похожий профиль утвержден в прошлом месяце на ту же роль
+      description: Rationale grounded in precedents / vacancies
+      example: A similar profile was approved last month for the same role
     action_type:
       $ref: '#/ScenarioActionType'
     payload:
       type: object
-      description: Параметры будущего MCP-действия (vacancy_id и т.д.)
+      description: Parameters for the future MCP action (vacancy_id, etc.)
       additionalProperties: true
 
 DecisionPackageStatus:
@@ -71,11 +71,11 @@ AcceptScenarioRequest:
     scenario_id:
       type: string
       format: uuid
-      description: ID выбранной кнопки HITL (Telegram callback → API)
+      description: ID of the selected HITL button (Telegram callback → API)
     comment:
       type: string
-      description: Опциональный комментарий менеджера
-      example: Согласен с назначением на собеседование
+      description: Optional manager comment
+      example: Agree with assignment to interview
 
 AcceptScenarioResponse:
   type: object
@@ -88,12 +88,12 @@ AcceptScenarioResponse:
     mcp_action_id:
       type: string
       format: uuid
-      description: Идентификатор исполненного MCP-действия
+      description: Identifier of the executed MCP action
 
 Outcome:
   type: object
   description: |
-    История одного HITL-выбора (опция → MCP). Живёт в Memory — канон docs/MEMORY.md.
+    History of one HITL choice (option → MCP). Lives in Memory — canon docs/MEMORY.md.
   required: [id, tenant_id, candidate_id, package_id, scenario_id, action_type, created_at]
   properties:
     id:
@@ -119,7 +119,7 @@ Outcome:
     decided_by:
       type: string
       format: uuid
-      description: user_id менеджера
+      description: Manager user_id
     mcp_action_id:
       type: string
       format: uuid
@@ -130,7 +130,7 @@ Outcome:
 Precedent:
   type: object
   description: |
-    Запись Memory tenant для контекста Automation (API name `Precedent` may lag).
+    Tenant Memory record for Automation context (API name `Precedent` may lag).
     Product canon: docs/MEMORY.md — decision history + other run memory.
   required: [id, tenant_id, summary, created_at]
   properties:
@@ -146,7 +146,7 @@ Precedent:
       nullable: true
     summary:
       type: string
-      example: Профиль backend-кандидата → interview выбран
+      example: Backend candidate profile → interview selected
     action_type:
       $ref: '#/ScenarioActionType'
     outcome_id:

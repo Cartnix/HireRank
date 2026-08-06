@@ -4,35 +4,38 @@ info:
   title: HireRank API
   version: 1.0.0
   description: |
-    REST API контракт платформы **HireRank** (HIRERANK) с **HireRank Automation**
+    REST API contract for the **HireRank** (HIRERANK) platform with **HireRank Automation**
     (events + HITL + MCP + Memory — bureaucracy automation).
 
     **Behavioral Source of Truth:** [use-cases/UC-08](../use-cases/UC-08-automation-hitl-loop.md)
     ([use-cases/README](../use-cases/README.md)).
-    **Compliance (strict):** [ATS_COMPLIANCE_RK](../ATS_COMPLIANCE_RK.md) (RK — primary),
-    [GDPR](../GDPR.md) (EU / West). Vision: [PASSPORT](../PASSPORT.md).
+    **Compliance (strict):** [ATS_COMPLIANCE_RK](../laws/ATS_COMPLIANCE_RK.md) (RK — primary),
+    [GDPR](../laws/GDPR.md) (EU / West). Vision: [PASSPORT](../PASSPORT.md).
 
-    Automation предлагает 2–3 MCP-backed опции бюрократии; человек выбирает в Telegram;
-    FastMCP исполняет только выбранное действие под `tenant_id` и пишет Outcome
-    (история выбора опции) в Memory — [MEMORY.md](../MEMORY.md).
-    AI **не** делает auto-hire / auto-reject. MVP-событие: `resume.uploaded`; цикл расширяем.
+    Automation proposes 2–3 MCP-backed bureaucracy options; a human chooses in Telegram;
+    FastMCP executes only the selected action under `tenant_id` and writes an Outcome
+    (option-choice history) to Memory — [MEMORY.md](../MEMORY.md).
+    AI does **not** auto-hire / auto-reject. MVP event: `resume.uploaded`; the loop expands over time.
 
-    **Hidden multi-tenancy**: Core (self-hosted) — один enterprise на инстанс;
-    `tenant_id` в JWT/БД фиксирован через `TENANT_ID` (env). PostgreSQL RLS фильтрует строки.
-    SaaS позже снимет жёсткую привязку без смены схемы.
+    **Hidden multi-tenancy**: Core (self-hosted) — one enterprise per instance;
+    `tenant_id` in JWT/DB is fixed via `TENANT_ID` (env). PostgreSQL RLS filters rows.
+    SaaS later removes the hard binding without a schema change.
 
-    **RBAC**: роли `administrator`, `hr`, `manager`, `recruiter`, `candidate`.
-    Матрица: [docs/RBAC.md](../RBAC.md).
+    **RBAC**: roles `administrator`, `hr`, `manager`, `recruiter`, `candidate`.
+    Matrix: [docs/RBAC.md](../RBAC.md).
 
-    **Auth**: Bearer JWT. Получить токен через `POST /auth/login`.
+    **Auth**: HttpOnly Secure cookie session (PyJWT) + optional Bearer for
+    non-browser clients. Social login: Google/LinkedIn OAuth for identity only;
+    roles/tenant from PostgreSQL. CSRF: `X-CSRF-Token` on mutating cookie requests.
+    See [RBAC.md](../RBAC.md), [AUTH_COOKIE_OAUTH.md](../issues/AUTH_COOKIE_OAUTH.md).
 
     **Business rules**:
 
-    * кандидат заполняет анкету, HR создаёт карточку кандидата из JSON-анкеты, recruiter остаётся role-only до отдельного use-case;
-    * кандидат после сохранения попадает в пул `unassigned` и публикуется `resume.uploaded` для Automation;
-    * Automation генерирует 2–3 опции → Telegram HITL → MCP → Outcome в Memory ([MEMORY.md](../MEMORY.md));
-    * Administrator — админ-панель, управление пользователями и vacancy CRUD;
-    * Manager в web — read-only; решение по опциям — кнопка в Telegram.
+    * candidate fills in a questionnaire; HR creates a candidate card from the JSON questionnaire; recruiter remains role-only until a dedicated use case;
+    * after save, the candidate enters the `unassigned` pool and `resume.uploaded` is published for Automation;
+    * Automation generates 2–3 options → Telegram HITL → MCP → Outcome in Memory ([MEMORY.md](../MEMORY.md));
+    * Administrator — admin panel, user management, and vacancy CRUD;
+    * Manager in web — read-only; option decisions are made via Telegram button.
 
 servers:
   - url: http://localhost:8000/api/v1
@@ -42,31 +45,40 @@ servers:
 
 tags:
   - name: Auth
-    description: Регистрация, вход, сессия
+    description: Registration, login, session
   - name: Users
-    description: Профиль пользователя и управление пользователями (admin)
+    description: User profile and user management (admin)
   - name: Candidates
-    description: Кандидаты, анкеты, назначение на вакансию
+    description: Candidates, questionnaires, vacancy assignment
   - name: Vacancies
-    description: Вакансии tenant
+    description: Tenant vacancies
   - name: Notifications
-    description: Уведомления
+    description: Notifications
   - name: Dashboard
-    description: Сводные данные по ролям
+    description: Role-specific summary data
   - name: Admin
-    description: Админ-панель, управление пользователями и правами доступа
+    description: Admin panel, user management and access control
   - name: Automations
     description: Decision packages, HITL options, accept; Outcomes/Memory ([MEMORY.md](../MEMORY.md))
 
 security:
+  - CookieAuth: []
   - BearerAuth: []
 
 components:
   securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: |
+        HttpOnly access JWT cookie (name may be `__Host-access_token` in prod).
+        Mutating requests also require `X-CSRF-Token` matching `csrf_token` cookie.
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: Dual-mode for scripts/Swagger (`POST /login/access-token`).
 
   schemas:
     $ref: './schemas/_index.yaml'
@@ -81,8 +93,22 @@ paths:
     $ref: './paths/auth.yaml#/paths/~1auth~1logout'
   /auth/me:
     $ref: './paths/auth.yaml#/paths/~1auth~1me'
+  /auth/check-email:
+    $ref: './paths/auth.yaml#/paths/~1auth~1check-email'
+  /auth/accept-legal:
+    $ref: './paths/auth.yaml#/paths/~1auth~1accept-legal'
   /auth/refresh:
     $ref: './paths/auth.yaml#/paths/~1auth~1refresh'
+  /auth/consent:
+    $ref: './paths/auth.yaml#/paths/~1auth~1consent'
+  /auth/forget-me:
+    $ref: './paths/auth.yaml#/paths/~1auth~1forget-me'
+  /auth/oauth/{provider}/start:
+    $ref: './paths/auth.yaml#/paths/~1auth~1oauth~1{provider}~1start'
+  /auth/callback/google:
+    $ref: './paths/auth.yaml#/paths/~1auth~1callback~1google'
+  /auth/callback/linkedin:
+    $ref: './paths/auth.yaml#/paths/~1auth~1callback~1linkedin'
 
   # Users
   /users/me:

@@ -38,13 +38,13 @@ Notification:
       $ref: '#/NotificationChannel'
     title:
       type: string
-      example: Новый кандидат
+      example: New candidate
     body:
       type: string
-      example: Зарегистрирован новый кандидат — Алибек Сейткали.
+      example: A new candidate has registered — Alibek Seitkali.
     payload:
       type: object
-      description: Дополнительный контекст (candidate_id, vacancy_id, package_id и т.д.)
+      description: Additional context (candidate_id, vacancy_id, package_id, etc.)
       additionalProperties: true
       example:
         candidate_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890

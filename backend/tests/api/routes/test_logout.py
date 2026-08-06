@@ -1,30 +1,18 @@
-"""TDD: logout must require Bearer access + refresh_token body (hard revoke)."""
+"""TDD: logout — cookie or Bearer access + refresh revoke (hard)."""
 
 from __future__ import annotations
-
-from typing import cast
 
 from httpx import AsyncClient
 
 from app.core.config import settings
-from tests.utils.auth_types import TokenPairDict
-from tests.utils.utils import random_email, random_lower_string
+from tests.utils.auth_types import TokenPairDict, register_bearer_pair
 
 
 async def _register_pair(client: AsyncClient) -> TokenPairDict:
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": random_email(),
-            "password": random_lower_string(),
-            "role": "hr",
-        },
-    )
-    assert r.status_code == 201
-    return cast(TokenPairDict, r.json())
+    return await register_bearer_pair(client, role="hr")
 
 
-async def test_logout_requires_bearer(client: AsyncClient) -> None:
+async def test_logout_requires_auth(client: AsyncClient) -> None:
     pair = await _register_pair(client)
     r = await client.post(
         f"{settings.API_V1_STR}/auth/logout",
@@ -33,7 +21,7 @@ async def test_logout_requires_bearer(client: AsyncClient) -> None:
     assert r.status_code == 401
 
 
-async def test_logout_requires_refresh_token_body(client: AsyncClient) -> None:
+async def test_logout_requires_refresh_token(client: AsyncClient) -> None:
     pair = await _register_pair(client)
     r = await client.post(
         f"{settings.API_V1_STR}/auth/logout",
@@ -80,7 +68,6 @@ async def test_logout_without_refresh_would_leave_session_stealable_is_blocked(
 ) -> None:
     """Client-only logout (drop access, keep refresh) must not be enough server-side."""
     pair = await _register_pair(client)
-    # Attacker still holds refresh if server never saw logout with refresh body
     r = await client.post(
         f"{settings.API_V1_STR}/auth/refresh",
         json={"refresh_token": pair["refresh_token"]},
@@ -98,7 +85,6 @@ async def test_logout_rejects_foreign_refresh_token(client: AsyncClient) -> None
     )
     assert r.status_code == 401
 
-    # B's refresh must still work — A must not revoke B's session
     r = await client.post(
         f"{settings.API_V1_STR}/auth/refresh",
         json={"refresh_token": b["refresh_token"]},

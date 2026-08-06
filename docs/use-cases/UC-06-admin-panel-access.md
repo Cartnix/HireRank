@@ -4,7 +4,7 @@ Actor:
 Administrator
 
 Preconditions:
-- Authenticated
+- Authenticated (cookie or Bearer session)
 - Role is `administrator`
 
 Flow:

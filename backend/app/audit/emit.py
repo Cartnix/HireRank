@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ipaddress
 from typing import Any
 from uuid import UUID
 
@@ -10,18 +9,11 @@ from fastapi import BackgroundTasks, Request
 
 from app.audit.schemas import AuditAction, hash_email
 from app.audit.service import get_audit_service
+from app.auth.request_meta import client_ip, sanitize_ip
 from app.core.config import settings
 from app.core.context import set_request_meta, set_tenant_id
 
-
-def sanitize_ip(raw: str | None) -> str | None:
-    """Store only valid IPs (TestClient uses host 'testclient')."""
-    if not raw:
-        return None
-    try:
-        return str(ipaddress.ip_address(raw))
-    except ValueError:
-        return None
+__all__ = ["sanitize_ip", "emit_auth_audit", "email_hash_metadata"]
 
 
 async def emit_auth_audit(
@@ -42,7 +34,7 @@ async def emit_auth_audit(
     set_tenant_id(tenant_id or settings.TENANT_ID)
     set_request_meta(
         {
-            "ip": sanitize_ip(request.client.host if request.client else None),
+            "ip": client_ip(request),
             "user_agent": request.headers.get("user-agent"),
             "path": request.url.path,
             "method": request.method,

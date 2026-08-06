@@ -26,6 +26,7 @@ from app.core.context import (
 from app.core.logging import configure_logging
 from app.models import AuditLog
 from tests.conftest import bypass_rls_session
+from tests.utils.auth_types import register_bearer_pair
 from tests.utils.utils import random_email, random_lower_string
 
 
@@ -56,12 +57,9 @@ async def test_authenticated_me_binds_user_contextvars(client: AsyncClient) -> N
     """JWT /me must bind user_id into contextvars for the request (via deps)."""
     email = random_email()
     password = random_lower_string()
-    reg = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={"email": email, "password": password, "role": "recruiter"},
+    pair = await register_bearer_pair(
+        client, role="recruiter", email=email, password=password
     )
-    assert reg.status_code == 201
-    pair = reg.json()
     r = await client.get(
         f"{settings.API_V1_STR}/auth/me",
         headers={"Authorization": f"Bearer {pair['access_token']}"},

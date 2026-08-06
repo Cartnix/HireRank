@@ -37,11 +37,13 @@ The system supports user registration and authentication.
 
 ### Capabilities
 
-* register a new user;
-* sign in;
-* sign out;
-* session restore;
-* authorization check.
+* register a new user (email/password or Google/LinkedIn);
+* sign in (cookie session; optional Bearer for API clients);
+* sign out (clears cookies + server revoke);
+* session restore via `/auth/me` + HttpOnly cookies;
+* authorization check (`require_permission` / JWT claims).
+
+See [AUTH_COOKIE_OAUTH.md](AUTH_COOKIE_OAUTH.md).
 
 ---
 
@@ -446,9 +448,9 @@ Vacancy filters:
 
 ## Capabilities
 
-* persist authentication;
-* end session;
-* automatic sign-out after token expiry.
+* persist authentication in HttpOnly Secure cookies (CSRF on mutations);
+* end session (logout clears cookies + blacklist/revoke);
+* automatic sign-out after token expiry / refresh rotation.
 
 ---
 

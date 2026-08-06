@@ -5,11 +5,14 @@ paths:
     post:
       tags: [Auth]
       operationId: registerUser
-      summary: Регистрация нового пользователя
+      summary: Register a new user
       description: |
-        Доступные роли при регистрации: `candidate`, `hr`, `manager`, `recruiter`.
-        Роль `administrator` создаётся вручную через БД или seed-скрипт.
-        `tenant_id` не передаётся клиентом — подставляется singleton TENANT_ID (hidden multi-tenancy).
+        Roles available at registration: `candidate`, `hr`, `manager`, `recruiter`.
+        The `administrator` role is created manually via DB or a seed script.
+        `tenant_id` is not sent by the client — the singleton TENANT_ID is injected (hidden multi-tenancy).
+        Requires separated `consent` (RK §1.4): `account_processing` must be true;
+        `talent_pool` / `cross_border` optional (empty by default). Extra fields (e.g. `iin`) are rejected.
+        On success, sets HttpOnly access/refresh cookies + a readable CSRF cookie.
       security: []
       requestBody:
         required: true
@@ -19,19 +22,24 @@ paths:
               $ref: '../schemas/auth.yaml#/RegisterRequest'
       responses:
         '201':
-          description: Пользователь создан, токены выданы
+          description: User created; session in cookies
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: access_token (HttpOnly), refresh_token (HttpOnly), csrf_token
           content:
             application/json:
               schema:
-                $ref: '../schemas/auth.yaml#/TokenPair'
+                $ref: '../schemas/auth.yaml#/AuthSession'
         '400':
-          description: Ошибка валидации
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: '../schemas/common.yaml#/ValidationError'
         '409':
-          description: Email уже зарегистрирован
+          description: Email already registered
           content:
             application/json:
               schema:
@@ -44,7 +52,7 @@ paths:
     post:
       tags: [Auth]
       operationId: loginUser
-      summary: Вход в систему
+      summary: Login (email/password) → cookie session
       security: []
       requestBody:
         required: true
@@ -54,13 +62,13 @@ paths:
               $ref: '../schemas/auth.yaml#/LoginRequest'
       responses:
         '200':
-          description: Успешный вход
+          description: Login successful; JWTs only in Set-Cookie
           content:
             application/json:
               schema:
-                $ref: '../schemas/auth.yaml#/TokenPair'
+                $ref: '../schemas/auth.yaml#/AuthSession'
         '401':
-          description: Неверные учётные данные
+          description: Invalid credentials
           content:
             application/json:
               schema:
@@ -73,33 +81,43 @@ paths:
     post:
       tags: [Auth]
       operationId: logoutUser
-      summary: Выход (обязательны Bearer access + refresh_token в body)
+      summary: Logout (cookie or Bearer + refresh cookie/body)
       description: |
-        `Authorization: Bearer <access_token>` авторизует запрос.
-        `refresh_token` в JSON body обязателен и hard-revoke'ится в token store
-        (без grace), иначе украденный refresh продолжит выдавать access.
+        Access cookie or `Authorization: Bearer` authorizes the request.
+        When using an access cookie, the `X-CSRF-Token` header is required (double-submit).
+        Refresh is taken from the HttpOnly cookie or an optional body; hard-revoked in the token store.
+        Cookies are cleared.
+      parameters:
+        - name: X-CSRF-Token
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
               $ref: '../schemas/auth.yaml#/RefreshRequest'
       responses:
         '204':
-          description: Access в blacklist, refresh отозван
+          description: Access blacklisted, refresh revoked, cookies cleared
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '422':
-          description: Отсутствует refresh_token в body
+        '403':
+          description: CSRF Token missing or invalid
 
   /auth/me:
     get:
       tags: [Auth]
       operationId: getCurrentUser
-      summary: Получить текущего авторизованного пользователя
+      summary: Current user (cookie or Bearer)
+      description: |
+        Includes `legal_acceptance_required`, `consent_refresh_required`, and
+        `current_legal_policy_version` for the policy-update gate (RK).
       responses:
         '200':
-          description: Данные текущего пользователя
+          description: Current user data
           content:
             application/json:
               schema:
@@ -107,43 +125,202 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /auth/refresh:
+  /auth/check-email:
     post:
       tags: [Auth]
-      operationId: refreshToken
-      summary: Обновить access токен по refresh токену
+      operationId: checkEmailRegistered
+      summary: Universal auth — whether email already has an account
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
+              type: object
+              required: [email]
+              additionalProperties: false
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Registration status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [registered]
+                properties:
+                  registered:
+                    type: boolean
+        '429':
+          description: Rate limited
+
+  /auth/accept-legal:
+    post:
+      tags: [Auth]
+      operationId: acceptLegalDocuments
+      summary: Accept current Terms + PD policy version (and refresh consent if expired)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                consent:
+                  $ref: '../schemas/auth.yaml#/ConsentGrant'
+      responses:
+        '200':
+          description: Updated user public profile
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '400':
+          description: Consent required when account processing expired
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: CSRF Token missing or invalid
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Rotate access/refresh (cookie or body refresh)
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
               $ref: '../schemas/auth.yaml#/RefreshRequest'
       responses:
         '200':
-          description: Новая пара токенов
+          description: New cookies issued
           content:
             application/json:
               schema:
-                $ref: '../schemas/auth.yaml#/TokenPair'
+                $ref: '../schemas/auth.yaml#/AuthSession'
         '401':
-          description: Refresh токен недействителен или истёк
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/oauth/{provider}/start:
+    post:
+      tags: [Auth]
+      operationId: oauthStart
+      summary: Start Google/LinkedIn OAuth with consent snapshot
+      description: |
+        Requires separated consent (same as register). Stores consent with OAuth state,
+        then redirects to the IdP authorize URL.
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, linkedin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/auth.yaml#/OAuthStartRequest'
+      responses:
+        '302':
+          description: Redirect to IdP
+        '400':
+          description: Missing account_processing consent or provider misconfigured
+
+  /auth/consent:
+    get:
+      tags: [Auth]
+      operationId: getConsent
+      summary: Current consent grants for the authenticated user
+      responses:
+        '200':
+          description: Separated consent flags
           content:
             application/json:
               schema:
-                $ref: '../schemas/common.yaml#/ErrorResponse'
-              example:
-                code: INVALID_REFRESH_TOKEN
-                message: Refresh token is invalid or expired
+                $ref: '../schemas/auth.yaml#/ConsentPublic'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [Auth]
+      operationId: updateConsent
+      summary: Update optional / required consent grants
+      responses:
+        '200':
+          description: Updated consent state
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/auth.yaml#/ConsentPublic'
+        '400':
+          description: Invalid consent combination
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
-components:
-  responses:
-    Unauthorized:
-      description: Токен отсутствует или недействителен
-      content:
-        application/json:
+  /auth/forget-me:
+    post:
+      tags: [Auth]
+      operationId: forgetMe
+      summary: Withdraw consents and anonymize auth identity (GDPR Art.17 / RK §3.3)
+      responses:
+        '204':
+          description: Consents revoked, identity anonymized, cookies cleared
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Administrators cannot self-erase via this endpoint
+
+  /auth/callback/google:
+    get:
+      tags: [Auth]
+      operationId: googleCallback
+      summary: Google OAuth callback → HireRank cookie session
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
           schema:
-            $ref: '../schemas/common.yaml#/ErrorResponse'
-          example:
-            code: UNAUTHORIZED
-            message: Authentication required
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to FRONTEND_HOST/auth with session cookies
+        '400':
+          description: Invalid state / IdP failure / inactive user
+
+  /auth/callback/linkedin:
+    get:
+      tags: [Auth]
+      operationId: linkedinCallback
+      summary: LinkedIn OAuth callback → HireRank cookie session
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to FRONTEND_HOST/auth with session cookies
+        '400':
+          description: Invalid state / IdP failure / inactive user

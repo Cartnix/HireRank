@@ -10,7 +10,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
 
-from app.audit.emit import sanitize_ip
+from app.auth.request_meta import client_ip
 from app.core.config import settings
 from app.core.context import (
     clear_security_context,
@@ -37,7 +37,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         set_tenant_id(settings.TENANT_ID)
         set_request_meta(
             {
-                "ip": sanitize_ip(request.client.host if request.client else None),
+                "ip": client_ip(request),
                 "user_agent": request.headers.get("user-agent"),
                 "path": request.url.path,
                 "method": request.method,

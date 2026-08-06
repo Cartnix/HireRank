@@ -9,6 +9,7 @@ from app import crud
 from app.core.config import settings
 from app.core.security import verify_password
 from app.models import User, UserCreate
+from tests.utils.consent import register_json
 from tests.utils.user import create_random_user
 from tests.utils.utils import random_email, random_lower_string
 
@@ -103,10 +104,11 @@ async def test_get_existing_user_current_user(
     user_id = user.id
 
     r = await client.post(
-        f"{settings.API_V1_STR}/auth/login",
-        json={"email": username, "password": password},
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": username, "password": password},
     )
     tokens = r.json()
+    client.cookies.clear()
     headers = {"Authorization": f"Bearer {tokens['access_token']}"}
 
     r = await client.get(
@@ -251,6 +253,7 @@ async def test_update_password_me(
     user_db = (await db.exec(user_query)).first()
     assert user_db
     assert user_db.email == settings.FIRST_SUPERUSER
+    assert user_db.hashed_password is not None
     verified, _ = verify_password(new_password, user_db.hashed_password)
     assert verified
 
@@ -266,6 +269,7 @@ async def test_update_password_me(
     await db.refresh(user_db)
 
     assert r.status_code == 200
+    assert user_db.hashed_password is not None
     verified, _ = verify_password(
         settings.FIRST_SUPERUSER_PASSWORD, user_db.hashed_password
     )
@@ -328,12 +332,12 @@ async def test_register_user(client: AsyncClient, db: AsyncSession) -> None:
     username = random_email()
     password = random_lower_string()
     first_name = random_lower_string()
-    data = {
-        "email": username,
-        "password": password,
-        "role": "candidate",
-        "first_name": first_name,
-    }
+    data = register_json(
+        email=username,
+        password=password,
+        role="candidate",
+        first_name=first_name,
+    )
     r = await client.post(
         f"{settings.API_V1_STR}/users/signup",
         json=data,
@@ -348,17 +352,18 @@ async def test_register_user(client: AsyncClient, db: AsyncSession) -> None:
     user_db = (await db.exec(user_query)).first()
     assert user_db
     assert user_db.email == username
+    assert user_db.hashed_password is not None
     verified, _ = verify_password(password, user_db.hashed_password)
     assert verified
 
 
 async def test_register_user_already_exists_error(client: AsyncClient) -> None:
     password = random_lower_string()
-    data = {
-        "email": settings.FIRST_SUPERUSER,
-        "password": password,
-        "role": "candidate",
-    }
+    data = register_json(
+        email=settings.FIRST_SUPERUSER,
+        password=password,
+        role="candidate",
+    )
     r = await client.post(
         f"{settings.API_V1_STR}/users/signup",
         json=data,
@@ -437,10 +442,11 @@ async def test_delete_user_me(client: AsyncClient, db: AsyncSession) -> None:
     user_id = user.id
 
     r = await client.post(
-        f"{settings.API_V1_STR}/auth/login",
-        json={"email": username, "password": password},
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": username, "password": password},
     )
     tokens = r.json()
+    client.cookies.clear()
     headers = {"Authorization": f"Bearer {tokens['access_token']}"}
 
     r = await client.delete(

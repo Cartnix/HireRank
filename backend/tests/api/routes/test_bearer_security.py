@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from typing import Any
 from uuid import UUID, uuid4
 
 import jwt
@@ -11,23 +11,13 @@ from httpx import AsyncClient
 
 from app.core import security
 from app.core.config import settings
-from tests.utils.auth_types import TokenPairDict
-from tests.utils.utils import random_email, random_lower_string
+from tests.utils.auth_types import TokenPairDict, register_bearer_pair
 
 PROTECTED = f"{settings.API_V1_STR}/auth/me"
 
 
 async def _register(client: AsyncClient) -> TokenPairDict:
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": random_email(),
-            "password": random_lower_string(),
-            "role": "candidate",
-        },
-    )
-    assert r.status_code == 201
-    return cast(TokenPairDict, r.json())
+    return await register_bearer_pair(client, role="candidate")
 
 
 def _forge(

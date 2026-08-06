@@ -5,17 +5,17 @@ paths:
     get:
       tags: [Notifications]
       operationId: listNotifications
-      summary: Список уведомлений текущего пользователя
+      summary: List notifications for the current user
       description: |
-        Возвращает уведомления, адресованные текущему пользователю,
-        отсортированные по убыванию `created_at`.
-        Менеджер дополнительно получает уведомления по email через SMTP/Outlook.
+        Returns notifications addressed to the current user,
+        sorted by `created_at` descending.
+        Managers additionally receive email notifications via SMTP/Outlook.
       parameters:
         - name: is_read
           in: query
           schema:
             type: boolean
-          description: Фильтр по статусу прочтения
+          description: Filter by read status
         - name: page
           in: query
           schema:
@@ -28,13 +28,13 @@ paths:
             default: 20
       responses:
         '200':
-          description: Список уведомлений
+          description: Notification list
           content:
             application/json:
               schema:
                 $ref: '../schemas/notification.yaml#/PagedNotificationResponse'
         '401':
-          description: Не авторизован
+          description: Unauthorized
 
   /notifications/{id}/read:
     parameters:
@@ -48,26 +48,26 @@ paths:
     patch:
       tags: [Notifications]
       operationId: markNotificationRead
-      summary: Отметить уведомление как прочитанное
+      summary: Mark notification as read
       responses:
         '200':
-          description: Уведомление отмечено как прочитанное
+          description: Notification marked as read
           content:
             application/json:
               schema:
                 $ref: '../schemas/notification.yaml#/Notification'
         '403':
-          description: Уведомление не принадлежит текущему пользователю
+          description: Notification does not belong to the current user
         '404':
-          description: Уведомление не найдено
+          description: Notification not found
 
   /notifications/read-all:
     post:
       tags: [Notifications]
       operationId: markAllNotificationsRead
-      summary: Отметить все уведомления как прочитанные
+      summary: Mark all notifications as read
       responses:
         '204':
-          description: Все уведомления отмечены как прочитанные
+          description: All notifications marked as read
         '401':
-          description: Не авторизован
+          description: Unauthorized

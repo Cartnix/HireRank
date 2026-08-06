@@ -15,6 +15,7 @@ from app.core import security
 from app.core.config import settings
 from app.models import Permission, Role, RolePermission
 from tests.conftest import bypass_rls_session, session_context
+from tests.utils.auth_types import register_bearer_pair
 from tests.utils.utils import random_email, random_lower_string
 
 USERS_URL = f"{settings.API_V1_STR}/users/"
@@ -37,16 +38,8 @@ async def test_admin_can_list_users(
 async def test_candidate_valid_token_forbidden_on_users_manage(
     client: AsyncClient,
 ) -> None:
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": random_email(),
-            "password": random_lower_string(),
-            "role": "candidate",
-        },
-    )
-    assert r.status_code == 201
-    headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    pair = await register_bearer_pair(client, role="candidate")
+    headers = {"Authorization": f"Bearer {pair['access_token']}"}
 
     r = await client.get(ME_URL, headers=headers)
     assert r.status_code == 200  # authenticated
@@ -57,15 +50,8 @@ async def test_candidate_valid_token_forbidden_on_users_manage(
 
 
 async def test_recruiter_forbidden_on_users_manage(client: AsyncClient) -> None:
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": random_email(),
-            "password": random_lower_string(),
-            "role": "recruiter",
-        },
-    )
-    headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    pair = await register_bearer_pair(client, role="recruiter")
+    headers = {"Authorization": f"Bearer {pair['access_token']}"}
     r = await client.get(USERS_URL, headers=headers)
     assert r.status_code == 403
 
@@ -77,15 +63,7 @@ async def test_jwt_role_claim_alone_does_not_grant_permissions(
     Elevating only the role claim (without permissions) must not unlock
     users.manage — require_permission reads the JWT permissions claim.
     """
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": random_email(),
-            "password": random_lower_string(),
-            "role": "candidate",
-        },
-    )
-    pair = r.json()
+    pair = await register_bearer_pair(client, role="candidate")
     sub = jwt.decode(
         pair["access_token"],
         settings.SECRET_KEY,
@@ -112,16 +90,9 @@ async def test_jwt_role_claim_alone_does_not_grant_permissions(
 async def test_role_escalation_with_wrong_signing_key_is_401(
     client: AsyncClient,
 ) -> None:
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": random_email(),
-            "password": random_lower_string(),
-            "role": "candidate",
-        },
-    )
+    pair = await register_bearer_pair(client, role="candidate")
     sub = jwt.decode(
-        r.json()["access_token"],
+        pair["access_token"],
         settings.SECRET_KEY,
         algorithms=[security.ALGORITHM],
     )["sub"]
@@ -147,12 +118,9 @@ async def test_db_permission_change_picked_up_after_refresh(
 ) -> None:
     email = random_email()
     password = random_lower_string()
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={"email": email, "password": password, "role": "recruiter"},
+    pair = await register_bearer_pair(
+        client, role="recruiter", email=email, password=password
     )
-    assert r.status_code == 201
-    pair = r.json()
     headers = {"Authorization": f"Bearer {pair['access_token']}"}
     assert (await client.get(USERS_URL, headers=headers)).status_code == 403
 
@@ -177,9 +145,12 @@ async def test_db_permission_change_picked_up_after_refresh(
             json={"refresh_token": pair["refresh_token"]},
         )
         assert r.status_code == 200
-        new_headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        new_access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+        assert new_access
+        client.cookies.clear()
+        new_headers = {"Authorization": f"Bearer {new_access}"}
         payload = jwt.decode(
-            r.json()["access_token"],
+            new_access,
             settings.SECRET_KEY,
             algorithms=[security.ALGORITHM],
         )
@@ -205,7 +176,6 @@ async def test_authenticated_session_sets_user_gucs(
     superuser_token_headers: dict[str, str],
 ) -> None:
     """After get_current_user, transaction has app.current_user_id / role GUCs."""
-    from fastapi.security import HTTPAuthorizationCredentials
     from sqlalchemy import event
     from starlette.requests import Request
 
@@ -226,7 +196,6 @@ async def test_authenticated_session_sets_user_gucs(
         "server": ("testserver", 80),
     }
     request = Request(scope)
-    creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
     async with session_context() as session:
 
@@ -236,7 +205,12 @@ async def test_authenticated_session_sets_user_gucs(
         event.listen(session.sync_session, "after_begin", _set_rls)
         try:
             await session.execute(text("SELECT 1"))
-            user = await get_current_user(request=request, session=session, creds=creds)
+            user = await get_current_user(
+                request=request,
+                session=session,
+                creds=token,
+                _access_cookie=None,
+            )
             assert str(user.id) == payload["sub"]
 
             row = (

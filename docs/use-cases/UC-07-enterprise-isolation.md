@@ -4,7 +4,7 @@ Actor:
 Administrator, HR Operator, Manager, Candidate
 
 Preconditions:
-- Authenticated
+- Authenticated (cookie or Bearer session)
 - JWT contains `tenant_id`
 
 Flow:

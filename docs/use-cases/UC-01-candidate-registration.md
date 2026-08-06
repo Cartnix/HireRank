@@ -4,7 +4,7 @@ Actor:
 Candidate
 
 Preconditions:
-- Authenticated
+- Authenticated (browser session via HttpOnly cookie JWT, or Bearer dual-mode)
 - Tenant is resolved from JWT `tenant_id`
 
 Flow:

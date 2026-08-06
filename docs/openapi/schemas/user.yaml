@@ -25,10 +25,10 @@ User:
       $ref: '#/UserRole'
     first_name:
       type: string
-      example: Иван
+      example: Ivan
     last_name:
       type: string
-      example: Петров
+      example: Petrov
     is_active:
       type: boolean
       example: true
@@ -36,16 +36,33 @@ User:
       type: string
       format: date-time
       example: "2025-06-01T10:00:00Z"
+    legal_policy_version:
+      type: string
+      nullable: true
+      example: "2026-08-06"
+    legal_accepted_at:
+      type: string
+      format: date-time
+      nullable: true
+    legal_acceptance_required:
+      type: boolean
+      description: True when accepted policy version ≠ current LEGAL_POLICY_VERSION
+    consent_refresh_required:
+      type: boolean
+      description: True when account_processing consent missing or expired
+    current_legal_policy_version:
+      type: string
+      example: "2026-08-06"
 
 UpdateUserRequest:
   type: object
   properties:
     first_name:
       type: string
-      example: Иван
+      example: Ivan
     last_name:
       type: string
-      example: Петров
+      example: Petrov
     email:
       type: string
       format: email

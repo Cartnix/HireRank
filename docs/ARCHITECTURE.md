@@ -65,7 +65,8 @@ Controls: here, [GDPR.md](GDPR.md), [RBAC.md](RBAC.md):
 
 - On-prem custody of personal data and Memory
 - RLS + FORCE RLS on tenant-scoped tables
-- Bearer JWT; `TOKEN_STORE=memory|redis` — **not** product Memory
+- HttpOnly Secure cookie JWT session (+ optional Bearer dual-mode); `TOKEN_STORE=memory|redis` — **not** product Memory
+- CSRF double-submit for cookie-authenticated mutations; Google/LinkedIn for identity only
 - Human-gated MCP (Art. 22); audit: options → button → MCP → Outcome in Memory
 
 ## Non-goals
