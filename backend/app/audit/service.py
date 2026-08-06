@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 from uuid import UUID
 
@@ -9,13 +10,12 @@ from fastapi import BackgroundTasks
 from sqlalchemy import event as sa_event
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
-from sqlmodel import Session
 
 from app.api.deps import apply_rls_context
 from app.audit.schemas import AuditEvent
 from app.core.config import settings
 from app.core.context import snapshot_security_context
-from app.core.db import engine
+from app.core.db import async_session_maker
 from app.core.logging import get_logger
 from app.models import AuditLog
 
@@ -35,15 +35,15 @@ def _structlog_audit(audit_event: AuditEvent) -> None:
     )
 
 
-def _persist_audit_row(audit_event: AuditEvent) -> None:
-    with Session(engine) as session:
+async def _persist_audit_row(audit_event: AuditEvent) -> None:
+    async with async_session_maker() as session:
 
-        def _set_rls(_sess: Session, _trans: object, connection: Connection) -> None:
+        def _set_rls(_sess: object, _trans: object, connection: Connection) -> None:
             apply_rls_context(connection, tenant_id=audit_event.tenant_id)
 
-        sa_event.listen(session, "after_begin", _set_rls)
+        sa_event.listen(session.sync_session, "after_begin", _set_rls)
         try:
-            session.execute(text("SELECT 1"))
+            await session.execute(text("SELECT 1"))
             row = AuditLog(
                 id=audit_event.event_id,
                 created_at=audit_event.created_at,
@@ -57,12 +57,12 @@ def _persist_audit_row(audit_event: AuditEvent) -> None:
                 metadata_=audit_event.metadata,
             )
             session.add(row)
-            session.commit()
+            await session.commit()
         finally:
-            sa_event.remove(session, "after_begin", _set_rls)
+            sa_event.remove(session.sync_session, "after_begin", _set_rls)
 
 
-def insert_audit_log(audit_event: AuditEvent) -> None:
+async def insert_audit_log_async(audit_event: AuditEvent) -> None:
     """
     Insert one audit row in a fresh Session under SET LOCAL ROLE + tenant GUC.
 
@@ -71,7 +71,7 @@ def insert_audit_log(audit_event: AuditEvent) -> None:
     """
     _structlog_audit(audit_event)
     try:
-        _persist_audit_row(audit_event)
+        await _persist_audit_row(audit_event)
     except Exception:
         get_logger(__name__).critical(
             "audit_insert_failed",
@@ -82,7 +82,11 @@ def insert_audit_log(audit_event: AuditEvent) -> None:
         )
 
 
-def schedule_audit(
+def insert_audit_log(audit_event: AuditEvent) -> None:
+    asyncio.run(insert_audit_log_async(audit_event))
+
+
+async def schedule_audit(
     background_tasks: BackgroundTasks | None,
     audit_event: AuditEvent,
     *,
@@ -96,16 +100,16 @@ def schedule_audit(
     background_tasks=None) so the failure row is still written.
     """
     if force_sync or background_tasks is None:
-        insert_audit_log(audit_event)
+        await insert_audit_log_async(audit_event)
         return
     _structlog_audit(audit_event)
     background_tasks.add_task(_insert_audit_log_db_only, audit_event)
 
 
-def _insert_audit_log_db_only(audit_event: AuditEvent) -> None:
+async def _insert_audit_log_db_only(audit_event: AuditEvent) -> None:
     """BG task: DB insert only (structlog already emitted in schedule_audit)."""
     try:
-        _persist_audit_row(audit_event)
+        await _persist_audit_row(audit_event)
     except Exception:
         get_logger(__name__).critical(
             "audit_insert_failed",
@@ -156,7 +160,7 @@ class AuditLogService:
             user_agent=user_agent if user_agent is not None else snap["user_agent"],
         )
 
-    def log(
+    async def log(
         self,
         background_tasks: BackgroundTasks | None,
         action: str,
@@ -188,7 +192,7 @@ class AuditLogService:
         )
         if event is None:
             return
-        schedule_audit(background_tasks, event, force_sync=force_sync)
+        await schedule_audit(background_tasks, event, force_sync=force_sync)
 
 
 _audit_service: AuditLogService | None = None

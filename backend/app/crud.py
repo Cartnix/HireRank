@@ -1,7 +1,8 @@
 import uuid
 from typing import Any
 
-from sqlmodel import Session, col, select
+from sqlmodel import col, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
@@ -17,7 +18,7 @@ from app.models import (
 )
 
 
-def create_user(*, session: Session, user_create: UserCreate) -> User:
+async def create_user(*, session: AsyncSession, user_create: UserCreate) -> User:
     # Core: always bind to singleton tenant — ignore any client/body override
     db_obj = User.model_validate(
         user_create,
@@ -27,12 +28,14 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
         },
     )
     session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
+    await session.commit()
+    await session.refresh(db_obj)
     return db_obj
 
 
-def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
+async def update_user(
+    *, session: AsyncSession, db_user: User, user_in: UserUpdate
+) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
     extra_data: dict[str, Any] = {}
     if "password" in user_data:
@@ -41,31 +44,35 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
         extra_data["hashed_password"] = hashed_password
     db_user.sqlmodel_update(user_data, update=extra_data)
     session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
+    await session.commit()
+    await session.refresh(db_user)
     return db_user
 
 
-def get_user_by_email(*, session: Session, email: str) -> User | None:
+async def get_user_by_email(*, session: AsyncSession, email: str) -> User | None:
     statement = select(User).where(
         User.email == email,
         User.tenant_id == settings.TENANT_ID,
     )
-    session_user = session.exec(statement).first()
+    session_user = (await session.exec(statement)).first()
     return session_user
 
 
-def get_user_by_id(*, session: Session, user_id: uuid.UUID) -> User | None:
+async def get_user_by_id(*, session: AsyncSession, user_id: uuid.UUID) -> User | None:
     """Tenant-scoped PK lookup — prefer over session.get under FORCE RLS."""
-    return session.exec(
-        select(User).where(
-            User.id == user_id,
-            User.tenant_id == settings.TENANT_ID,
+    return (
+        await session.exec(
+            select(User).where(
+                User.id == user_id,
+                User.tenant_id == settings.TENANT_ID,
+            )
         )
     ).first()
 
 
-def get_permissions_for_role(*, session: Session, role_name: str) -> list[str]:
+async def get_permissions_for_role(
+    *, session: AsyncSession, role_name: str
+) -> list[str]:
     """Load permission names for a role slug from the M2M tables."""
     statement = (
         select(Permission.name)
@@ -74,15 +81,17 @@ def get_permissions_for_role(*, session: Session, role_name: str) -> list[str]:
         .where(Role.name == role_name)
         .order_by(col(Permission.name))
     )
-    return list(session.exec(statement).all())
+    return list((await session.exec(statement)).all())
 
 
 # Dummy hash to use for timing attack prevention when user is not found
 DUMMY_HASH = "$argon2id$v=19$m=65536,t=3,p=4$MjQyZWE1MzBjYjJlZTI0Yw$YTU4NGM5ZTZmYjE2NzZlZjY0ZWY3ZGRkY2U2OWFjNjk"
 
 
-def authenticate(*, session: Session, email: str, password: str) -> User | None:
-    db_user = get_user_by_email(session=session, email=email)
+async def authenticate(
+    *, session: AsyncSession, email: str, password: str
+) -> User | None:
+    db_user = await get_user_by_email(session=session, email=email)
     if not db_user:
         verify_password(password, DUMMY_HASH)
         return None
@@ -92,14 +101,16 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
     if updated_password_hash:
         db_user.hashed_password = updated_password_hash
         session.add(db_user)
-        session.commit()
-        session.refresh(db_user)
+        await session.commit()
+        await session.refresh(db_user)
     return db_user
 
 
-def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -> Item:
+async def create_item(
+    *, session: AsyncSession, item_in: ItemCreate, owner_id: uuid.UUID
+) -> Item:
     db_item = Item.model_validate(item_in, update={"owner_id": owner_id})
     session.add(db_item)
-    session.commit()
-    session.refresh(db_item)
+    await session.commit()
+    await session.refresh(db_item)
     return db_item

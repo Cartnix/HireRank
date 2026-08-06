@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
 from datetime import UTC, datetime
 
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 from app.core import security
 from app.core.config import settings
@@ -13,8 +13,8 @@ from app.core.token_store import get_token_store, reset_token_store
 from tests.utils.utils import random_email, random_lower_string
 
 
-def test_blacklist_ttl_matches_remaining_access_token_lifetime(
-    client: TestClient,
+async def test_blacklist_ttl_matches_remaining_access_token_lifetime(
+    client: AsyncClient,
 ) -> None:
     """Logout blacklist TTL must track JWT exp, not a fixed arbitrary window."""
     reset_token_store()
@@ -22,7 +22,7 @@ def test_blacklist_ttl_matches_remaining_access_token_lifetime(
 
     email = random_email()
     password = random_lower_string()
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
         json={"email": email, "password": password, "role": "candidate"},
     )
@@ -33,7 +33,7 @@ def test_blacklist_ttl_matches_remaining_access_token_lifetime(
     exp = int(payload["exp"])
     remaining = max(exp - int(datetime.now(UTC).timestamp()), 1)
 
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/logout",
         headers={"Authorization": f"Bearer {pair['access_token']}"},
         json={"refresh_token": pair["refresh_token"]},
@@ -47,8 +47,8 @@ def test_blacklist_ttl_matches_remaining_access_token_lifetime(
     assert ttl_left <= remaining + 5
 
 
-def test_refresh_rotation_grace_allows_parallel_duplicate_refresh(
-    client: TestClient,
+async def test_refresh_rotation_grace_allows_parallel_duplicate_refresh(
+    client: AsyncClient,
 ) -> None:
     """
     Mobile flaky networks may fire /auth/refresh twice with the same token.
@@ -58,36 +58,33 @@ def test_refresh_rotation_grace_allows_parallel_duplicate_refresh(
     reset_token_store()
     email = random_email()
     password = random_lower_string()
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
         json={"email": email, "password": password, "role": "candidate"},
     )
     assert r.status_code == 201
     refresh_token = r.json()["refresh_token"]
 
-    def _refresh() -> int:
-        resp = client.post(
+    async def _refresh() -> int:
+        resp = await client.post(
             f"{settings.API_V1_STR}/auth/refresh",
             json={"refresh_token": refresh_token},
         )
         return resp.status_code
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        codes = [
-            f.result() for f in as_completed([pool.submit(_refresh) for _ in range(2)])
-        ]
+    codes = await asyncio.gather(_refresh(), _refresh())
 
     assert codes.count(200) == 2
     assert 401 not in codes
 
 
-def test_refresh_after_grace_expires_is_rejected(client: TestClient) -> None:
+async def test_refresh_after_grace_expires_is_rejected(client: AsyncClient) -> None:
     reset_token_store()
     store = get_token_store()
 
     email = random_email()
     password = random_lower_string()
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
         json={"email": email, "password": password, "role": "candidate"},
     )
@@ -95,7 +92,7 @@ def test_refresh_after_grace_expires_is_rejected(client: TestClient) -> None:
     payload = security.decode_token(refresh_token)
     jti = payload["jti"]
 
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/refresh",
         json={"refresh_token": refresh_token},
     )
@@ -103,31 +100,31 @@ def test_refresh_after_grace_expires_is_rejected(client: TestClient) -> None:
 
     store.force_expire_grace(jti, tenant_id=settings.TENANT_ID)
 
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/refresh",
         json={"refresh_token": refresh_token},
     )
     assert r.status_code == 401
 
 
-def test_logout_hard_revokes_refresh_without_grace(client: TestClient) -> None:
+async def test_logout_hard_revokes_refresh_without_grace(client: AsyncClient) -> None:
     reset_token_store()
     email = random_email()
     password = random_lower_string()
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
         json={"email": email, "password": password, "role": "candidate"},
     )
     pair = r.json()
 
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/logout",
         headers={"Authorization": f"Bearer {pair['access_token']}"},
         json={"refresh_token": pair["refresh_token"]},
     )
     assert r.status_code == 204
 
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/refresh",
         json={"refresh_token": pair["refresh_token"]},
     )

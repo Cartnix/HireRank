@@ -21,7 +21,7 @@ router = APIRouter(tags=["login"])
 
 
 @router.post("/login/access-token", response_model=TokenPair)
-def login_access_token(
+async def login_access_token(
     request: Request,
     background_tasks: BackgroundTasks,
     session: SessionDep,
@@ -30,11 +30,11 @@ def login_access_token(
     """
     OAuth2 form-compatible login (Swagger). Prefer POST /auth/login (JSON).
     """
-    user = crud.authenticate(
+    user = await crud.authenticate(
         session=session, email=form_data.username, password=form_data.password
     )
     if not user:
-        emit_auth_audit(
+        await emit_auth_audit(
             request=request,
             background_tasks=background_tasks,
             action=AuditAction.LOGIN_FAILURE,
@@ -43,7 +43,7 @@ def login_access_token(
         )
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
-        emit_auth_audit(
+        await emit_auth_audit(
             request=request,
             background_tasks=background_tasks,
             action=AuditAction.LOGIN_FAILURE,
@@ -54,8 +54,8 @@ def login_access_token(
             force_sync=True,
         )
         raise HTTPException(status_code=400, detail="Inactive user")
-    pair = _issue_token_pair(session, user)
-    emit_auth_audit(
+    pair = await _issue_token_pair(session, user)
+    await emit_auth_audit(
         request=request,
         background_tasks=background_tasks,
         action=AuditAction.LOGIN_SUCCESS,
@@ -73,8 +73,8 @@ def test_token(current_user: CurrentUser) -> Any:
 
 
 @router.post("/password-recovery/{email}")
-def recover_password(email: str, session: SessionDep) -> Message:
-    user = crud.get_user_by_email(session=session, email=email)
+async def recover_password(email: str, session: SessionDep) -> Message:
+    user = await crud.get_user_by_email(session=session, email=email)
     if user:
         password_reset_token = generate_password_reset_token(email=email)
         email_data = generate_reset_password_email(
@@ -91,17 +91,17 @@ def recover_password(email: str, session: SessionDep) -> Message:
 
 
 @router.post("/reset-password/")
-def reset_password(session: SessionDep, body: NewPassword) -> Message:
+async def reset_password(session: SessionDep, body: NewPassword) -> Message:
     email = verify_password_reset_token(token=body.token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
-    user = crud.get_user_by_email(session=session, email=email)
+    user = await crud.get_user_by_email(session=session, email=email)
     if not user:
         raise HTTPException(status_code=400, detail="Invalid token")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     user_in_update = UserUpdate(password=body.new_password)
-    crud.update_user(
+    await crud.update_user(
         session=session,
         db_user=user,
         user_in=user_in_update,
@@ -114,8 +114,8 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
     dependencies=[Depends(get_current_active_superuser)],
     response_class=HTMLResponse,
 )
-def recover_password_html_content(email: str, session: SessionDep) -> Any:
-    user = crud.get_user_by_email(session=session, email=email)
+async def recover_password_html_content(email: str, session: SessionDep) -> Any:
+    user = await crud.get_user_by_email(session=session, email=email)
 
     if not user:
         raise HTTPException(

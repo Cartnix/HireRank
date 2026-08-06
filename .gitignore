@@ -27,3 +27,6 @@ package-lock.json
 package.json
 
 .mypy_cache
+.pytest_cache
+.coverage
+.ruff_cache

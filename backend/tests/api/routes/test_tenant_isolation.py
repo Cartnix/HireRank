@@ -7,28 +7,28 @@ foreign tenant rows must never leak through JWT, RLS, or body injection.
 
 from __future__ import annotations
 
+import asyncio
 import uuid
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import timedelta
 
 import jwt
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from sqlalchemy import text
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core import security
 from app.core.config import settings
-from app.core.db import engine
 from app.core.security import get_password_hash
 from app.models import Tenant, User, UserRole
-from tests.conftest import bypass_rls_session
+from tests.conftest import bypass_rls_session, session_context
 from tests.utils.utils import random_email, random_lower_string
 
 FOREIGN_TENANT_ID = uuid.UUID("11111111-1111-4111-8111-111111111111")
 
 
-def _ensure_foreign_tenant(session: Session) -> Tenant:
-    tenant = session.get(Tenant, FOREIGN_TENANT_ID)
+async def _ensure_foreign_tenant(session: AsyncSession) -> Tenant:
+    tenant = await session.get(Tenant, FOREIGN_TENANT_ID)
     if tenant:
         return tenant
     tenant = Tenant(
@@ -37,13 +37,15 @@ def _ensure_foreign_tenant(session: Session) -> Tenant:
         name="Foreign Tenant B",
     )
     session.add(tenant)
-    session.commit()
-    session.refresh(tenant)
+    await session.commit()
+    await session.refresh(tenant)
     return tenant
 
 
-def _seed_foreign_user(session: Session, *, email: str | None = None) -> User:
-    _ensure_foreign_tenant(session)
+async def _seed_foreign_user(
+    session: AsyncSession, *, email: str | None = None
+) -> User:
+    await _ensure_foreign_tenant(session)
     user = User(
         email=email or random_email(),
         hashed_password=get_password_hash(random_lower_string()),
@@ -54,25 +56,26 @@ def _seed_foreign_user(session: Session, *, email: str | None = None) -> User:
         is_active=True,
     )
     session.add(user)
-    session.commit()
-    session.refresh(user)
+    await session.commit()
+    await session.refresh(user)
     # Detach safely for use after session closes (avoid DetachedInstanceError)
     session.expunge(user)
     return user
 
 
-def _rls_bound_ids(tenant_id: uuid.UUID) -> set[uuid.UUID]:
+async def _rls_bound_ids(tenant_id: uuid.UUID) -> set[uuid.UUID]:
     """Query users under the non-BYPASSRLS app role + tenant GUC."""
-    with Session(engine) as session:
-        session.execute(text("BEGIN"))
-        session.execute(text("SET row_security = on"))
-        session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
-        session.execute(
+    async with session_context() as session:
+        await session.execute(text("BEGIN"))
+        await session.execute(text("SET row_security = on"))
+        await session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
+        await session.execute(
             text("SELECT set_config('app.current_tenant', :tenant, true)"),
             {"tenant": str(tenant_id)},
         )
-        ids = {u.id for u in session.exec(select(User)).all()}
-        session.execute(text("ROLLBACK"))
+        users = (await session.exec(select(User))).all()
+        ids = {user.id for user in users}
+        await session.execute(text("ROLLBACK"))
         return ids
 
 
@@ -91,10 +94,10 @@ def _forge_access_token(
     return token
 
 
-def test_positive_tenant_bound_me_returns_core_tenant_only(
-    client: TestClient, superuser_token_headers: dict[str, str]
+async def test_positive_tenant_bound_me_returns_core_tenant_only(
+    client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
-    r = client.get(
+    r = await client.get(
         f"{settings.API_V1_STR}/auth/me",
         headers=superuser_token_headers,
     )
@@ -104,13 +107,13 @@ def test_positive_tenant_bound_me_returns_core_tenant_only(
     assert body["tenant_id"] != str(FOREIGN_TENANT_ID)
 
 
-def test_positive_list_users_excludes_foreign_tenant_rows(
-    client: TestClient, superuser_token_headers: dict[str, str]
+async def test_positive_list_users_excludes_foreign_tenant_rows(
+    client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
-    with bypass_rls_session() as seed:
-        foreign = _seed_foreign_user(seed)
+    async with bypass_rls_session() as seed:
+        foreign = await _seed_foreign_user(seed)
 
-    r = client.get(
+    r = await client.get(
         f"{settings.API_V1_STR}/users/",
         headers=superuser_token_headers,
     )
@@ -121,14 +124,14 @@ def test_positive_list_users_excludes_foreign_tenant_rows(
         assert item["tenant_id"] == str(settings.TENANT_ID)
 
 
-def test_cross_tenant_leak_get_user_by_id_returns_404(
-    client: TestClient, superuser_token_headers: dict[str, str]
+async def test_cross_tenant_leak_get_user_by_id_returns_404(
+    client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
     """Valid Core JWT + foreign user UUID must not reveal that the row exists."""
-    with bypass_rls_session() as seed:
-        foreign = _seed_foreign_user(seed)
+    async with bypass_rls_session() as seed:
+        foreign = await _seed_foreign_user(seed)
 
-    r = client.get(
+    r = await client.get(
         f"{settings.API_V1_STR}/users/{foreign.id}",
         headers=superuser_token_headers,
     )
@@ -136,20 +139,22 @@ def test_cross_tenant_leak_get_user_by_id_returns_404(
     assert r.json()["detail"] == "User not found"
 
 
-def test_cross_tenant_jwt_claim_mismatch_is_rejected(
-    client: TestClient, superuser_token_headers: dict[str, str]
+async def test_cross_tenant_jwt_claim_mismatch_is_rejected(
+    client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
     """Forged access token with foreign tenant_id must not authenticate."""
-    me = client.get(
-        f"{settings.API_V1_STR}/auth/me",
-        headers=superuser_token_headers,
+    me = (
+        await client.get(
+            f"{settings.API_V1_STR}/auth/me",
+            headers=superuser_token_headers,
+        )
     ).json()
     forged = _forge_access_token(
         user_id=uuid.UUID(me["id"]),
         tenant_id=FOREIGN_TENANT_ID,
         role=me["role"],
     )
-    r = client.get(
+    r = await client.get(
         f"{settings.API_V1_STR}/auth/me",
         headers={"Authorization": f"Bearer {forged}"},
     )
@@ -157,19 +162,19 @@ def test_cross_tenant_jwt_claim_mismatch_is_rejected(
     assert r.json()["detail"] == "Tenant mismatch"
 
 
-def test_cross_tenant_jwt_sub_of_foreign_user_returns_404(
-    client: TestClient,
+async def test_cross_tenant_jwt_sub_of_foreign_user_returns_404(
+    client: AsyncClient,
 ) -> None:
     """Core tenant claim + foreign user sub → RLS hides row → 404 (not 200)."""
-    with bypass_rls_session() as seed:
-        foreign = _seed_foreign_user(seed)
+    async with bypass_rls_session() as seed:
+        foreign = await _seed_foreign_user(seed)
 
     forged = _forge_access_token(
         user_id=foreign.id,
         tenant_id=settings.TENANT_ID,
         role="recruiter",
     )
-    r = client.get(
+    r = await client.get(
         f"{settings.API_V1_STR}/auth/me",
         headers={"Authorization": f"Bearer {forged}"},
     )
@@ -177,16 +182,16 @@ def test_cross_tenant_jwt_sub_of_foreign_user_returns_404(
     assert r.json()["detail"] == "User not found"
 
 
-def test_write_exploit_admin_create_ignores_body_tenant_id(
-    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+async def test_write_exploit_admin_create_ignores_body_tenant_id(
+    client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
     """POST /users with tenant_id of Tenant B must still bind to Core TENANT_ID."""
-    with bypass_rls_session() as seed:
-        _ensure_foreign_tenant(seed)
+    async with bypass_rls_session() as seed:
+        await _ensure_foreign_tenant(seed)
 
     email = random_email()
     password = random_lower_string()
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/users/",
         headers=superuser_token_headers,
         json={
@@ -201,21 +206,21 @@ def test_write_exploit_admin_create_ignores_body_tenant_id(
     assert created["tenant_id"] == str(settings.TENANT_ID)
     assert created["tenant_id"] != str(FOREIGN_TENANT_ID)
 
-    db.execute(text("SET row_security = off"))
+    await db.execute(text("SET row_security = off"))
     try:
-        row = db.exec(select(User).where(User.email == email)).first()
+        row = (await db.exec(select(User).where(User.email == email))).first()
         assert row is not None
         assert row.tenant_id == settings.TENANT_ID
     finally:
-        db.execute(text("SET row_security = on"))
-        db.commit()
+        await db.execute(text("SET row_security = on"))
+        await db.commit()
 
 
-def test_write_exploit_register_ignores_body_tenant_and_persists_core(
-    client: TestClient, db: Session
+async def test_write_exploit_register_ignores_body_tenant_and_persists_core(
+    client: AsyncClient, db: AsyncSession
 ) -> None:
     email = random_email()
-    r = client.post(
+    r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
         json={
             "email": email,
@@ -232,28 +237,30 @@ def test_write_exploit_register_ignores_body_tenant_and_persists_core(
     )
     assert payload["tenant_id"] == str(settings.TENANT_ID)
 
-    db.execute(text("SET row_security = off"))
+    await db.execute(text("SET row_security = off"))
     try:
-        row = db.exec(select(User).where(User.email == email)).first()
+        row = (await db.exec(select(User).where(User.email == email))).first()
         assert row is not None
         assert row.tenant_id == settings.TENANT_ID
     finally:
-        db.execute(text("SET row_security = on"))
-        db.commit()
+        await db.execute(text("SET row_security = on"))
+        await db.commit()
 
 
-def test_rls_force_enabled_on_user_and_tenant_tables() -> None:
+async def test_rls_force_enabled_on_user_and_tenant_tables() -> None:
     """Table owner must not silently bypass policies (FORCE ROW LEVEL SECURITY)."""
-    with Session(engine) as session:
-        rows = session.execute(
-            text(
-                """
+    async with session_context() as session:
+        rows = (
+            await session.execute(
+                text(
+                    """
                 SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity
                 FROM pg_class c
                 JOIN pg_namespace n ON n.oid = c.relnamespace
                 WHERE n.nspname = 'public' AND c.relname IN ('user', 'tenant')
                 ORDER BY c.relname
                 """
+                )
             )
         ).all()
     by_name = {name: (rls, force) for name, rls, force in rows}
@@ -261,12 +268,13 @@ def test_rls_force_enabled_on_user_and_tenant_tables() -> None:
     assert by_name["tenant"] == (True, True)
 
 
-def test_rls_policies_use_nullif_uuid_cast() -> None:
+async def test_rls_policies_use_nullif_uuid_cast() -> None:
     """Empty/missing GUC must not raise on ::uuid — policies use NULLIF."""
-    with Session(engine) as session:
-        quals = session.execute(
-            text(
-                """
+    async with session_context() as session:
+        quals = (
+            await session.execute(
+                text(
+                    """
                 SELECT tablename, qual
                 FROM pg_policies
                 WHERE schemaname = 'public'
@@ -274,6 +282,7 @@ def test_rls_policies_use_nullif_uuid_cast() -> None:
                     'tenant_isolation_policy', 'tenant_self_policy'
                   )
                 """
+                )
             )
         ).all()
     assert len(quals) == 2
@@ -284,70 +293,74 @@ def test_rls_policies_use_nullif_uuid_cast() -> None:
         assert "::uuid" in qual or "::uuid" in qual.lower()
 
 
-def test_empty_tenant_guc_hides_all_rows_without_error() -> None:
+async def test_empty_tenant_guc_hides_all_rows_without_error() -> None:
     """Best-practice fail-closed: empty GUC hides rows and must not error."""
-    with bypass_rls_session() as seed:
-        _seed_foreign_user(seed)
+    async with bypass_rls_session() as seed:
+        await _seed_foreign_user(seed)
 
-    with Session(engine) as session:
-        session.execute(text("SET row_security = on"))
-        session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
-        session.execute(text("SELECT set_config('app.current_tenant', '', true)"))
-        ids = session.execute(text('SELECT id FROM "user"')).scalars().all()
+    async with session_context() as session:
+        await session.execute(text("SET row_security = on"))
+        await session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
+        await session.execute(text("SELECT set_config('app.current_tenant', '', true)"))
+        ids = (await session.execute(text('SELECT id FROM "user"'))).scalars().all()
         assert ids == []
 
 
-def test_rls_guc_hides_foreign_rows_on_fresh_connection() -> None:
-    with bypass_rls_session() as seed:
-        foreign = _seed_foreign_user(seed)
-        core_user = seed.exec(
-            select(User).where(User.tenant_id == settings.TENANT_ID)
+async def test_rls_guc_hides_foreign_rows_on_fresh_connection() -> None:
+    async with bypass_rls_session() as seed:
+        foreign = await _seed_foreign_user(seed)
+        core_user = (
+            await seed.exec(select(User).where(User.tenant_id == settings.TENANT_ID))
         ).first()
         assert core_user is not None
         core_id = core_user.id
         foreign_id = foreign.id
 
-    visible_ids = _rls_bound_ids(settings.TENANT_ID)
+    visible_ids = await _rls_bound_ids(settings.TENANT_ID)
     assert core_id in visible_ids
     assert foreign_id not in visible_ids
 
 
-def test_rls_guc_isolated_across_parallel_sessions() -> None:
+async def test_rls_guc_isolated_across_parallel_sessions() -> None:
     """Two physical connections with different GUCs must not pollute each other."""
-    with bypass_rls_session() as seed:
-        foreign = _seed_foreign_user(seed)
-        core_user = seed.exec(
-            select(User).where(User.tenant_id == settings.TENANT_ID)
+    async with bypass_rls_session() as seed:
+        foreign = await _seed_foreign_user(seed)
+        core_user = (
+            await seed.exec(select(User).where(User.tenant_id == settings.TENANT_ID))
         ).first()
         assert core_user is not None
         core_id = core_user.id
         foreign_id = foreign.id
 
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        futures = [
-            pool.submit(_rls_bound_ids, settings.TENANT_ID)
+    results = await asyncio.gather(
+        *[
+            _rls_bound_ids(settings.TENANT_ID)
             if i % 2 == 0
-            else pool.submit(_rls_bound_ids, FOREIGN_TENANT_ID)
+            else _rls_bound_ids(FOREIGN_TENANT_ID)
             for i in range(40)
         ]
-        results = [f.result() for f in as_completed(futures)]
+    )
 
     assert len(results) == 40
-    core_ids = _rls_bound_ids(settings.TENANT_ID)
-    foreign_ids = _rls_bound_ids(FOREIGN_TENANT_ID)
+    core_ids = await _rls_bound_ids(settings.TENANT_ID)
+    foreign_ids = await _rls_bound_ids(FOREIGN_TENANT_ID)
     assert core_id in core_ids and foreign_id not in core_ids
     assert foreign_id in foreign_ids and core_id not in foreign_ids
 
 
-def test_superuser_bypassrls_pitfall_is_mitigated_by_app_role() -> None:
+async def test_superuser_bypassrls_pitfall_is_mitigated_by_app_role() -> None:
     """Document the pitfall: login role may BYPASSRLS; app role must not."""
-    with Session(engine) as session:
-        login_bypass = session.execute(
-            text("SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user")
+    async with session_context() as session:
+        login_bypass = (
+            await session.execute(
+                text("SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user")
+            )
         ).scalar_one()
-        session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
-        app_bypass = session.execute(
-            text("SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user")
+        await session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
+        app_bypass = (
+            await session.execute(
+                text("SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user")
+            )
         ).scalar_one()
     # Local/dev often connects as postgres (bypass=true); runtime role must be false.
     assert app_bypass is False

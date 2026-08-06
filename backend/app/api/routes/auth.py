@@ -14,7 +14,7 @@ from fastapi import (
 from fastapi.security import HTTPAuthorizationCredentials
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
-from sqlmodel import Session
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep, bearer_scheme
@@ -40,11 +40,11 @@ from app.models import (
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-def _issue_token_pair(session: Session, user: User) -> TokenPair:
+async def _issue_token_pair(session: AsyncSession, user: User) -> TokenPair:
     access_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     role = role_str(user.role)
-    permissions = crud.get_permissions_for_role(session=session, role_name=role)
+    permissions = await crud.get_permissions_for_role(session=session, role_name=role)
     access_token, _, _ = security.create_access_token(
         subject=user.id,
         role=role,
@@ -104,7 +104,7 @@ def _blacklist_access_from_creds(
         400: {"model": ErrorResponse},
     },
 )
-def register(
+async def register(
     request: Request,
     background_tasks: BackgroundTasks,
     session: SessionDep,
@@ -115,7 +115,7 @@ def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Role is not allowed for registration",
         )
-    existing = crud.get_user_by_email(session=session, email=body.email)
+    existing = await crud.get_user_by_email(session=session, email=body.email)
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -129,9 +129,9 @@ def register(
         last_name=body.last_name,
         tenant_id=settings.TENANT_ID,
     )
-    user = crud.create_user(session=session, user_create=user_create)
-    pair = _issue_token_pair(session, user)
-    emit_auth_audit(
+    user = await crud.create_user(session=session, user_create=user_create)
+    pair = await _issue_token_pair(session, user)
+    await emit_auth_audit(
         request=request,
         background_tasks=background_tasks,
         action=AuditAction.REGISTER,
@@ -148,15 +148,17 @@ def register(
     response_model=TokenPair,
     responses={401: {"model": ErrorResponse}},
 )
-def login(
+async def login(
     request: Request,
     background_tasks: BackgroundTasks,
     session: SessionDep,
     body: LoginRequest,
 ) -> TokenPair:
-    user = crud.authenticate(session=session, email=body.email, password=body.password)
+    user = await crud.authenticate(
+        session=session, email=body.email, password=body.password
+    )
     if not user:
-        emit_auth_audit(
+        await emit_auth_audit(
             request=request,
             background_tasks=background_tasks,
             action=AuditAction.LOGIN_FAILURE,
@@ -168,7 +170,7 @@ def login(
             detail="Email or password is incorrect",
         )
     if not user.is_active:
-        emit_auth_audit(
+        await emit_auth_audit(
             request=request,
             background_tasks=background_tasks,
             action=AuditAction.LOGIN_FAILURE,
@@ -182,8 +184,8 @@ def login(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user",
         )
-    pair = _issue_token_pair(session, user)
-    emit_auth_audit(
+    pair = await _issue_token_pair(session, user)
+    await emit_auth_audit(
         request=request,
         background_tasks=background_tasks,
         action=AuditAction.LOGIN_SUCCESS,
@@ -204,7 +206,7 @@ def login(
         422: {"description": "Missing refresh_token body"},
     },
 )
-def logout(
+async def logout(
     request: Request,
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
@@ -245,7 +247,7 @@ def logout(
         tenant_id=token_data.tenant_id or settings.TENANT_ID,
     )
     _blacklist_access_from_creds(creds)
-    emit_auth_audit(
+    await emit_auth_audit(
         request=request,
         background_tasks=background_tasks,
         action=AuditAction.LOGOUT,
@@ -267,7 +269,7 @@ def me(current_user: CurrentUser) -> Any:
     response_model=TokenPair,
     responses={401: {"model": ErrorResponse}},
 )
-def refresh(
+async def refresh(
     request: Request,
     background_tasks: BackgroundTasks,
     session: SessionDep,
@@ -277,7 +279,7 @@ def refresh(
         payload = security.decode_token(body.refresh_token)
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
-        emit_auth_audit(
+        await emit_auth_audit(
             request=request,
             background_tasks=background_tasks,
             action=AuditAction.LOGIN_FAILURE,
@@ -289,7 +291,7 @@ def refresh(
             detail="Refresh token is invalid or expired",
         )
     if token_data.type != security.TOKEN_TYPE_REFRESH or not token_data.jti:
-        emit_auth_audit(
+        await emit_auth_audit(
             request=request,
             background_tasks=background_tasks,
             action=AuditAction.LOGIN_FAILURE,
@@ -304,7 +306,7 @@ def refresh(
     tenant_id = token_data.tenant_id or settings.TENANT_ID
     stored_user_id = store.get_refresh_user(token_data.jti, tenant_id=tenant_id)
     if not stored_user_id or stored_user_id != token_data.sub:
-        emit_auth_audit(
+        await emit_auth_audit(
             request=request,
             background_tasks=background_tasks,
             action=AuditAction.LOGIN_FAILURE,
@@ -324,9 +326,9 @@ def refresh(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or expired",
         )
-    user = crud.get_user_by_id(session=session, user_id=user_id)
+    user = await crud.get_user_by_id(session=session, user_id=user_id)
     if not user or not user.is_active:
-        emit_auth_audit(
+        await emit_auth_audit(
             request=request,
             background_tasks=background_tasks,
             action=AuditAction.LOGIN_FAILURE,
@@ -342,8 +344,8 @@ def refresh(
         grace_seconds=settings.REFRESH_TOKEN_GRACE_SECONDS,
         tenant_id=tenant_id,
     )
-    pair = _issue_token_pair(session, user)
-    emit_auth_audit(
+    pair = await _issue_token_pair(session, user)
+    await emit_auth_audit(
         request=request,
         background_tasks=background_tasks,
         action=AuditAction.REFRESH,
