@@ -12,7 +12,6 @@ import uuid
 from datetime import timedelta
 
 import jwt
-import pytest
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlmodel import select
@@ -95,7 +94,6 @@ def _forge_access_token(
     return token
 
 
-@pytest.mark.asyncio
 async def test_positive_tenant_bound_me_returns_core_tenant_only(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -109,7 +107,6 @@ async def test_positive_tenant_bound_me_returns_core_tenant_only(
     assert body["tenant_id"] != str(FOREIGN_TENANT_ID)
 
 
-@pytest.mark.asyncio
 async def test_positive_list_users_excludes_foreign_tenant_rows(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -127,7 +124,6 @@ async def test_positive_list_users_excludes_foreign_tenant_rows(
         assert item["tenant_id"] == str(settings.TENANT_ID)
 
 
-@pytest.mark.asyncio
 async def test_cross_tenant_leak_get_user_by_id_returns_404(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -143,7 +139,6 @@ async def test_cross_tenant_leak_get_user_by_id_returns_404(
     assert r.json()["detail"] == "User not found"
 
 
-@pytest.mark.asyncio
 async def test_cross_tenant_jwt_claim_mismatch_is_rejected(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -167,7 +162,6 @@ async def test_cross_tenant_jwt_claim_mismatch_is_rejected(
     assert r.json()["detail"] == "Tenant mismatch"
 
 
-@pytest.mark.asyncio
 async def test_cross_tenant_jwt_sub_of_foreign_user_returns_404(
     client: AsyncClient,
 ) -> None:
@@ -188,7 +182,6 @@ async def test_cross_tenant_jwt_sub_of_foreign_user_returns_404(
     assert r.json()["detail"] == "User not found"
 
 
-@pytest.mark.asyncio
 async def test_write_exploit_admin_create_ignores_body_tenant_id(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -223,7 +216,6 @@ async def test_write_exploit_admin_create_ignores_body_tenant_id(
         await db.commit()
 
 
-@pytest.mark.asyncio
 async def test_write_exploit_register_ignores_body_tenant_and_persists_core(
     client: AsyncClient, db: AsyncSession
 ) -> None:
@@ -255,7 +247,6 @@ async def test_write_exploit_register_ignores_body_tenant_and_persists_core(
         await db.commit()
 
 
-@pytest.mark.asyncio
 async def test_rls_force_enabled_on_user_and_tenant_tables() -> None:
     """Table owner must not silently bypass policies (FORCE ROW LEVEL SECURITY)."""
     async with session_context() as session:
@@ -277,7 +268,6 @@ async def test_rls_force_enabled_on_user_and_tenant_tables() -> None:
     assert by_name["tenant"] == (True, True)
 
 
-@pytest.mark.asyncio
 async def test_rls_policies_use_nullif_uuid_cast() -> None:
     """Empty/missing GUC must not raise on ::uuid — policies use NULLIF."""
     async with session_context() as session:
@@ -303,7 +293,6 @@ async def test_rls_policies_use_nullif_uuid_cast() -> None:
         assert "::uuid" in qual or "::uuid" in qual.lower()
 
 
-@pytest.mark.asyncio
 async def test_empty_tenant_guc_hides_all_rows_without_error() -> None:
     """Best-practice fail-closed: empty GUC hides rows and must not error."""
     async with bypass_rls_session() as seed:
@@ -317,7 +306,6 @@ async def test_empty_tenant_guc_hides_all_rows_without_error() -> None:
         assert ids == []
 
 
-@pytest.mark.asyncio
 async def test_rls_guc_hides_foreign_rows_on_fresh_connection() -> None:
     async with bypass_rls_session() as seed:
         foreign = await _seed_foreign_user(seed)
@@ -333,7 +321,6 @@ async def test_rls_guc_hides_foreign_rows_on_fresh_connection() -> None:
     assert foreign_id not in visible_ids
 
 
-@pytest.mark.asyncio
 async def test_rls_guc_isolated_across_parallel_sessions() -> None:
     """Two physical connections with different GUCs must not pollute each other."""
     async with bypass_rls_session() as seed:
@@ -361,7 +348,6 @@ async def test_rls_guc_isolated_across_parallel_sessions() -> None:
     assert foreign_id in foreign_ids and core_id not in foreign_ids
 
 
-@pytest.mark.asyncio
 async def test_superuser_bypassrls_pitfall_is_mitigated_by_app_role() -> None:
     """Document the pitfall: login role may BYPASSRLS; app role must not."""
     async with session_context() as session:

@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 # Prefer in-memory token store for unit tests (no Redis required).
 # Override with TOKEN_STORE=redis to exercise the Redis-backed path (fakeredis).
 os.environ.setdefault("TOKEN_STORE", "memory")
-# Async tests still use a dedicated loop; NullPool avoids loop-bound reuse.
+# Function-scoped event loops + asyncpg: NullPool avoids cross-loop connection reuse.
 os.environ.setdefault("SQLALCHEMY_POOL_MODE", "null")
 
 import pytest
@@ -18,7 +18,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core import token_store as token_store_module
 from app.core.config import settings
-from app.core.db import async_session_maker, init_db
+from app.core.db import async_session_maker, engine, init_db
 from app.core.token_store import (
     MemoryTokenStore,
     RedisTokenStore,
@@ -84,8 +84,22 @@ def reset_test_token_store() -> Iterator[None]:
     reset_token_store()
 
 
-@pytest_asyncio.fixture(autouse=True)
+@pytest_asyncio.fixture(scope="session", loop_scope="session", autouse=True)
+async def dispose_engine() -> AsyncIterator[None]:
+    """Dispose the async engine once after the suite (lifespan-equivalent teardown)."""
+    yield
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def db() -> AsyncIterator[AsyncSession]:
+    """
+    Per-test seed session with RLS bypass for fixtures/helpers.
+
+    Route handlers still open their own sessions via ``get_db`` so FORCE RLS
+    and ``SET LOCAL ROLE`` stay exercised. Shared-session dependency overrides
+    would short-circuit those policies.
+    """
     async with session_context(bypass_rls=True) as session:
         try:
             await init_db(session)
@@ -94,6 +108,7 @@ async def db() -> AsyncIterator[AsyncSession]:
             raise
         yield session
         try:
+            await session.rollback()
             await session.execute(delete(Item))
             await session.execute(delete(User))
             await session.commit()
@@ -102,20 +117,22 @@ async def db() -> AsyncIterator[AsyncSession]:
             raise
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(scope="function")
 async def client() -> AsyncIterator[AsyncClient]:
+    """Function-scoped ASGI client — no shared lifespan state across tests."""
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://testserver"
     ) as async_client:
         yield async_client
+    app.dependency_overrides.clear()
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(scope="function")
 async def superuser_token_headers(client: AsyncClient) -> dict[str, str]:
     return await get_superuser_token_headers(client)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(scope="function")
 async def normal_user_token_headers(
     client: AsyncClient, db: AsyncSession
 ) -> dict[str, str]:

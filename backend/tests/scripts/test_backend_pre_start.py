@@ -1,12 +1,10 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from sqlmodel import select
 
 from app.backend_pre_start import init, logger
 
 
-@pytest.mark.asyncio
 async def test_init_successful_connection() -> None:
     engine_mock = MagicMock()
 

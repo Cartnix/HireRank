@@ -6,7 +6,6 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import jwt
-import pytest
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlmodel import select
@@ -22,7 +21,6 @@ USERS_URL = f"{settings.API_V1_STR}/users/"
 ME_URL = f"{settings.API_V1_STR}/auth/me"
 
 
-@pytest.mark.asyncio
 async def test_admin_can_list_users(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -36,7 +34,6 @@ async def test_admin_can_list_users(
     assert "users.manage" in payload["permissions"]
 
 
-@pytest.mark.asyncio
 async def test_candidate_valid_token_forbidden_on_users_manage(
     client: AsyncClient,
 ) -> None:
@@ -59,7 +56,6 @@ async def test_candidate_valid_token_forbidden_on_users_manage(
     assert r.json()["detail"] == "Insufficient permissions"
 
 
-@pytest.mark.asyncio
 async def test_recruiter_forbidden_on_users_manage(client: AsyncClient) -> None:
     r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
@@ -74,7 +70,6 @@ async def test_recruiter_forbidden_on_users_manage(client: AsyncClient) -> None:
     assert r.status_code == 403
 
 
-@pytest.mark.asyncio
 async def test_jwt_role_claim_alone_does_not_grant_permissions(
     client: AsyncClient,
 ) -> None:
@@ -114,7 +109,6 @@ async def test_jwt_role_claim_alone_does_not_grant_permissions(
     assert r.status_code == 403
 
 
-@pytest.mark.asyncio
 async def test_role_escalation_with_wrong_signing_key_is_401(
     client: AsyncClient,
 ) -> None:
@@ -148,7 +142,6 @@ async def test_role_escalation_with_wrong_signing_key_is_401(
     assert r.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_db_permission_change_picked_up_after_refresh(
     client: AsyncClient,
 ) -> None:
@@ -208,7 +201,6 @@ async def test_db_permission_change_picked_up_after_refresh(
                 await session.commit()
 
 
-@pytest.mark.asyncio
 async def test_authenticated_session_sets_user_gucs(
     superuser_token_headers: dict[str, str],
 ) -> None:

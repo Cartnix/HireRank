@@ -64,7 +64,6 @@ async def _latest_action(action: str) -> AuditLog | None:
         return row
 
 
-@pytest.mark.asyncio
 async def test_login_success_writes_audit_log(client: AsyncClient) -> None:
     email = random_email()
     password = random_lower_string()
@@ -96,7 +95,6 @@ async def test_login_success_writes_audit_log(client: AsyncClient) -> None:
     assert "email" not in (row.metadata_ or {})
 
 
-@pytest.mark.asyncio
 async def test_login_failure_writes_audit_log(client: AsyncClient) -> None:
     before = await _count_actions(AuditAction.LOGIN_FAILURE)
     r = await client.post(
@@ -115,7 +113,6 @@ async def test_login_failure_writes_audit_log(client: AsyncClient) -> None:
     assert "email_hash" in meta
 
 
-@pytest.mark.asyncio
 async def test_oauth_form_login_writes_audit_log(client: AsyncClient) -> None:
     email = random_email()
     password = random_lower_string()
@@ -133,7 +130,6 @@ async def test_oauth_form_login_writes_audit_log(client: AsyncClient) -> None:
     assert await _count_actions(AuditAction.LOGIN_SUCCESS) == before + 1
 
 
-@pytest.mark.asyncio
 async def test_register_logout_refresh_write_audit(client: AsyncClient) -> None:
     email = random_email()
     password = random_lower_string()
@@ -165,7 +161,6 @@ async def test_register_logout_refresh_write_audit(client: AsyncClient) -> None:
     assert await _count_actions(AuditAction.LOGOUT) == before_logout + 1
 
 
-@pytest.mark.asyncio
 async def test_tenant_rls_hides_foreign_audit_rows() -> None:
     async with bypass_rls_session() as seed:
         await _ensure_foreign_tenant(seed)
@@ -215,7 +210,6 @@ async def test_tenant_rls_hides_foreign_audit_rows() -> None:
     assert all(r.tenant_id != FOREIGN_TENANT_ID for r in rows)
 
 
-@pytest.mark.asyncio
 async def test_hirerank_app_cannot_update_or_delete_audit_log() -> None:
     event = AuditEvent(
         tenant_id=settings.TENANT_ID,
@@ -258,7 +252,6 @@ async def test_hirerank_app_cannot_update_or_delete_audit_log() -> None:
         await session.rollback()
 
 
-@pytest.mark.asyncio
 async def test_connection_pooling_guc_does_not_leak_audit_rows() -> None:
     """Sequential RLS queries with different tenants must not cross-read."""
     async with bypass_rls_session() as seed:
@@ -307,7 +300,6 @@ async def test_connection_pooling_guc_does_not_leak_audit_rows() -> None:
     assert "core-pool" not in await _visible(FOREIGN_TENANT_ID)
 
 
-@pytest.mark.asyncio
 async def test_insert_audit_log_with_explicit_tenant_no_jwt() -> None:
     """Background worker path: only explicit tenant_id, no request JWT."""
     event = AuditEvent(
@@ -346,7 +338,6 @@ def test_audit_event_strips_pii_metadata() -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_structlog_emits_audit_event_fields(client: AsyncClient) -> None:
     from structlog.testing import capture_logs
 

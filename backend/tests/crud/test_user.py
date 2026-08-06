@@ -1,4 +1,3 @@
-import pytest
 from fastapi.encoders import jsonable_encoder
 from pwdlib.hashers.bcrypt import BcryptHasher
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -10,7 +9,6 @@ from app.models import User, UserCreate, UserRole, UserUpdate
 from tests.utils.utils import random_email, random_lower_string
 
 
-@pytest.mark.asyncio
 async def test_create_user(db: AsyncSession) -> None:
     email = random_email()
     password = random_lower_string()
@@ -21,7 +19,6 @@ async def test_create_user(db: AsyncSession) -> None:
     assert user.tenant_id == settings.TENANT_ID
 
 
-@pytest.mark.asyncio
 async def test_authenticate_user(db: AsyncSession) -> None:
     email = random_email()
     password = random_lower_string()
@@ -34,7 +31,6 @@ async def test_authenticate_user(db: AsyncSession) -> None:
     assert user.email == authenticated_user.email
 
 
-@pytest.mark.asyncio
 async def test_not_authenticate_user(db: AsyncSession) -> None:
     email = random_email()
     password = random_lower_string()
@@ -42,7 +38,6 @@ async def test_not_authenticate_user(db: AsyncSession) -> None:
     assert user is None
 
 
-@pytest.mark.asyncio
 async def test_check_if_user_is_active(db: AsyncSession) -> None:
     email = random_email()
     password = random_lower_string()
@@ -51,7 +46,6 @@ async def test_check_if_user_is_active(db: AsyncSession) -> None:
     assert user.is_active is True
 
 
-@pytest.mark.asyncio
 async def test_check_if_user_is_active_inactive(db: AsyncSession) -> None:
     email = random_email()
     password = random_lower_string()
@@ -60,7 +54,6 @@ async def test_check_if_user_is_active_inactive(db: AsyncSession) -> None:
     assert user.is_active is False
 
 
-@pytest.mark.asyncio
 async def test_check_if_user_is_administrator(db: AsyncSession) -> None:
     email = random_email()
     password = random_lower_string()
@@ -70,7 +63,6 @@ async def test_check_if_user_is_administrator(db: AsyncSession) -> None:
     assert user.role == UserRole.ADMINISTRATOR
 
 
-@pytest.mark.asyncio
 async def test_check_if_user_is_superuser_normal_user(db: AsyncSession) -> None:
     username = random_email()
     password = random_lower_string()
@@ -79,7 +71,6 @@ async def test_check_if_user_is_superuser_normal_user(db: AsyncSession) -> None:
     assert user.is_superuser is False
 
 
-@pytest.mark.asyncio
 async def test_get_user(db: AsyncSession) -> None:
     password = random_lower_string()
     username = random_email()
@@ -91,7 +82,6 @@ async def test_get_user(db: AsyncSession) -> None:
     assert jsonable_encoder(user) == jsonable_encoder(user_2)
 
 
-@pytest.mark.asyncio
 async def test_update_user(db: AsyncSession) -> None:
     password = random_lower_string()
     email = random_email()
@@ -108,7 +98,6 @@ async def test_update_user(db: AsyncSession) -> None:
     assert verified
 
 
-@pytest.mark.asyncio
 async def test_authenticate_user_with_bcrypt_upgrades_to_argon2(
     db: AsyncSession,
 ) -> None:

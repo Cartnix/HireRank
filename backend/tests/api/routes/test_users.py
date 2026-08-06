@@ -1,7 +1,6 @@
 import uuid
 from unittest.mock import patch
 
-import pytest
 from httpx import AsyncClient
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -14,7 +13,6 @@ from tests.utils.user import create_random_user
 from tests.utils.utils import random_email, random_lower_string
 
 
-@pytest.mark.asyncio
 async def test_get_users_superuser_me(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -29,7 +27,6 @@ async def test_get_users_superuser_me(
     assert current_user["tenant_id"] == str(settings.TENANT_ID)
 
 
-@pytest.mark.asyncio
 async def test_get_users_normal_user_me(
     client: AsyncClient, normal_user_token_headers: dict[str, str]
 ) -> None:
@@ -43,7 +40,6 @@ async def test_get_users_normal_user_me(
     assert current_user["email"] == settings.EMAIL_TEST_USER
 
 
-@pytest.mark.asyncio
 async def test_create_user_new_email(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -67,7 +63,6 @@ async def test_create_user_new_email(
         assert user.email == created_user["email"]
 
 
-@pytest.mark.asyncio
 async def test_get_existing_user_as_superuser(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -87,7 +82,6 @@ async def test_get_existing_user_as_superuser(
     assert existing_user.email == api_user["email"]
 
 
-@pytest.mark.asyncio
 async def test_get_non_existing_user_as_superuser(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -99,7 +93,6 @@ async def test_get_non_existing_user_as_superuser(
     assert r.json() == {"detail": "User not found"}
 
 
-@pytest.mark.asyncio
 async def test_get_existing_user_current_user(
     client: AsyncClient, db: AsyncSession
 ) -> None:
@@ -127,7 +120,6 @@ async def test_get_existing_user_current_user(
     assert existing_user.email == api_user["email"]
 
 
-@pytest.mark.asyncio
 async def test_get_existing_user_permissions_error(
     db: AsyncSession,
     client: AsyncClient,
@@ -143,7 +135,6 @@ async def test_get_existing_user_permissions_error(
     assert r.json() == {"detail": "The user doesn't have enough privileges"}
 
 
-@pytest.mark.asyncio
 async def test_get_non_existing_user_permissions_error(
     client: AsyncClient,
     normal_user_token_headers: dict[str, str],
@@ -158,7 +149,6 @@ async def test_get_non_existing_user_permissions_error(
     assert r.json() == {"detail": "The user doesn't have enough privileges"}
 
 
-@pytest.mark.asyncio
 async def test_create_user_existing_username(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -177,7 +167,6 @@ async def test_create_user_existing_username(
     assert "_id" not in created_user
 
 
-@pytest.mark.asyncio
 async def test_create_user_by_normal_user(
     client: AsyncClient, normal_user_token_headers: dict[str, str]
 ) -> None:
@@ -192,7 +181,6 @@ async def test_create_user_by_normal_user(
     assert r.status_code == 403
 
 
-@pytest.mark.asyncio
 async def test_retrieve_users(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -217,7 +205,6 @@ async def test_retrieve_users(
         assert "email" in item
 
 
-@pytest.mark.asyncio
 async def test_update_user_me(
     client: AsyncClient, normal_user_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -243,7 +230,6 @@ async def test_update_user_me(
     assert user_db.first_name == first_name
 
 
-@pytest.mark.asyncio
 async def test_update_password_me(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -286,7 +272,6 @@ async def test_update_password_me(
     assert verified
 
 
-@pytest.mark.asyncio
 async def test_update_password_me_incorrect_password(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -302,7 +287,6 @@ async def test_update_password_me_incorrect_password(
     assert updated_user["detail"] == "Incorrect password"
 
 
-@pytest.mark.asyncio
 async def test_update_user_me_email_exists(
     client: AsyncClient, normal_user_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -321,7 +305,6 @@ async def test_update_user_me_email_exists(
     assert r.json()["detail"] == "User with this email already exists"
 
 
-@pytest.mark.asyncio
 async def test_update_password_me_same_password_error(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -341,7 +324,6 @@ async def test_update_password_me_same_password_error(
     )
 
 
-@pytest.mark.asyncio
 async def test_register_user(client: AsyncClient, db: AsyncSession) -> None:
     username = random_email()
     password = random_lower_string()
@@ -370,7 +352,6 @@ async def test_register_user(client: AsyncClient, db: AsyncSession) -> None:
     assert verified
 
 
-@pytest.mark.asyncio
 async def test_register_user_already_exists_error(client: AsyncClient) -> None:
     password = random_lower_string()
     data = {
@@ -386,7 +367,6 @@ async def test_register_user_already_exists_error(client: AsyncClient) -> None:
     assert r.json()["detail"] == "The user with this email already exists in the system"
 
 
-@pytest.mark.asyncio
 async def test_update_user(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -413,7 +393,6 @@ async def test_update_user(
     assert user_db.first_name == "Updated"
 
 
-@pytest.mark.asyncio
 async def test_update_user_not_exists(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -427,7 +406,6 @@ async def test_update_user_not_exists(
     assert r.json()["detail"] == "The user with this id does not exist in the system"
 
 
-@pytest.mark.asyncio
 async def test_update_user_email_exists(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -451,7 +429,6 @@ async def test_update_user_email_exists(
     assert r.json()["detail"] == "User with this email already exists"
 
 
-@pytest.mark.asyncio
 async def test_delete_user_me(client: AsyncClient, db: AsyncSession) -> None:
     username = random_email()
     password = random_lower_string()
@@ -477,7 +454,6 @@ async def test_delete_user_me(client: AsyncClient, db: AsyncSession) -> None:
     assert result is None
 
 
-@pytest.mark.asyncio
 async def test_delete_user_me_as_superuser(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -490,7 +466,6 @@ async def test_delete_user_me_as_superuser(
     assert response["detail"] == "Administrators are not allowed to delete themselves"
 
 
-@pytest.mark.asyncio
 async def test_delete_user_super_user(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -510,7 +485,6 @@ async def test_delete_user_super_user(
     assert result is None
 
 
-@pytest.mark.asyncio
 async def test_delete_user_not_found(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -522,7 +496,6 @@ async def test_delete_user_not_found(
     assert r.json()["detail"] == "User not found"
 
 
-@pytest.mark.asyncio
 async def test_delete_user_current_super_user_error(
     client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
 ) -> None:
@@ -540,7 +513,6 @@ async def test_delete_user_current_super_user_error(
     assert r.json()["detail"] == "Administrators are not allowed to delete themselves"
 
 
-@pytest.mark.asyncio
 async def test_delete_user_without_privileges(
     client: AsyncClient, normal_user_token_headers: dict[str, str], db: AsyncSession
 ) -> None:

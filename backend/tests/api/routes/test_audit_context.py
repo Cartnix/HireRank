@@ -6,7 +6,6 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-import pytest
 from fastapi import BackgroundTasks
 from httpx import AsyncClient
 from sqlmodel import col, select
@@ -30,7 +29,6 @@ from tests.conftest import bypass_rls_session
 from tests.utils.utils import random_email, random_lower_string
 
 
-@pytest.mark.asyncio
 async def test_middleware_binds_request_meta_and_default_tenant(
     client: AsyncClient,
 ) -> None:
@@ -54,7 +52,6 @@ async def test_middleware_binds_request_meta_and_default_tenant(
         assert row.user_agent == "Context-Middleware-Test/1.0"
 
 
-@pytest.mark.asyncio
 async def test_authenticated_me_binds_user_contextvars(client: AsyncClient) -> None:
     """JWT /me must bind user_id into contextvars for the request (via deps)."""
     email = random_email()
@@ -92,7 +89,6 @@ async def test_authenticated_me_binds_user_contextvars(client: AsyncClient) -> N
         assert row.tenant_id == settings.TENANT_ID
 
 
-@pytest.mark.asyncio
 async def test_audit_service_log_reads_contextvars_without_explicit_ids() -> None:
     clear_security_context()
     set_tenant_id(settings.TENANT_ID)
@@ -136,7 +132,6 @@ async def test_audit_service_log_reads_contextvars_without_explicit_ids() -> Non
         assert "password" not in row.metadata_
 
 
-@pytest.mark.asyncio
 async def test_audit_service_snapshots_context_before_background_clears() -> None:
     """
     Pitfall: reading ContextVars inside BG task after request ends loses tenant.
@@ -202,7 +197,6 @@ def test_snapshot_security_context_copies_values() -> None:
     assert snap["user_agent"] == "snap"
 
 
-@pytest.mark.asyncio
 async def test_structlog_binds_tenant_from_middleware(client: AsyncClient) -> None:
     with capture_logs() as cap:
         await client.post(

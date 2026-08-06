@@ -7,7 +7,6 @@ from typing import Any, cast
 from uuid import UUID, uuid4
 
 import jwt
-import pytest
 from httpx import AsyncClient
 
 from app.core import security
@@ -60,7 +59,6 @@ def _forge(
     )
 
 
-@pytest.mark.asyncio
 async def test_bearer_happy_path(client: AsyncClient) -> None:
     pair = await _register(client)
     r = await client.get(
@@ -70,13 +68,11 @@ async def test_bearer_happy_path(client: AsyncClient) -> None:
     assert r.status_code == 200
 
 
-@pytest.mark.asyncio
 async def test_missing_authorization_header(client: AsyncClient) -> None:
     r = await client.get(PROTECTED)
     assert r.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_malformed_wrong_scheme_prefix(client: AsyncClient) -> None:
     pair = await _register(client)
     r = await client.get(
@@ -86,13 +82,11 @@ async def test_malformed_wrong_scheme_prefix(client: AsyncClient) -> None:
     assert r.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_malformed_bearer_without_token(client: AsyncClient) -> None:
     r = await client.get(PROTECTED, headers={"Authorization": "Bearer"})
     assert r.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_expired_access_token(client: AsyncClient) -> None:
     pair = await _register(client)
     sub = jwt.decode(
@@ -105,7 +99,6 @@ async def test_expired_access_token(client: AsyncClient) -> None:
     assert r.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_signature_tampering_wrong_secret(client: AsyncClient) -> None:
     pair = await _register(client)
     sub = jwt.decode(
@@ -118,7 +111,6 @@ async def test_signature_tampering_wrong_secret(client: AsyncClient) -> None:
     assert r.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_algorithm_none_confusion(client: AsyncClient) -> None:
     pair = await _register(client)
     sub = jwt.decode(
@@ -140,7 +132,6 @@ async def test_algorithm_none_confusion(client: AsyncClient) -> None:
     assert r.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_refresh_token_rejected_as_bearer_access(client: AsyncClient) -> None:
     pair = await _register(client)
     r = await client.get(
@@ -150,7 +141,6 @@ async def test_refresh_token_rejected_as_bearer_access(client: AsyncClient) -> N
     assert r.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_inactive_user_banned_mid_session(client: AsyncClient) -> None:
     from sqlmodel import select
 
