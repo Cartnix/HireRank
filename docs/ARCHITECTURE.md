@@ -1,14 +1,15 @@
 # HireRank — Architecture
 
 Behavioral SoT: [use-cases/](use-cases/) ([UC-08](use-cases/UC-08-automation-hitl-loop.md)).
-**Compliance (strict):** [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](GDPR.md) (EU / West).
+**Compliance (strict):** [ATS_COMPLIANCE_RK.md](laws/ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](laws/GDPR.md) (EU / West).
 Vision: [PASSPORT.md](PASSPORT.md). Automation detail: [AUTOMATION.md](AUTOMATION.md). Memory: [MEMORY.md](MEMORY.md).
+ATS tables + RLS map: [ATS_SCHEMA.md](ATS_SCHEMA.md).
 
 ## Planes
 
 | Plane | Role |
 |-------|------|
-| **HireRank** | Domain ATS: auth, RBAC, candidates, vacancies, pool, dashboards, storage |
+| **HireRank** | Domain ATS: auth, RBAC, candidates, vacancies, applications/pipeline, interviews/scorecards (human feedback), pool, dashboards, storage — see [ATS_SCHEMA.md](ATS_SCHEMA.md) |
 | **Automation** | Event-driven bureaucracy Automation + HITL (implements UC-08): trigger → agent run → 2–3 MCP options |
 | **FastMCP** | Executes **only** the human-selected tool under `tenant_id`; Outcome → [Memory](MEMORY.md) |
 | **n8n** | Delivery: Telegram HITL, email — **not** the automation brain |

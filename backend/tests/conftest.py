@@ -26,7 +26,17 @@ from app.core.token_store import (
     reset_token_store,
 )
 from app.main import app
-from app.models import Item, OAuthIdentity, User, UserConsent
+from app.models import (
+    Application,
+    Candidate,
+    Interview,
+    OAuthIdentity,
+    PipelineStage,
+    Scorecard,
+    User,
+    UserConsent,
+    Vacancy,
+)
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
 
@@ -109,7 +119,12 @@ async def db() -> AsyncIterator[AsyncSession]:
         yield session
         try:
             await session.rollback()
-            await session.execute(delete(Item))
+            await session.execute(delete(Scorecard))
+            await session.execute(delete(Interview))
+            await session.execute(delete(Application))
+            await session.execute(delete(PipelineStage))
+            await session.execute(delete(Candidate))
+            await session.execute(delete(Vacancy))
             await session.execute(delete(OAuthIdentity))
             await session.execute(delete(UserConsent))
             await session.execute(delete(User))

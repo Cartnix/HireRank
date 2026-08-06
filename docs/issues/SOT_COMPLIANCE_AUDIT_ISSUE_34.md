@@ -27,10 +27,15 @@ The current FastAPI router mounts only the following modules:
 - `backend/app/api/routes/login.py`
 - `backend/app/api/routes/users.py`
 - `backend/app/api/routes/utils.py`
-- `backend/app/api/routes/items.py`
 - `backend/app/api/routes/private.py` in local environment only
 
+Legacy template `items` routes were removed with issue #24 (ATS schema).
+
 See `backend/app/api/main.py`.
+
+## Schema status (issue #24)
+
+Postgres ATS domain tables exist with FORCE RLS: `vacancy`, `pipeline_stage`, `candidate`, `application`, `interview`, `scorecard`. See [ATS_SCHEMA.md](../ATS_SCHEMA.md). HTTP CRUD for those entities remains out of scope of #24 (still `spec-only` in the matrix below).
 
 ## UC Traceability Matrix
 
@@ -42,7 +47,7 @@ See `backend/app/api/main.py`.
 | `UC-04` Manual admin assignment; MCP path via UC-08 also valid | `docs/use-cases/UC-04-candidate-assignment.md` | `docs/openapi/paths/candidates.yaml`, `docs/openapi/paths/automation.yaml` | No `/candidates/{id}/assign` or `/automations/packages/{id}/accept` routes in FastAPI | `spec-only` | Assignment is documented, but not implemented in backend |
 | `UC-05` Manager read-only vacancies and assignments view | `docs/use-cases/UC-05-manager-vacancies-and-assignments.md` | `docs/openapi/paths/candidates.yaml`, `docs/openapi/paths/vacancies.yaml`, `docs/openapi/paths/dashboard.yaml`, `docs/openapi/paths/notifications.yaml`, `docs/openapi/paths/automation.yaml` | No manager-facing ATS routes in FastAPI | `spec-only` | No `/dashboard`, `/notifications`, candidate list, vacancy list, or automation package routes in backend |
 | `UC-06` Administrator-only admin panel access | `docs/use-cases/UC-06-admin-panel-access.md` | `docs/openapi/paths/admin.yaml`, `docs/openapi/paths/users.yaml` | `/users`, `/users/{id}`, `/users/me` exist; `/admin/users*` does not | `partial` | Admin user access partially exists through `/users*`, but dedicated admin panel routes from OpenAPI are not implemented |
-| `UC-07` Tenant isolation including Memory | `docs/use-cases/UC-07-enterprise-isolation.md` | Cross-cutting across `docs/openapi/openapi.yaml` and domain path files | Tenant-aware auth/RLS foundations exist in JWT, middleware, and DB policy code | `partial` | Infrastructure is present, but domain APIs that would exercise tenant isolation for ATS data are mostly still spec-only |
+| `UC-07` Tenant isolation including Memory | `docs/use-cases/UC-07-enterprise-isolation.md` | Cross-cutting across `docs/openapi/openapi.yaml` and domain path files | Tenant-aware auth/RLS foundations exist; ATS tables have FORCE RLS (`docs/ATS_SCHEMA.md`) | `partial` | Schema isolation is ready; domain APIs that would exercise it for ATS data are still mostly spec-only |
 | `UC-08` Automation HITL loop: event -> options -> human -> MCP -> Memory | `docs/use-cases/UC-08-automation-hitl-loop.md` | `docs/openapi/paths/automation.yaml` plus `resume.uploaded` side effects from candidate flows | No `/automations/*` FastAPI routes | `spec-only` | Automation contract exists in docs only; no FastAPI accept/outcome/precedent endpoints are implemented |
 
 ## Implemented Endpoint Inventory
@@ -77,14 +82,13 @@ This section maps every currently implemented backend endpoint either to a use-c
 | `POST /password-recovery/{email}` | `backend/app/api/routes/login.py` | `undocumented` | Password recovery behavior is not represented in SoT use-cases |
 | `POST /reset-password/` | `backend/app/api/routes/login.py` | `undocumented` | Password reset flow is not represented in SoT use-cases |
 | `POST /password-recovery-html-content/{email}` | `backend/app/api/routes/login.py` | `undocumented` | Superuser utility endpoint not covered by approved use-cases |
-| `GET /items/`, `GET /items/{id}`, `POST /items/`, `PUT /items/{id}`, `DELETE /items/{id}` | `backend/app/api/routes/items.py` | `undocumented` | Template CRUD surface unrelated to HireRank SoT |
 | `POST /utils/test-email/` | `backend/app/api/routes/utils.py` | `undocumented` | Operational test endpoint, not a product use-case |
 | `GET /utils/health-check/` | `backend/app/api/routes/utils.py` | `undocumented` | Operational health endpoint, not part of the approved behavioral SoT |
 | `POST /private/users/` | `backend/app/api/routes/private.py` | `undocumented` | Local-only bootstrap route outside approved use-cases |
 
 ## Key Findings
 
-1. The current backend is primarily an auth/RBAC/RLS foundation. Most ATS behavior described by `UC-02` through `UC-08` exists in OpenAPI only and has no FastAPI implementation yet.
+1. The current backend is primarily an auth/RBAC/RLS foundation plus ATS **schema** ([ATS_SCHEMA.md](../ATS_SCHEMA.md)). Most ATS **HTTP** behavior described by `UC-02` through `UC-08` exists in OpenAPI only and has no FastAPI implementation yet.
 2. `UC-03` says vacancy CRUD is administrator-only, but secondary docs drift from that rule:
    - `docs/openapi/openapi.yaml` says `HR` handles vacancy CRUD in the intro text
    - `docs/RBAC.md` grants `vacancy.create`, `vacancy.update`, and `vacancy.delete` to `hr`

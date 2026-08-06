@@ -1,4 +1,7 @@
 # schemas/vacancy.yaml
+# DB persistence: table `vacancy` (+ `pipeline_stage`, `application`).
+# See docs/ATS_SCHEMA.md. `assigned_candidate_ids` is an API projection of
+# active applications — not a denormalized column on vacancy.
 
 VacancyStatus:
   type: string

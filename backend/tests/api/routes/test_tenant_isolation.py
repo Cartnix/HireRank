@@ -1,6 +1,6 @@
 """TDD matrix: hidden multi-tenancy isolation and exploit attempts.
 
-Philosophy (Reddit ATS consensus): test break-ins, not happy-path isolation.
+Philosophy: test break-ins, not happy-path isolation.
 Core deploy has one active TENANT_ID, but the schema is multi-tenant-ready —
 foreign tenant rows must never leak through JWT, RLS, or body injection.
 """
@@ -270,8 +270,22 @@ async def test_rls_policies_use_nullif_uuid_cast() -> None:
                 )
             )
         ).all()
-    assert len(quals) == 2
-    for _table, qual in quals:
+    by_table: dict[str, str | None] = {
+        str(table): (str(qual) if qual is not None else None) for table, qual in quals
+    }
+    # Auth foundation + ATS domain tables (issue #24)
+    for required in (
+        "user",
+        "tenant",
+        "vacancy",
+        "pipeline_stage",
+        "candidate",
+        "application",
+        "interview",
+        "scorecard",
+    ):
+        assert required in by_table, f"missing policy on {required}"
+    for _table, qual in by_table.items():
         assert qual is not None
         assert "NULLIF" in qual
         assert "app.current_tenant" in qual

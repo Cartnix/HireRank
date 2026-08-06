@@ -1,10 +1,20 @@
 import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any, Self
+from typing import Any, Optional, Self
 
 from pydantic import ConfigDict, EmailStr, field_validator, model_validator
-from sqlalchemy import Column, DateTime, ForeignKey, String, UniqueConstraint, text
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Integer,
+    String,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.dialects.postgresql import INET, JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -238,9 +248,16 @@ class User(UserBase, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     tenant: Tenant | None = Relationship(back_populates="users")
-    items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     oauth_identities: list["OAuthIdentity"] = Relationship(back_populates="user")
     consents: list["UserConsent"] = Relationship(back_populates="user")
+    vacancies_created: list["Vacancy"] = Relationship(back_populates="creator")
+    interviews_as_interviewer: list["Interview"] = Relationship(
+        back_populates="interviewer"
+    )
+    candidate_profile: Optional["Candidate"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"uselist": False},
+    )
 
     @property
     def is_superuser(self) -> bool:
@@ -329,40 +346,253 @@ class UsersPublic(SQLModel):
     count: int
 
 
-class ItemBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=255)
+class VacancyStatus(StrEnum):
+    DRAFT = "draft"
+    OPEN = "open"
+    CLOSED = "closed"
 
 
-class ItemCreate(ItemBase):
-    pass
+class CandidateStatus(StrEnum):
+    UNASSIGNED = "unassigned"
+    ASSIGNED = "assigned"
+    PENDING_HITL = "pending_hitl"
+    ACTION_APPLIED = "action_applied"
 
 
-class ItemUpdate(ItemBase):
-    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
+class ApplicationStatus(StrEnum):
+    ACTIVE = "active"
+    REJECTED = "rejected"
+    HIRED = "hired"
+    WITHDRAWN = "withdrawn"
 
 
-class Item(ItemBase, table=True):
+class Vacancy(SQLModel, table=True):
+    __tablename__ = "vacancy"
+    __table_args__ = (UniqueConstraint("tenant_id", "id", name="uq_vacancy_tenant_id"),)
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", index=True, nullable=False)
+    title: str = Field(max_length=255, nullable=False)
+    department: str | None = Field(default=None, max_length=255)
+    description: str | None = Field(default=None)
+    requirements: list[Any] = Field(
+        default_factory=list,
+        sa_column=Column(
+            JSONB,
+            nullable=False,
+            server_default=text("'[]'::jsonb"),
+        ),
+    )
+    status: VacancyStatus = Field(
+        default=VacancyStatus.DRAFT,
+        sa_column=Column(String(50), nullable=False, server_default="draft"),
+    )
+    created_by: uuid.UUID = Field(foreign_key="user.id", nullable=False, index=True)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    updated_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
     )
-    owner: User | None = Relationship(back_populates="items")
+    creator: User | None = Relationship(back_populates="vacancies_created")
+    stages: list["PipelineStage"] = Relationship(
+        back_populates="vacancy",
+        sa_relationship_kwargs={"overlaps": "applications,vacancy"},
+    )
+    applications: list["Application"] = Relationship(
+        back_populates="vacancy",
+        sa_relationship_kwargs={
+            "overlaps": "applications,candidate,current_stage,vacancy"
+        },
+    )
 
 
-class ItemPublic(ItemBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    created_at: datetime | None = None
+class PipelineStage(SQLModel, table=True):
+    __tablename__ = "pipeline_stage"
+    __table_args__ = (
+        UniqueConstraint("vacancy_id", "sort_order", name="uq_pipeline_stage_order"),
+        UniqueConstraint("tenant_id", "id", name="uq_pipeline_stage_tenant_id"),
+        ForeignKeyConstraint(
+            ["tenant_id", "vacancy_id"],
+            ["vacancy.tenant_id", "vacancy.id"],
+            ondelete="CASCADE",
+            name="fk_pipeline_stage_vacancy_tenant",
+        ),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", index=True, nullable=False)
+    vacancy_id: uuid.UUID = Field(nullable=False, index=True)
+    stage_name: str = Field(max_length=100, nullable=False)
+    sort_order: int = Field(nullable=False)
+    vacancy: Vacancy | None = Relationship(
+        back_populates="stages",
+        sa_relationship_kwargs={"overlaps": "applications,stages"},
+    )
+    applications: list["Application"] = Relationship(
+        back_populates="current_stage",
+        sa_relationship_kwargs={
+            "overlaps": "applications,candidate,vacancy,current_stage"
+        },
+    )
 
 
-class ItemsPublic(SQLModel):
-    data: list[ItemPublic]
-    count: int
+class Candidate(SQLModel, table=True):
+    __tablename__ = "candidate"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "email", name="uq_candidate_tenant_email"),
+        UniqueConstraint("tenant_id", "id", name="uq_candidate_tenant_id"),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", index=True, nullable=False)
+    user_id: uuid.UUID | None = Field(
+        default=None, foreign_key="user.id", nullable=True, index=True
+    )
+    email: str | None = Field(default=None, max_length=255, index=True)
+    status: CandidateStatus = Field(
+        default=CandidateStatus.UNASSIGNED,
+        sa_column=Column(String(50), nullable=False, server_default="unassigned"),
+    )
+    questionnaire: dict[str, Any] = Field(
+        default_factory=dict,
+        sa_column=Column(
+            JSONB,
+            nullable=False,
+            server_default=text("'{}'::jsonb"),
+        ),
+    )
+    resume_url: str | None = Field(default=None)
+    active_package_id: uuid.UUID | None = Field(default=None, nullable=True)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    updated_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    user: User | None = Relationship(back_populates="candidate_profile")
+    applications: list["Application"] = Relationship(
+        back_populates="candidate",
+        sa_relationship_kwargs={
+            "overlaps": "applications,vacancy,current_stage,candidate"
+        },
+    )
+
+
+class Application(SQLModel, table=True):
+    __tablename__ = "application"
+    __table_args__ = (
+        UniqueConstraint(
+            "vacancy_id", "candidate_id", name="uq_application_vacancy_candidate"
+        ),
+        UniqueConstraint("tenant_id", "id", name="uq_application_tenant_id"),
+        ForeignKeyConstraint(
+            ["tenant_id", "vacancy_id"],
+            ["vacancy.tenant_id", "vacancy.id"],
+            ondelete="CASCADE",
+            name="fk_application_vacancy_tenant",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "candidate_id"],
+            ["candidate.tenant_id", "candidate.id"],
+            ondelete="CASCADE",
+            name="fk_application_candidate_tenant",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "current_stage_id"],
+            ["pipeline_stage.tenant_id", "pipeline_stage.id"],
+            name="fk_application_stage_tenant",
+        ),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", index=True, nullable=False)
+    vacancy_id: uuid.UUID = Field(nullable=False, index=True)
+    candidate_id: uuid.UUID = Field(nullable=False, index=True)
+    current_stage_id: uuid.UUID = Field(nullable=False, index=True)
+    status: ApplicationStatus = Field(
+        default=ApplicationStatus.ACTIVE,
+        sa_column=Column(String(50), nullable=False, server_default="active"),
+    )
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    updated_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    vacancy: Vacancy | None = Relationship(
+        back_populates="applications",
+        sa_relationship_kwargs={"overlaps": "applications,candidate,current_stage"},
+    )
+    candidate: Candidate | None = Relationship(
+        back_populates="applications",
+        sa_relationship_kwargs={"overlaps": "applications,vacancy,current_stage"},
+    )
+    current_stage: PipelineStage | None = Relationship(
+        back_populates="applications",
+        sa_relationship_kwargs={"overlaps": "applications,candidate,vacancy"},
+    )
+    interviews: list["Interview"] = Relationship(back_populates="application")
+
+
+class Interview(SQLModel, table=True):
+    __tablename__ = "interview"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id", name="uq_interview_tenant_id"),
+        ForeignKeyConstraint(
+            ["tenant_id", "application_id"],
+            ["application.tenant_id", "application.id"],
+            ondelete="CASCADE",
+            name="fk_interview_application_tenant",
+        ),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", index=True, nullable=False)
+    application_id: uuid.UUID = Field(nullable=False, index=True)
+    interviewer_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, index=True)
+    scheduled_at: datetime = Field(
+        sa_type=DateTime(timezone=True),  # type: ignore
+        nullable=False,
+    )
+    duration_minutes: int = Field(default=45, nullable=False)
+    application: Application | None = Relationship(back_populates="interviews")
+    interviewer: User | None = Relationship(back_populates="interviews_as_interviewer")
+    scorecards: list["Scorecard"] = Relationship(back_populates="interview")
+
+
+class Scorecard(SQLModel, table=True):
+    """Human interview feedback only — not AI auto-scoring (UC-08 / PRODUCT)."""
+
+    __tablename__ = "scorecard"
+    __table_args__ = (
+        CheckConstraint(
+            "rating >= 1 AND rating <= 5", name="ck_scorecard_rating_range"
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "interview_id"],
+            ["interview.tenant_id", "interview.id"],
+            ondelete="CASCADE",
+            name="fk_scorecard_interview_tenant",
+        ),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", index=True, nullable=False)
+    interview_id: uuid.UUID = Field(nullable=False, index=True)
+    rating: int = Field(sa_column=Column(Integer, nullable=False))
+    notes: str | None = Field(default=None)
+    submitted_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    interview: Interview | None = Relationship(back_populates="scorecards")
 
 
 class Message(SQLModel):
