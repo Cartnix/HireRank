@@ -79,6 +79,9 @@ keep-runtime-typing = true
 [tool.coverage.run]
 source = ["app"]
 dynamic_context = "test_function"
+# SQLAlchemy async uses greenlets; without this, route/CRUD coverage collapses.
+concurrency = ["greenlet", "thread"]
+relative_files = true
 
 [tool.coverage.report]
 show_missing = true
@@ -88,6 +91,7 @@ omit = [
     "app/backend_pre_start.py",
     "app/tests_pre_start.py",
     "app/alembic/*",
+    "app/db/rls_policies.py",
 ]
 
 [tool.coverage.html]
