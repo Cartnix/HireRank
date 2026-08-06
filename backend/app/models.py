@@ -3,7 +3,13 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Optional, Self
 
-from pydantic import ConfigDict, EmailStr, field_validator, model_validator
+from pydantic import (
+    ConfigDict,
+    EmailStr,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 from sqlalchemy import (
     CheckConstraint,
     Column,
@@ -151,6 +157,12 @@ class UserBase(SQLModel):
         if isinstance(value, str):
             return UserRole(value)
         return value
+
+    @field_serializer("role", mode="plain")
+    @classmethod
+    def _serialize_role(cls, value: UserRole | str) -> str:
+        # SA String FK often leaves a plain str on the instance; avoid Pydantic dump warnings.
+        return role_str(value)
 
 
 class UserCreate(UserBase):

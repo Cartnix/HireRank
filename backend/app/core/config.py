@@ -198,9 +198,19 @@ class Settings(BaseSettings):
             else:
                 raise ValueError(message)
 
+    def _check_secret_key_strength(self) -> None:
+        # PyJWT HS256 / RFC 7518 §3.2: key length should be >= 32 bytes.
+        key_len = len(self.SECRET_KEY.encode("utf-8"))
+        if key_len < 32:
+            raise ValueError(
+                f"SECRET_KEY must be at least 32 bytes for HS256 (got {key_len}). "
+                'Use e.g. `python -c "import secrets; print(secrets.token_urlsafe(32))"`.'
+            )
+
     @model_validator(mode="after")
     def _enforce_non_default_secrets(self) -> Self:
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
+        self._check_secret_key_strength()
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
         self._check_default_secret(
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
