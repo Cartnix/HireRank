@@ -1,30 +1,32 @@
-import { useAuth } from "./useAuth"
-import { UseFormSetError } from "react-hook-form"
-import { RegisterFormValuesType } from "./model/FormSchema"
+import { useAuthStore } from "./model/auth-store"
+import { RegisterFormValues } from "./model/FormSchema";
 
-type useAuthFormParams = {
-    view: 'login' | 'register';
-    setError: UseFormSetError<RegisterFormValuesType>;
-    onSuccess?: () => void
-}
+export const useAuthForm = ({ view, setError, onSuccess }) => {
+    const login = useAuthStore((s) => s.login);
+    const register = useAuthStore((s) => s.register);
+    const isloading = useAuthStore((s) => s.isLoading);
 
-export const useAuthForm = ({view, setError, onSuccess}: useAuthFormParams) => {
-    const { signIn, signUp, isLoading } = useAuth()
+    const onSubmit = async (data: RegisterFormValues) => {
+        try {
+            if (view === "register") {
+                await register({
+                    email: data.email,
+                    password: data.password,
+                    role: data.role,
+                    first_name: data.first_name,
+                    last_name: data.last_name,
+                });
+            } else {
+                await login(data.email, data.password);
+            }
 
-    const onSubmit = async(data: RegisterFormValuesType) => {
-        const {error} = 
-        view === 'register'
-        ? await signUp(data.email, data.password)
-        : await signIn(data.email, data.password)
-
-        if (error) {
-            setError("email", {message: error.message})
-            return
+            onSuccess?.();
+        } catch (e) {
+            setError("email", {
+                message: e instanceof Error ? e.message : "Ошибка авторизации",
+            });
         }
+    };
 
-        onSuccess?.();
-
-    }
-
-    return { onSubmit, isLoading }
+    return { onSubmit, isloading }
 }
