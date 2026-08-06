@@ -151,10 +151,16 @@ async def test_rbac_permissions_matrix_from_db(db: AsyncSession) -> None:
 
     assert "admin.panel" in admin
     assert "users.manage" in admin
-    assert "vacancy.create" in hr
+    assert "vacancy.create" in admin
+    assert "vacancy.create" not in hr
+    assert "candidate.create" in hr
+    assert "application.assign" in admin
+    assert "application.assign" not in hr
+    assert "application.assign" not in manager
     assert "vacancy.create" not in recruiter
     assert "resume.upload" in recruiter
     assert "vacancy.read" in manager
+    assert "application.read" in manager
     assert "resume.upload" not in manager
     assert "users.manage" not in candidate
     assert "candidate.read" in candidate

@@ -114,6 +114,9 @@ class Settings(BaseSettings):
     LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 300
     CHECK_EMAIL_RATE_LIMIT_ATTEMPTS: int = 60
     CHECK_EMAIL_RATE_LIMIT_WINDOW_SECONDS: int = 300
+    # Aggregate dashboard joins (Attack 4: pool/CPU exhaustion via unbounded fan-out)
+    DASHBOARD_RATE_LIMIT_ATTEMPTS: int = 120
+    DASHBOARD_RATE_LIMIT_WINDOW_SECONDS: int = 60
 
     @model_validator(mode="after")
     def _apply_cookie_defaults(self) -> Self:

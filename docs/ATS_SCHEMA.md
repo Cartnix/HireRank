@@ -63,7 +63,7 @@ Pool / flood intake: candidates with no active `application` and `status=unassig
 
 ## Non-goals of the schema issue
 
-HTTP CRUD, Automation worker, Memory tables, S3 gateway, AI scoring pipelines — separate issues.
+Schema issue (#24) did not ship HTTP. Vacancy/candidate/assign/dashboard HTTP is covered by issue #30. Still separate: Automation worker, Memory tables, S3 gateway, AI scoring, interview/scorecard HTTP.
 
 ## TDD security coverage (Defense-in-Depth)
 
@@ -86,13 +86,32 @@ Behavioral SoT stays in [use-cases/](use-cases/). Security tests attack boundari
 
 Dual-role pattern: seed Tenant Alpha (Core) + Tenant Omega (attacker); assert authorized read succeeds and attacker read/mutate fails.
 
-### Missing until ATS HTTP CRUD ships
+### HTTP API coverage (issue #30)
 
 | Vector | Expected API outcome | Status |
 |--------|----------------------|--------|
-| `GET /vacancies/{id}` IDOR | 404 for Omega | No routes yet |
-| `POST /candidates` same email as Alpha | 200 for Omega | No routes yet |
-| `PATCH /applications/{id}` foreign stage | 400/404 | No routes yet |
-| `POST /scorecards` foreign `interview_id` | 404/400/409 | No routes yet |
+| `GET /vacancies/{id}` IDOR / foreign seed | 404 | Covered — `tests/api/routes/test_ats_api.py` |
+| `GET /candidates/{id}` foreign seed | 404 | Covered |
+| `POST /candidates` duplicate email (same tenant) | 409 | Covered |
+| Questionnaire email collision on PUT | 409 | Covered |
+| Forged `tenant_id` in body | 422 | Covered (candidates + vacancies) |
+| HR vacancy POST/PATCH/DELETE | 403 (UC-03) | Covered |
+| Manager assign | 403 | Covered |
+| Admin assign + manager list | 200 | Covered |
+| Resume URL after RLS row visible | 200 stub / 404 foreign | Covered |
+| `page_size > 100` | 422 | Covered |
+| Wrong-vacancy stage (API helper) | 400 | Covered — `validate_stage_for_vacancy` |
+| Dashboard flood | 429 (sliding window) | Covered — `enforce_dashboard_rate_limit` |
 
-When those routes land, mirror each DB case with httpx **authorized 200** + **attacker 404/403** (Dual-Role Execution Matrix). Do not mock Postgres — RLS must run under `hirerank_app`.
+Routes: `/api/v1/vacancies`, `/api/v1/candidates` (+ assign, questionnaire, resume-url), `/api/v1/dashboard`. Event stub: `app.ats.events.publish_resume_uploaded`. Interview/scorecard HTTP still deferred (UC-08).
+
+### Reddit / 2026 checklist mapping
+
+| Rule | HireRank |
+|------|----------|
+| 1. Only `SET LOCAL` / transaction-local GUC | `set_config(..., true)` + `SET LOCAL ROLE` in `deps.apply_rls_context` (`app.current_tenant`) |
+| 2. `tenant_id` in every FK / unique | Composite FKs + `UNIQUE (tenant_id, email)` + `UNIQUE (tenant_id, id)` |
+| 3. Negative dual-role tests | DB attack matrix + HTTP mirrors in `test_ats_api.py` |
+| Extra: pagination + rate limit | Lists `le=100`; dashboard rate-limited |
+| Extra: API stage check | `validate_stage_for_vacancy` (complements composite FK) |
+| Reject | Strip RLS from `candidate` (conflicts UC-07) |

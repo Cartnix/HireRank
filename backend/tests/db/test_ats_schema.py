@@ -157,23 +157,31 @@ async def test_ats_composite_tenant_foreign_keys() -> None:
         "FOREIGN KEY (tenant_id, application_id) REFERENCES application(tenant_id, id)",
         "FOREIGN KEY (tenant_id, interview_id) REFERENCES interview(tenant_id, id)",
     }
+    expected_names = {
+        "fk_pipeline_stage_vacancy_tenant",
+        "fk_application_vacancy_tenant",
+        "fk_application_candidate_tenant",
+        "fk_application_stage_tenant",
+        "fk_interview_application_tenant",
+        "fk_scorecard_interview_tenant",
+    }
     async with session_context() as session:
-        defs = (
-            (
-                await session.execute(
-                    text(
-                        """
-                SELECT pg_get_constraintdef(oid)
+        rows = (
+            await session.execute(
+                text(
+                    """
+                SELECT conname, pg_get_constraintdef(oid)
                 FROM pg_constraint
                 WHERE contype = 'f'
                   AND conname LIKE 'fk_%_tenant'
                 """
-                    )
                 )
             )
-            .scalars()
-            .all()
-        )
+        ).all()
+    names = {r[0] for r in rows}
+    defs = [r[1] for r in rows]
+    missing_names = expected_names - names
+    assert not missing_names, f"Missing composite FK names: {missing_names}"
     joined = " | ".join(defs)
     missing = [frag for frag in expected_frags if frag not in joined]
     assert not missing, f"Missing composite tenant FKs: {missing}; have: {defs}"

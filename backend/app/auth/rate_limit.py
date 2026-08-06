@@ -1,8 +1,13 @@
-"""In-memory sliding-window rate limits for auth endpoints (Core / single-node)."""
+"""In-memory sliding-window rate limits (Core / single-node).
+
+Auth brute-force gates plus heavy ATS aggregate endpoints (dashboard).
+Multi-instance deploys should replace this with a shared store.
+"""
 
 from __future__ import annotations
 
 import time
+import uuid
 from collections import defaultdict, deque
 from threading import Lock
 
@@ -67,4 +72,16 @@ def enforce_check_email_rate_limit(*, ip: str | None) -> None:
         check_email_rate_key(ip=ip),
         limit=settings.CHECK_EMAIL_RATE_LIMIT_ATTEMPTS,
         window_seconds=settings.CHECK_EMAIL_RATE_LIMIT_WINDOW_SECONDS,
+    )
+
+
+def dashboard_rate_key(*, user_id: uuid.UUID, ip: str | None) -> str:
+    return f"dashboard:{user_id}:{(ip or 'unknown')}"
+
+
+def enforce_dashboard_rate_limit(*, user_id: uuid.UUID, ip: str | None) -> None:
+    hit_rate_limit(
+        dashboard_rate_key(user_id=user_id, ip=ip),
+        limit=settings.DASHBOARD_RATE_LIMIT_ATTEMPTS,
+        window_seconds=settings.DASHBOARD_RATE_LIMIT_WINDOW_SECONDS,
     )
