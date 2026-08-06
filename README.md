@@ -1,19 +1,20 @@
 # HireRank
 
-**HireRank** is an on-premise ATS with **AIDE** (AI Decision Engine) — the organization’s nervous hiring system, not a resume calculator.
+**HireRank** is an on-premise ATS with **HireRank Automation**: AI Automation **events** with **HITL** via **MCP tools**, with **[Memory](docs/MEMORY.md)** storing option-choice history — for hiring **bureaucracy**.
+**North star:** [docs/use-cases/](docs/use-cases/) (MVP) + strict [ATS_COMPLIANCE_RK.md](docs/ATS_COMPLIANCE_RK.md) (RK) + [GDPR.md](docs/GDPR.md) (EU / West).
 
 ```text
-HireRank intake → AIDE (scenarios) → Telegram HITL → FastMCP (`tenant_id`) → Precedent Memory
+Domain event → Automation (MCP options) → Telegram HITL → FastMCP (`tenant_id`) → Memory (MEMORY.md)
 ```
 
-> AIDE only **suggests**. A human picks a scenario in Telegram; MCP executes that choice and writes the Outcome. AI never auto-hires or auto-rejects.
+> Automation only **suggests** bureaucracy next steps. A human picks in Telegram; MCP executes; Outcome goes to Memory. AI never auto-hires or auto-rejects. MVP event: `resume.uploaded`; more events later ([UC-08](docs/use-cases/UC-08-automation-hitl-loop.md)).
 
 | Plane | Role |
 |-------|------|
 | **HireRank** | Domain ATS + storage + Admin |
-| **AIDE** | Vacancies + precedents → 2–3 scenarios ([AIDE.md](docs/AIDE.md)) |
+| **Automation** | Events + HITL: MCP-backed options ([AUTOMATION.md](docs/AUTOMATION.md); SoT [UC-08](docs/use-cases/UC-08-automation-hitl-loop.md)) |
 | **FastMCP** | Selected action only, under `tenant_id` |
-| **n8n** | Telegram / email delivery (not the decision engine) |
+| **n8n** | Telegram / email delivery (not the automation brain) |
 
 ## Core, Enterprise & SaaS
 
@@ -37,24 +38,26 @@ See [SELF-HOSTED.md](docs/SELF-HOSTED.md) and [RBAC.md](docs/RBAC.md).
 
 | Doc | Purpose |
 |-----|---------|
-| [PASSPORT.md](docs/PASSPORT.md) | Product vision & goals |
+| **[use-cases/](docs/use-cases/)** | **Behavioral Source of Truth** (MVP north star) |
+| **[ATS_COMPLIANCE_RK.md](docs/ATS_COMPLIANCE_RK.md)** | **RK compliance — strict** |
+| **[GDPR.md](docs/GDPR.md)** | **EU / West privacy — strict** |
+| [PASSPORT.md](docs/PASSPORT.md) | Product vision & moat |
 | [PRODUCT.md](docs/PRODUCT.md) | UVP, JTBD, anti-patterns |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | HireRank + AIDE + MCP + n8n planes |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | HireRank + Automation + MCP + n8n planes |
 | [SELF-HOSTED.md](docs/SELF-HOSTED.md) | Core deploy defaults & token store |
 | [RBAC.md](docs/RBAC.md) | Roles, JWT, token store |
-| [AIDE.md](docs/AIDE.md) | Decision engine lifecycle + strict gate |
+| [AUTOMATION.md](docs/AUTOMATION.md) | Implements UC-08 (detail) |
+| [MEMORY.md](docs/MEMORY.md) | Option-choice history + run memory |
 | [ROADMAP.md](docs/ROADMAP.md) | Delivery phases |
-| [FEAUTERS.md](docs/FEAUTERS.md) | Feature catalog |
-| [use-cases/](docs/use-cases/) | Behavioral specs |
+| [FEAUTERS.md](docs/FEAUTERS.md) | Feature catalog (must match use-cases) |
 | [openapi/](docs/openapi/) | REST API contract |
-| [GDPR.md](docs/GDPR.md) | Privacy & sovereignty |
 
 ## Stack
 
 | Area | Tech |
 |------|------|
 | HireRank | Next.js, FastAPI, PostgreSQL, Redis (optional for Core auth), S3, Celery |
-| AIDE | Ollama + scenario orchestration |
+| Automation | Ollama + event worker / agent run orchestration |
 | Execution | FastMCP |
 | Delivery | n8n (Telegram, email, webhooks) |
 | Edge / ops | Traefik, Cloudflare, Compose |
@@ -70,4 +73,4 @@ Core auth defaults to `TOKEN_STORE=memory`. Set `TOKEN_STORE=redis` when you sca
 
 ## MVP
 
-Phase 1: human ATS loop (tenant pool, vacancies, assignment). Phase 2: AIDE + Telegram HITL + MCP + Precedent Memory. See [ROADMAP.md](docs/ROADMAP.md).
+Phase 1: human ATS loop. Phase 2: bureaucracy Automation events + HITL + MCP + [Memory](docs/MEMORY.md) ([UC-08](docs/use-cases/UC-08-automation-hitl-loop.md)). See [ROADMAP.md](docs/ROADMAP.md).

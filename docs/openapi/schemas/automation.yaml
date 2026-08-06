@@ -1,4 +1,4 @@
-# schemas/aide.yaml
+# schemas/automation.yaml
 
 ScenarioActionType:
   type: string
@@ -92,6 +92,8 @@ AcceptScenarioResponse:
 
 Outcome:
   type: object
+  description: |
+    История одного HITL-выбора (опция → MCP). Живёт в Memory — канон docs/MEMORY.md.
   required: [id, tenant_id, candidate_id, package_id, scenario_id, action_type, created_at]
   properties:
     id:
@@ -127,7 +129,9 @@ Outcome:
 
 Precedent:
   type: object
-  description: Запись Precedent Memory tenant (чтение AIDE)
+  description: |
+    Запись Memory tenant для контекста Automation (API name `Precedent` may lag).
+    Product canon: docs/MEMORY.md — decision history + other run memory.
   required: [id, tenant_id, summary, created_at]
   properties:
     id:

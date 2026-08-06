@@ -6,8 +6,8 @@ NotificationType:
     - candidate_created
     - vacancy_created
     - candidate_assigned
-    - aide_scenarios_sent
-    - aide_scenario_accepted
+    - automation_options_sent
+    - automation_option_accepted
   example: candidate_created
 
 NotificationChannel:

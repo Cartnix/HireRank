@@ -27,7 +27,7 @@ AdminDashboard:
       example: 3
     recent_pending_packages:
       type: array
-      description: Недавние pending AIDE packages (не rank-score)
+      description: Недавние pending Automation packages (не rank-score)
       items:
         type: object
         properties:

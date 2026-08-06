@@ -141,7 +141,7 @@ Candidate:
       type: string
       format: uuid
       nullable: true
-      description: Pending или последний AIDE decision package
+      description: Pending или последний Automation decision package
     created_at:
       type: string
       format: date-time
