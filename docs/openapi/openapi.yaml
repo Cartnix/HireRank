@@ -5,12 +5,17 @@ info:
   version: 1.0.0
   description: |
     REST API контракт платформы **HireRank** (HIRERANK) с **HireRank Automation**
-    (event-driven AI-native Automation + HITL).
+    (events + HITL + MCP + Memory — bureaucracy automation).
 
-    Канон: PASSPORT — Automation предлагает 2–3 MCP-backed опции; человек выбирает в Telegram;
+    **Behavioral Source of Truth:** [use-cases/UC-08](../use-cases/UC-08-automation-hitl-loop.md)
+    ([use-cases/README](../use-cases/README.md)).
+    **Compliance (strict):** [ATS_COMPLIANCE_RK](../ATS_COMPLIANCE_RK.md) (RK — primary),
+    [GDPR](../GDPR.md) (EU / West). Vision: [PASSPORT](../PASSPORT.md).
+
+    Automation предлагает 2–3 MCP-backed опции бюрократии; человек выбирает в Telegram;
     FastMCP исполняет только выбранное действие под `tenant_id` и пишет Outcome
-    (история выбора опции) в Memory — канон [MEMORY.md](../MEMORY.md).
-    AI **не** делает auto-hire / auto-reject.
+    (история выбора опции) в Memory — [MEMORY.md](../MEMORY.md).
+    AI **не** делает auto-hire / auto-reject. MVP-событие: `resume.uploaded`; цикл расширяем.
 
     **Hidden multi-tenancy**: Core (self-hosted) — один enterprise на инстанс;
     `tenant_id` в JWT/БД фиксирован через `TENANT_ID` (env). PostgreSQL RLS фильтрует строки.

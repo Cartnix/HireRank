@@ -1,6 +1,8 @@
 # HireRank HITL Automation Pattern
 
-> **Design reference (non-canon).** Deep dive into the event-driven Automation + HITL architecture. Product SoT: [AUTOMATION.md](../AUTOMATION.md), [MEMORY.md](../MEMORY.md), [UC-08](../use-cases/UC-08-automation-hitl-loop.md).
+> **Design reference (non-canon).** Deep dive into event-driven Automation + HITL. **Behavioral Source of Truth:** [use-cases/](../use-cases/) ([UC-08](../use-cases/UC-08-automation-hitl-loop.md)). **Compliance (strict):** [ATS_COMPLIANCE_RK.md](../ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](../GDPR.md). Detail: [AUTOMATION.md](../AUTOMATION.md), [MEMORY.md](../MEMORY.md).
+
+**Moat:** AI Automation events with HITL via MCP tools, with Memory storing option-choice history — for hiring bureaucracy; extensible beyond MVP `resume.uploaded`.
 
 This note describes HireRank Automation as a **distributed event-driven AI system**: declarative automation config, short-lived agent runs, local LLM option generation, human approval, then MCP execution under `tenant_id`.
 

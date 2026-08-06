@@ -1,8 +1,10 @@
 # HireRank — Privacy, sovereignty & human oversight
 
-Canonical product posture: [PASSPORT.md](PASSPORT.md). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md). Memory: [MEMORY.md](MEMORY.md).
+**Compliance Source of Truth (EU / West)** — obeyed **strictly** with [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) (RK — primary) and [use-cases/](use-cases/) (MVP behavioral north star). See [use-cases/README.md](use-cases/README.md).
 
-HireRank is positioned as **on-prem / in-perimeter** ATS + HireRank Automation. Personal data, [Memory](MEMORY.md), and decision audit stay under the controller’s custody — not a multi-tenant cloud LLM black box.
+Vision: [PASSPORT.md](PASSPORT.md). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md). Memory: [MEMORY.md](MEMORY.md).
+
+HireRank is positioned as **on-prem / in-perimeter** ATS + HireRank Automation (events + HITL + MCP + Memory for bureaucracy). Personal data, [Memory](MEMORY.md), and decision audit stay under the controller’s custody — not a multi-tenant cloud LLM black box.
 
 ## 1. Data sovereignty & isolation (`tenant_id`)
 
@@ -17,7 +19,7 @@ A cross-tenant leak is a severe breach. Absolute isolation is required.
 
 Recruitment AI is high-risk context (EU AI Act Annex III §4 screening/evaluation posture).
 
-* Automation **suggests** 2–3 MCP-backed options; a human presses a Telegram button; FastMCP executes **only** the selected action.
+* Automation **suggests** 2–3 MCP-backed bureaucracy options; a human presses a Telegram button; FastMCP executes **only** the selected action ([UC-08](use-cases/UC-08-automation-hitl-loop.md)).
 * **Ban:** automatic hire/reject without human selection.
 * Audit trail: proposed options → chosen button → MCP action → **Outcome** (option-choice history) in [Memory](MEMORY.md).
 

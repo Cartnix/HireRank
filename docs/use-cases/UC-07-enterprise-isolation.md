@@ -18,5 +18,5 @@ DoD:
 - All tenant-scoped entities are filtered by `tenant_id`.
 - A user cannot read or modify another tenant's data.
 - Candidate cannot access vacancies from another tenant.
-- [Memory](../MEMORY.md) (Outcomes and other run memory) is tenant-scoped.
+- [Memory](../MEMORY.md) (Outcomes / option-choice history for bureaucracy Automation, plus other run memory) is tenant-scoped. Automation HITL behavior: [UC-08](UC-08-automation-hitl-loop.md).
 - Cross-tenant requests fail with `403` or `404` depending on the endpoint.

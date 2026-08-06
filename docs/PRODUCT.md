@@ -1,34 +1,36 @@
 # HireRank — Product
 
-Canonical vision: [PASSPORT.md](PASSPORT.md).
+Vision: [PASSPORT.md](PASSPORT.md). **Behavioral Source of Truth:** [use-cases/](use-cases/) (Automation HITL: [UC-08](use-cases/UC-08-automation-hitl-loop.md)).
+**Compliance (strict):** [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](GDPR.md) (EU / West).
 
 ## What it is
 
-**HireRank** (HIRERANK) is an on-premise ATS with **HireRank Automation** (*ATS AI-native Automation*): the organization's nervous hiring system, not a resume calculator.
+**HireRank** (HIRERANK) is an on-premise ATS with **HireRank Automation**: AI Automation **events** with **HITL**, executed via **MCP tools**, with **[Memory](MEMORY.md)** storing option-choice history — for hiring **bureaucracy**, not a resume calculator.
 
-On `resume.uploaded`, Automation runs a short-lived agent, offers 2–3 MCP-backed action options in Telegram (Human-in-the-Loop captcha), executes only the selected action through MCP under `tenant_id`, and accumulates **[Memory](MEMORY.md)** — Outcomes (option-choice history) and other run memory — a digital asset that does not leave with HR turnover.
+MVP: `resume.uploaded` → options → Telegram HITL → FastMCP under `tenant_id` → Outcome into Memory. Further events reuse the same loop ([UC-08](use-cases/UC-08-automation-hitl-loop.md)).
 
 ## Job-to-be-done
 
 | Stakeholder | Job |
 |-------------|-----|
 | TA / HR | Absorb flood intake into a tenant pool without losing candidates in mail/Excel |
-| Hiring manager | Get 2–3 concrete next-step options in Telegram and pick one with a button |
-| CHRO / CISO | Keep personal data and decision logic inside the perimeter; prove meaningful human oversight |
-| Organization | Preserve hiring practice as a `tenant_id`-scoped asset in [Memory](MEMORY.md) |
+| Hiring manager | Get 2–3 concrete bureaucracy next-steps in Telegram and pick one with a button |
+| CHRO / CISO | Keep personal data and process logic inside the perimeter; prove meaningful human oversight |
+| Organization | Preserve hiring bureaucracy practice in [Memory](MEMORY.md) as a `tenant_id`-scoped asset |
 
 ## Unique value (five theses)
 
-1. **Data never leaves your perimeter** — on-prem; personal data and [Memory](MEMORY.md) stay in the loop.
-2. **Automation co-pilot, not black box** — prepares options; a human presses a button; MCP writes only the selected action.
-3. **[Memory](MEMORY.md) = org asset** — Outcomes and run memory survive turnover.
-4. **Built for the flood, not seats** — intake + Telegram; pricing not per-seat theater.
-5. **Selective MCP execution** — only the human-chosen option runs; AI never auto-hires or auto-rejects.
+1. **Data never leaves your perimeter** — on-prem; personal data and Memory stay in the loop.
+2. **Automation co-pilot for bureaucracy, not black box** — MCP options; human button; MCP writes only the selection.
+3. **[Memory](MEMORY.md) = org asset** — Outcomes (option choices) and run memory survive turnover.
+4. **Built for the flood, not seats** — intake events + Telegram HITL.
+5. **Selective MCP execution** — only the human-chosen option; event set is extensible.
 
 ## Moat (what compounds)
 
-- [Memory](MEMORY.md) per tenant (decision history + other run memory)
-- Tenant decision graph (context → proposed actions → chosen outcome)
+**Moat:** AI Automation events with HITL via MCP tools, with [MEMORY.md](MEMORY.md) history of option choices — for bureaucracy; extensible beyond `resume.uploaded`.
+
+- Events → HITL → MCP → Memory (per tenant)
 - HITL Telegram corpus (human-labeled buttons)
 - On-prem custody
 - Process switching cost (nervous system, not CSV export)
@@ -39,17 +41,20 @@ What is **not** moat: pretty chat UI, generic scoring criteria, “we also do Te
 
 | Pattern | Why rejected |
 |---------|----------------|
-| AI scoring as hero (`autoScoreOnApply`, silent rank-graves) | Soft-reject without audit; not org logic |
+| AI scoring as hero (`autoScoreOnApply`, silent rank-graves) | Soft-reject without audit; not org bureaucracy logic |
 | Chatbot as pipeline owner | Conversation ≠ process |
 | Black-box auto hire/reject | Violates trust, GDPR Art. 22, EU AI Act posture |
-| Keyword stuffing matchers | Evidence + [Memory](MEMORY.md), not denser score |
+| Keyword stuffing matchers | Evidence + Memory, not denser score |
 | Web-only weak HITL | Primary surface is Telegram/email agent |
 
-**Strict rule:** “we have AI” is false without (1) [Memory](MEMORY.md) context or a path to it, (2) Telegram HITL with ≥2 options, (3) execution only after a human, (4) Outcome recorded in [Memory](MEMORY.md).
+**Strict rule:** [UC-08](use-cases/UC-08-automation-hitl-loop.md) DoD — Memory path, ≥2 HITL options, human before MCP, Outcome in Memory, no silent score.
 
 ## See also
 
+- [use-cases/](use-cases/) — **behavioral SoT** (MVP north star)
+- [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) — RK compliance (strict)
+- [GDPR.md](GDPR.md) — EU / West privacy (strict)
 - [ARCHITECTURE.md](ARCHITECTURE.md) — planes
-- [AUTOMATION.md](AUTOMATION.md) — Automation lifecycle
-- [MEMORY.md](MEMORY.md) — Outcomes + run memory
+- [AUTOMATION.md](AUTOMATION.md) — implements UC-08
+- [MEMORY.md](MEMORY.md) — option-choice history
 - [ROADMAP.md](ROADMAP.md) — delivery

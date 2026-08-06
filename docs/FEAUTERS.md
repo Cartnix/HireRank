@@ -2,9 +2,11 @@
 
 ## Overview
 
-This document describes the functional capabilities of the **HireRank** (HIRERANK) platform with **HireRank Automation** (*ATS AI-native Automation*).
+This document describes the functional capabilities of the **HireRank** (HIRERANK) platform with **HireRank Automation** (bureaucracy Automation events + HITL).
 
-Product canon: [PASSPORT.md](PASSPORT.md). Automation: [AUTOMATION.md](AUTOMATION.md). Delivery: [ROADMAP.md](ROADMAP.md).
+**Behavioral Source of Truth:** [use-cases/](use-cases/) ([UC-08](use-cases/UC-08-automation-hitl-loop.md)).
+**Compliance (strict):** [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](GDPR.md) (EU / West).
+Vision: [PASSPORT.md](PASSPORT.md). Detail: [AUTOMATION.md](AUTOMATION.md). Delivery: [ROADMAP.md](ROADMAP.md). Features must not invent behavior beyond use-cases or weaken compliance.
 
 It does not include technical implementation details and is used as a requirements source for development.
 
@@ -336,19 +338,19 @@ Each user has a personal profile.
 
 ## Description
 
-**HireRank Automation** is an event-driven co-pilot cycle — not a black box, not a standing decision engine, and not a score dashboard.
+**HireRank Automation** automates hiring **bureaucracy** via domain **events** + **HITL** + **MCP** + **[Memory](MEMORY.md)** — not a black box, not a standing decision engine, not a score dashboard. Behavioral SoT: [UC-08](use-cases/UC-08-automation-hitl-loop.md).
 
-On `resume.uploaded`, a short-lived agent run loads the automation definition, builds context (resume JSON, open vacancies, [Memory](MEMORY.md), MCP tool schemas), generates **2–3 MCP-backed action options**, notifies managers by email and delivers options in Telegram as a HITL captcha, and only after a human selection executes the chosen tool via MCP under `tenant_id`, writing the **Outcome** (option-choice history) into [Memory](MEMORY.md).
+On a matching event (MVP `resume.uploaded`; further events later), a short-lived agent run loads the automation definition, builds context (domain payload, vacancies, Memory option-choice history, MCP schemas), generates **2–3 MCP-backed bureaucracy options**, notifies managers by email and delivers options in Telegram as a HITL captcha, and only after a human selection executes the chosen tool via MCP under `tenant_id`, writing the **Outcome** into Memory.
 
 ### Capabilities
 
-* trigger on `resume.uploaded` (candidate or HR intake);
+* trigger on `resume.uploaded` (candidate or HR intake); extensible to other domain events (UC-08 Notes);
 * load automation definition (prompt + tools + model + tenant scope);
-* read resume JSON, tenant vacancies, [Memory](MEMORY.md), and MCP schemas;
-* generate 2–3 options with rationale (local LLM / Ollama);
+* read domain payload, vacancies, [Memory](MEMORY.md), and MCP schemas;
+* generate 2–3 bureaucracy options with rationale (local LLM / Ollama);
 * SMTP awareness + Telegram delivery via n8n (delivery plane);
 * execute **only** the selected option via FastMCP;
-* write Outcome → [Memory](MEMORY.md) (decision history; other run memory TBD);
+* write Outcome → [Memory](MEMORY.md) (option-choice history; other run memory TBD);
 * destroy the agent run after completion.
 
 ### Ban
@@ -359,10 +361,7 @@ On `resume.uploaded`, a short-lived agent run loads the automation definition, b
 
 ### DoD (strict gate)
 
-1. [Memory](MEMORY.md) context exists, or an explicit path to build it.
-2. Telegram HITL with ≥2 MCP-backed options.
-3. Execution only after a human.
-4. Outcome recorded in tenant [Memory](MEMORY.md).
+Same as [UC-08](use-cases/UC-08-automation-hitl-loop.md): Memory path, ≥2 HITL MCP options, human before execute, Outcome in Memory, no silent score.
 
 ---
 
@@ -370,9 +369,9 @@ On `resume.uploaded`, a short-lived agent run loads the automation definition, b
 
 ## Description
 
-Tenant [Memory](MEMORY.md): history of HITL **Outcomes** (which option was chosen) and other Automation run memory. Storage shape TBD; product canon is the markdown doc.
+Tenant [Memory](MEMORY.md): history of HITL **Outcomes** (which Automation option was chosen — bureaucracy steps) and other Automation run memory. Storage shape TBD; product canon is the markdown doc. SoT for the write path: UC-08.
 
-A digital org asset; it does not leave with HR turnover.
+A digital org asset; part of the moat (events + HITL + MCP + Memory for bureaucracy).
 
 ### Capabilities
 

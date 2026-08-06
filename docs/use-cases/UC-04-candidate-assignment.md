@@ -17,7 +17,7 @@ Flow:
 6. Notification is created for the tenant.
 
 Notes:
-- The same assignment result may be produced by MCP after a human-selected Automation option (UC-08). Manual admin assignment remains valid.
+- The same assignment result may be produced by MCP after a human-selected Automation option ([UC-08](UC-08-automation-hitl-loop.md) — SoT). Manual admin assignment remains valid. Option-choice history is stored in [Memory](../MEMORY.md).
 
 DoD:
 - Assignment is allowed only for Administrator (manual path).
