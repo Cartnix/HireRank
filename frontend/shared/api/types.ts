@@ -5,6 +5,6 @@ export type TokenPair = {
     expires_id: number;
 }
 
-export type ApiErorr = {
+export type ApiError = {
     detail: string | { msg: string; type: string }[]
 }
