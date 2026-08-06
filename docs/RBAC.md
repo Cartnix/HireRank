@@ -61,7 +61,9 @@ Core / Open Source deploys one enterprise per instance. `tenant_id` remains on r
 
 Access and refresh JWTs carry `sub`, `role`, `tenant_id`, `jti`, `type`. Access tokens also carry `permissions` (list of strings). **Browser transport** is HttpOnly Secure cookies (`access_token` / `refresh_token`) plus a readable `csrf_token` for double-submit CSRF on mutating requests. JSON body for `/auth/login|register|refresh` returns `AuthSession` (`token_type=cookie`, `expires_in`) — **no usable access JWT in body**. Dual-mode: `Authorization: Bearer` still works for scripts/Swagger (`POST /login/access-token` returns `TokenPair`).
 
-Google/LinkedIn OAuth verify identity only (`oauth_identity.provider` + immutable `provider_subject`). Role / tenant / `is_active` always come from PostgreSQL. IdP refresh tokens (if any) are stored encrypted — never in the session JWT.
+**Consent (RK §1.4 / GDPR Arts. 6–7):** registration and OAuth start require a separated `consent` object (`account_processing` required; `talent_pool` / `cross_border` optional, empty by default). Grants persist in `user_consent`. `GET|PATCH /auth/consent` reads/updates; `POST /auth/forget-me` revokes consents, anonymizes the auth identity, and clears the session (GDPR Art. 17 / RK §3.3). Register body uses `extra=forbid` so IIN / passport / `tenant_id` cannot be injected (RK §1.5 minimization).
+
+Google/LinkedIn OAuth verify identity only (`oauth_identity.provider` + immutable `provider_subject`). Role / tenant / `is_active` always come from PostgreSQL. IdP refresh tokens (if any) are stored encrypted — never in the session JWT. OAuth start is **POST** with the same consent payload before IdP redirect.
 
 Refresh jtis and access blacklists live in a pluggable `TokenStore`:
 

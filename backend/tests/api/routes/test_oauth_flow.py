@@ -11,6 +11,7 @@ from httpx import AsyncClient, Response
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
+from tests.utils.consent import valid_consent
 from tests.utils.utils import random_email, random_lower_string
 
 AUTH = f"{settings.API_V1_STR}/auth"
@@ -63,7 +64,11 @@ def _access_set_cookie(response: object) -> str | None:
 
 
 async def _oauth_state(client: AsyncClient, provider: str) -> str:
-    r = await client.get(f"{AUTH}/oauth/{provider}/start", follow_redirects=False)
+    r = await client.post(
+        f"{AUTH}/oauth/{provider}/start",
+        json={"consent": valid_consent()},
+        follow_redirects=False,
+    )
     assert r.status_code in (302, 307)
     loc = r.headers["location"]
     qs = parse_qs(urlparse(loc).query)

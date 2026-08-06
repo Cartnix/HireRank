@@ -11,7 +11,6 @@ import asyncio
 import uuid
 from datetime import timedelta
 
-import jwt
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlmodel import select
@@ -22,6 +21,7 @@ from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models import Tenant, User, UserRole
 from tests.conftest import bypass_rls_session, session_context
+from tests.utils.consent import register_json
 from tests.utils.utils import random_email, random_lower_string
 
 FOREIGN_TENANT_ID = uuid.UUID("11111111-1111-4111-8111-111111111111")
@@ -216,37 +216,20 @@ async def test_write_exploit_admin_create_ignores_body_tenant_id(
         await db.commit()
 
 
-async def test_write_exploit_register_ignores_body_tenant_and_persists_core(
-    client: AsyncClient, db: AsyncSession
+async def test_write_exploit_register_rejects_body_tenant(
+    client: AsyncClient,
 ) -> None:
     email = random_email()
     r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": email,
-            "password": random_lower_string(),
-            "role": "hr",
-            "tenant_id": str(FOREIGN_TENANT_ID),
-        },
+        json=register_json(
+            email=email,
+            password=random_lower_string(),
+            role="hr",
+            tenant_id=str(FOREIGN_TENANT_ID),
+        ),
     )
-    assert r.status_code == 201
-    access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
-    assert access
-    payload = jwt.decode(
-        access,
-        settings.SECRET_KEY,
-        algorithms=[security.ALGORITHM],
-    )
-    assert payload["tenant_id"] == str(settings.TENANT_ID)
-
-    await db.execute(text("SET row_security = off"))
-    try:
-        row = (await db.exec(select(User).where(User.email == email))).first()
-        assert row is not None
-        assert row.tenant_id == settings.TENANT_ID
-    finally:
-        await db.execute(text("SET row_security = on"))
-        await db.commit()
+    assert r.status_code == 422
 
 
 async def test_rls_force_enabled_on_user_and_tenant_tables() -> None:

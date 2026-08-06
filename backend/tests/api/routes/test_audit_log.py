@@ -19,6 +19,7 @@ from app.core.config import settings
 from app.models import AuditLog, Tenant
 from tests.conftest import bypass_rls_session, session_context
 from tests.utils.auth_types import register_bearer_pair
+from tests.utils.consent import register_json
 from tests.utils.utils import random_email, random_lower_string
 
 FOREIGN_TENANT_ID = uuid.UUID("11111111-1111-4111-8111-111111111111")
@@ -70,11 +71,7 @@ async def test_login_success_writes_audit_log(client: AsyncClient) -> None:
     password = random_lower_string()
     r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": email,
-            "password": password,
-            "role": "recruiter",
-        },
+        json=register_json(email=email, password=password, role="recruiter"),
     )
     assert r.status_code == 201
     before = await _count_actions(AuditAction.LOGIN_SUCCESS)
@@ -119,7 +116,7 @@ async def test_oauth_form_login_writes_audit_log(client: AsyncClient) -> None:
     password = random_lower_string()
     register_response = await client.post(
         f"{settings.API_V1_STR}/auth/register",
-        json={"email": email, "password": password, "role": "recruiter"},
+        json=register_json(email=email, password=password, role="recruiter"),
     )
     assert register_response.status_code == 201
     before = await _count_actions(AuditAction.LOGIN_SUCCESS)

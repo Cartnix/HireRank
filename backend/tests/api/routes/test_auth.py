@@ -7,6 +7,7 @@ from app.auth.permissions import has_permission
 from app.core import security
 from app.core.config import settings
 from tests.utils.auth_types import register_bearer_pair
+from tests.utils.consent import register_json
 from tests.utils.utils import random_email, random_lower_string
 
 
@@ -101,35 +102,27 @@ async def test_auth_register_login_me_refresh_logout(client: AsyncClient) -> Non
 async def test_auth_register_rejects_administrator(client: AsyncClient) -> None:
     r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": random_email(),
-            "password": random_lower_string(),
-            "role": "administrator",
-        },
+        json=register_json(
+            email=random_email(),
+            password=random_lower_string(),
+            role="administrator",
+        ),
     )
     assert r.status_code == 400
 
 
-async def test_auth_register_ignores_client_tenant(client: AsyncClient) -> None:
+async def test_auth_register_rejects_client_tenant(client: AsyncClient) -> None:
     email = random_email()
     r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": email,
-            "password": random_lower_string(),
-            "role": "candidate",
-            "tenant_id": "11111111-1111-4111-8111-111111111111",
-        },
+        json=register_json(
+            email=email,
+            password=random_lower_string(),
+            tenant_id="11111111-1111-4111-8111-111111111111",
+        ),
     )
-    assert r.status_code == 201
-    access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
-    assert access
-    payload = jwt.decode(
-        access,
-        settings.SECRET_KEY,
-        algorithms=[security.ALGORITHM],
-    )
-    assert payload["tenant_id"] == str(settings.TENANT_ID)
+    # extra=forbid — tenant_id / IIN / etc. cannot be injected via register body
+    assert r.status_code == 422
 
 
 async def test_rbac_candidate_forbidden_on_users_manage(

@@ -6,6 +6,39 @@ const passwordSchema = z
   .string()
   .min(8, "Пароль должен состоять минимум из 8 символов");
 
+const REQUIRED_CONSENT_MSG =
+  "Согласие на обработку ПД для аккаунта обязательно";
+
+/** RK §1.4 — separated consents, empty by default (no pre-ticks). */
+export const ConsentSchema = z
+  .object({
+    account_processing: z.literal(true, {
+      errorMap: () => ({ message: REQUIRED_CONSENT_MSG }),
+    }),
+    talent_pool: z.boolean(),
+    cross_border: z.boolean(),
+    cross_border_countries: z.array(z.string()).default([]),
+  })
+  .superRefine((data, ctx) => {
+    if (data.cross_border && data.cross_border_countries.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Укажите страны для трансграничной передачи",
+        path: ["cross_border_countries"],
+      });
+    }
+  });
+
+const registerConsentFields = {
+  /** Explicit tick required on registration only (RK §1.4). */
+  consent_account_processing: z.literal(true, {
+    errorMap: () => ({ message: REQUIRED_CONSENT_MSG }),
+  }),
+  consent_talent_pool: z.boolean(),
+  consent_cross_border: z.boolean(),
+};
+
+/** Login: no checkboxes — acceptance is implicit via CTA + policy links. */
 export const LoginFormValues = z.object({
   email: emailSchema,
   password: passwordSchema,
@@ -19,6 +52,7 @@ export const RegisterFormValues = z
     role: z.enum(["candidate", "hr", "manager", "recruiter"]),
     first_name: z.string().optional(),
     last_name: z.string().optional(),
+    ...registerConsentFields,
   })
   .refine((data) => data.password === data.repeatPassword, {
     message: "Пароли не совпадают",
@@ -27,3 +61,43 @@ export const RegisterFormValues = z
 
 export type LoginFormValuesType = z.infer<typeof LoginFormValues>;
 export type RegisterFormValuesType = z.infer<typeof RegisterFormValues>;
+
+export type ConsentPayload = z.infer<typeof ConsentSchema>;
+
+export type ConsentFlags = {
+  consent_account_processing: boolean;
+  consent_talent_pool: boolean;
+  consent_cross_border: boolean;
+};
+
+/** Gate for register UI + submit — request must not fire without explicit tick. */
+export function hasRequiredConsent(flags: ConsentFlags): boolean {
+  return flags.consent_account_processing === true;
+}
+
+/**
+ * Implicit account-processing grant for returning login / OAuth on login view
+ * (clicking «Войти» / OAuth = acceptance of linked Terms & Privacy).
+ */
+export function implicitLoginConsentPayload(): ConsentPayload {
+  return {
+    account_processing: true,
+    talent_pool: false,
+    cross_border: false,
+    cross_border_countries: [],
+  };
+}
+
+export function toConsentPayload(data: ConsentFlags): ConsentPayload {
+  if (!hasRequiredConsent(data)) {
+    throw new Error(REQUIRED_CONSENT_MSG);
+  }
+  return {
+    account_processing: true,
+    talent_pool: data.consent_talent_pool === true,
+    cross_border: data.consent_cross_border === true,
+    cross_border_countries: [],
+  };
+}
+
+export { REQUIRED_CONSENT_MSG };

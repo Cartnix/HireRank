@@ -95,6 +95,10 @@ paths:
     $ref: './paths/auth.yaml#/paths/~1auth~1me'
   /auth/refresh:
     $ref: './paths/auth.yaml#/paths/~1auth~1refresh'
+  /auth/consent:
+    $ref: './paths/auth.yaml#/paths/~1auth~1consent'
+  /auth/forget-me:
+    $ref: './paths/auth.yaml#/paths/~1auth~1forget-me'
   /auth/oauth/{provider}/start:
     $ref: './paths/auth.yaml#/paths/~1auth~1oauth~1{provider}~1start'
   /auth/callback/google:

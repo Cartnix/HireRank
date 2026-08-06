@@ -22,6 +22,8 @@ ALLOWED_METADATA_KEYS: frozenset[str] = frozenset(
         "seed",  # test fixtures only
         "field",
         "changed",
+        "detail",
+        "purpose",
     }
 )
 
@@ -46,6 +48,8 @@ class AuditAction(StrEnum):
     LOGOUT = "auth.logout"
     REGISTER = "auth.register"
     REFRESH = "auth.refresh"
+    CONSENT_UPDATE = "auth.consent.update"
+    FORGET_ME = "auth.forget_me"
 
 
 def hash_email(email: str) -> str:

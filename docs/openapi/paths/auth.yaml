@@ -10,6 +10,8 @@ paths:
         Roles available at registration: `candidate`, `hr`, `manager`, `recruiter`.
         The `administrator` role is created manually via DB or a seed script.
         `tenant_id` is not sent by the client — the singleton TENANT_ID is injected (hidden multi-tenancy).
+        Requires separated `consent` (RK §1.4): `account_processing` must be true;
+        `talent_pool` / `cross_border` optional (empty by default). Extra fields (e.g. `iin`) are rejected.
         On success, sets HttpOnly access/refresh cookies + a readable CSRF cookie.
       security: []
       requestBody:
@@ -143,10 +145,13 @@ paths:
           $ref: '#/components/responses/Unauthorized'
 
   /auth/oauth/{provider}/start:
-    get:
+    post:
       tags: [Auth]
       operationId: oauthStart
-      summary: Redirect to Google/LinkedIn authorize URL
+      summary: Start Google/LinkedIn OAuth with consent snapshot
+      description: |
+        Requires separated consent (same as register). Stores consent with OAuth state,
+        then redirects to the IdP authorize URL.
       security: []
       parameters:
         - name: provider
@@ -155,9 +160,60 @@ paths:
           schema:
             type: string
             enum: [google, linkedin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/auth.yaml#/OAuthStartRequest'
       responses:
         '302':
           description: Redirect to IdP
+        '400':
+          description: Missing account_processing consent or provider misconfigured
+
+  /auth/consent:
+    get:
+      tags: [Auth]
+      operationId: getConsent
+      summary: Current consent grants for the authenticated user
+      responses:
+        '200':
+          description: Separated consent flags
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/auth.yaml#/ConsentPublic'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [Auth]
+      operationId: updateConsent
+      summary: Update optional / required consent grants
+      responses:
+        '200':
+          description: Updated consent state
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/auth.yaml#/ConsentPublic'
+        '400':
+          description: Invalid consent combination
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/forget-me:
+    post:
+      tags: [Auth]
+      operationId: forgetMe
+      summary: Withdraw consents and anonymize auth identity (GDPR Art.17 / RK §3.3)
+      responses:
+        '204':
+          description: Consents revoked, identity anonymized, cookies cleared
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Administrators cannot self-erase via this endpoint
 
   /auth/callback/google:
     get:

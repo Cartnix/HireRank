@@ -11,6 +11,7 @@ from app.api.deps import (
     SessionDep,
     require_permission,
 )
+from app.auth.consent import record_consents
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
@@ -163,7 +164,9 @@ async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
         last_name=user_in.last_name,
         tenant_id=settings.TENANT_ID,
     )
-    return await crud.create_user(session=session, user_create=user_create)
+    user = await crud.create_user(session=session, user_create=user_create)
+    await record_consents(session=session, user=user, consent=user_in.consent)
+    return user
 
 
 @router.get("/{user_id}", response_model=UserPublic)

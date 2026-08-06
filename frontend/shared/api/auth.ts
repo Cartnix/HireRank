@@ -1,5 +1,6 @@
 import { apiFetch } from "@/shared/api/client";
 import { getApiV1Url } from "@/shared/config/env";
+import type { ConsentPayload } from "@/features/auth/model/FormSchema";
 
 export type UserPublic = {
   id: string;
@@ -22,6 +23,7 @@ export type RegisterPayload = {
   role: "candidate" | "hr" | "manager" | "recruiter";
   first_name?: string;
   last_name?: string;
+  consent: ConsentPayload;
 };
 
 export async function login(email: string, password: string): Promise<AuthSession> {
@@ -52,6 +54,36 @@ export async function refresh(): Promise<AuthSession> {
   return apiFetch<AuthSession>("/auth/refresh", { method: "POST" });
 }
 
-export function oauthStartUrl(provider: "google" | "linkedin"): string {
-  return `${getApiV1Url()}/auth/oauth/${provider}/start`;
+export async function forgetMe(): Promise<void> {
+  await apiFetch<void>("/auth/forget-me", { method: "POST" });
+}
+
+/** POST start with consent → follow redirect to IdP (RK §1.4). */
+export async function startOAuth(
+  provider: "google" | "linkedin",
+  consent: ConsentPayload,
+): Promise<void> {
+  const res = await fetch(`${getApiV1Url()}/auth/oauth/${provider}/start`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ consent }),
+    redirect: "manual",
+  });
+  if (res.status >= 300 && res.status < 400) {
+    const loc = res.headers.get("Location");
+    if (loc) {
+      window.location.assign(loc);
+      return;
+    }
+  }
+  // Some browsers hide Location on opaque redirects — fall back to reading JSON error
+  let detail = "OAuth start failed";
+  try {
+    const data = (await res.json()) as { detail?: string };
+    if (data.detail) detail = data.detail;
+  } catch {
+    /* ignore */
+  }
+  throw new Error(detail);
 }

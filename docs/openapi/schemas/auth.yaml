@@ -40,7 +40,8 @@ TokenPair:
 
 RegisterRequest:
   type: object
-  required: [email, password, role]
+  required: [email, password, role, consent]
+  additionalProperties: false
   properties:
     email:
       type: string
@@ -64,6 +65,45 @@ RegisterRequest:
     last_name:
       type: string
       example: Petrov
+    consent:
+      $ref: '#/ConsentGrant'
+
+ConsentGrant:
+  type: object
+  required: [account_processing, talent_pool, cross_border]
+  description: |
+    Separated consents (RK §1.4). Defaults must be false / empty — never pre-ticked.
+  properties:
+    account_processing:
+      type: boolean
+      description: Required — process PD for HireRank account
+      example: true
+    talent_pool:
+      type: boolean
+      description: Optional — keep PD in talent pool / reserve
+      example: false
+    cross_border:
+      type: boolean
+      description: Optional — cross-border transfer
+      example: false
+    cross_border_countries:
+      type: array
+      items:
+        type: string
+      description: Required non-empty when cross_border is true
+      example: []
+
+ConsentPublic:
+  allOf:
+    - $ref: '#/ConsentGrant'
+
+OAuthStartRequest:
+  type: object
+  required: [consent]
+  additionalProperties: false
+  properties:
+    consent:
+      $ref: '#/ConsentGrant'
 
 LoginRequest:
   type: object

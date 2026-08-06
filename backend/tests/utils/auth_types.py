@@ -7,6 +7,7 @@ from typing import TypedDict, cast
 from httpx import AsyncClient
 
 from app.core.config import settings
+from tests.utils.consent import register_json
 from tests.utils.utils import random_email, random_lower_string
 
 
@@ -32,11 +33,7 @@ async def register_bearer_pair(
     password = password or random_lower_string()
     r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": email,
-            "password": password,
-            "role": role,
-        },
+        json=register_json(email=email, password=password, role=role),
     )
     assert r.status_code == 201, r.text
     access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)

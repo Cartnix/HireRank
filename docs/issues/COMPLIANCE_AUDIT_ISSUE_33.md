@@ -37,13 +37,13 @@ As a result, many compliance obligations for candidate processing are still desi
 
 | Requirement | Compliance source | Current evidence | Status | Classification | Notes |
 |---|---|---|---|---|---|
-| Granular consent UI with separate unchecked boxes | `docs/ATS_COMPLIANCE_RK.md` §1.4 | `frontend/widgets/authModal/ui/AuthModal.tsx` registers with email/password only; no consent fields in `frontend/features/auth/model/FormSchema.ts` | Missing | `must-fix` | There is already a live registration UI but it does not capture separated consent states |
-| No IIN / ID scans during initial apply | `docs/ATS_COMPLIANCE_RK.md` §1.5 | No IIN/passport/file-upload fields in current auth models or `docs/openapi/schemas/candidate.yaml` questionnaire | Partial | `MVP waiver` | Current runtime does not request IIN, but there is no candidate flow implementation or server-side enforcement if such fields are introduced later |
+| Granular consent UI with separate unchecked boxes | `docs/laws/ATS_COMPLIANCE_RK.md` §1.4 | `AuthModal` + `ConsentGrant` on `/auth/register` and OAuth POST start; `user_consent` table | Implemented | `implemented` | Empty-by-default checkboxes; `account_processing` required |
+| No IIN / ID scans during initial apply | `docs/laws/ATS_COMPLIANCE_RK.md` §1.5 | `UserRegister` `extra=forbid` rejects `iin` and other unknown PD fields | Implemented | `implemented` | Auth register path hardened; candidate apply forms still future |
+| “Forget Me” / consent withdrawal workflow | `docs/laws/GDPR.md` §3, RK §3.3 | `POST /auth/forget-me` anonymizes auth identity, revokes consents, clears session | Partial | `implemented` | Auth-scoped erasure done; candidate-profile purge remains MVP when candidate domain ships |
 | Personal-data masking in list views with audited reveal | `docs/ATS_COMPLIANCE_RK.md` §3.1 | No candidate pool/dashboard/list UI in frontend; no masking serializers or reveal endpoints in backend | Missing | `MVP waiver` | Required for future list views, but those views are not implemented yet |
 | Retention hooks / renewal / hard-delete or anonymize | `docs/GDPR.md` §3-4, `docs/ATS_COMPLIANCE_RK.md` §3.2-3.4 | No retention config, cron, anonymization hooks, or candidate lifecycle jobs in backend | Missing | `MVP waiver` | Candidate domain is not implemented yet, so this remains backlog rather than a contradiction in the current runtime |
 | Import without consent restrictions | `docs/ATS_COMPLIANCE_RK.md` §2.1 | No import flow, no `pending_consent` status, no expiry cleanup logic | Missing | `MVP waiver` | The import capability does not exist yet; the gap must remain tracked before any sourcing/import feature ships |
 | No raw CV transmission to foreign LLM providers | `docs/GDPR.md` §5, `docs/ATS_COMPLIANCE_RK.md` §2.3 | No foreign LLM client in runtime code; local Ollama posture documented; automation worker not implemented | Implemented by absence | `implemented` | The repo currently avoids foreign LLM calls because no such integration exists in runtime code |
-| “Forget Me” / consent withdrawal workflow | `docs/GDPR.md` §3, `docs/ATS_COMPLIANCE_RK.md` §3.3-3.4 | No candidate cabinet, no consent withdrawal UI, no dedicated backend endpoint or backup/crypto-shred policy hooks | Missing | `MVP waiver` | `DELETE /users/me` exists, but it is not a full candidate erasure / revoke-consent workflow |
 | Audit logging for personal-data reveal / access / export / assignment | `docs/ATS_COMPLIANCE_RK.md` §1.3 | Append-only audit foundation exists for auth events; no candidate PD access events wired into production routes | Partial | `MVP waiver` | Foundation is implemented, but candidate-domain audit coverage is still absent because candidate-domain routes are absent |
 | Logs avoid direct PII leakage | `docs/GDPR.md` §5 | Audit metadata allowlist and email hashing exist in backend audit layer | Partial | `implemented` | Auth/audit foundations show the intended PII-safe direction, though broader candidate-domain coverage is still missing |
 | Human-in-the-loop instead of solely automated hire/reject | `docs/GDPR.md` §2, `docs/ATS_COMPLIANCE_RK.md` §2.4 | No runtime auto-hire/auto-reject logic; UC-08 and architecture docs ban autonomous disposition | Implemented by absence | `implemented` | The automation runtime is not built yet, and current docs consistently ban silent auto-disposition |
@@ -52,20 +52,22 @@ As a result, many compliance obligations for candidate processing are still desi
 
 ### Must-fix
 
-1. Registration UI currently lacks separated consent capture even though user registration is already implemented.
-2. Privacy/legal links in the visible frontend are placeholders rather than an actual consent or privacy surface.
+None remaining on the **auth** surface after consent / forget-me / IIN-forbid / privacy page.
 
 ### MVP waivers
 
-1. Candidate-domain controls are largely not implemented yet: masking, candidate erasure, retention hooks, import-with-consent, and explicit candidate consent withdrawal.
+1. Candidate-domain controls are largely not implemented yet: masking, candidate-profile erasure beyond auth identity, retention hooks, import-with-consent.
 2. Candidate PD audit events are not wired because the candidate domain itself is not wired.
-3. IIN/ID minimization is currently satisfied by absence of the candidate flow, but there is no future-proof validation gate yet.
 
 ### Implemented or acceptable in current runtime
 
-1. No foreign LLM or raw CV exfiltration path exists in runtime code today.
-2. No auto-hire or auto-reject path exists in runtime code today.
-3. Auth-oriented append-only audit infrastructure is already in place and can be extended to candidate-domain events.
+1. Granular registration/OAuth consent + `user_consent` persistence.
+2. `POST /auth/forget-me` auth-identity erasure.
+3. Register `extra=forbid` (blocks IIN / tenant injection).
+4. Privacy page + footer links (no `#` placeholders).
+5. No foreign LLM or raw CV exfiltration path exists in runtime code today.
+6. No auto-hire or auto-reject path exists in runtime code today.
+7. Auth-oriented append-only audit infrastructure is already in place.
 
 ## Evidence Summary
 

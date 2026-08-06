@@ -8,6 +8,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.core.config import settings
+from tests.utils.consent import register_json
 from tests.utils.utils import random_email, random_lower_string
 
 AUTH = f"{settings.API_V1_STR}/auth"
@@ -64,11 +65,7 @@ def secure_cookie_flags(monkeypatch: pytest.MonkeyPatch) -> None:
 async def _register(client: AsyncClient) -> None:
     r = await client.post(
         f"{AUTH}/register",
-        json={
-            "email": random_email(),
-            "password": random_lower_string(),
-            "role": "candidate",
-        },
+        json=register_json(email=random_email(), password=random_lower_string()),
     )
     assert r.status_code == 201
 
@@ -80,7 +77,7 @@ async def test_login_returns_secure_httponly_cookies(client: AsyncClient) -> Non
     password = random_lower_string()
     await client.post(
         f"{AUTH}/register",
-        json={"email": email, "password": password, "role": "candidate"},
+        json=register_json(email=email, password=password),
     )
     client.cookies.clear()
 
@@ -202,7 +199,7 @@ async def test_bearer_still_works_without_cookie(client: AsyncClient) -> None:
     password = random_lower_string()
     r = await client.post(
         f"{AUTH}/register",
-        json={"email": email, "password": password, "role": "candidate"},
+        json=register_json(email=email, password=password),
     )
     assert r.status_code == 201
     # Use legacy form endpoint for Bearer token body

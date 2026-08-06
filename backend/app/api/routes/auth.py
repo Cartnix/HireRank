@@ -25,13 +25,20 @@ from app.api.deps import (
     extract_access_token,
 )
 from app.audit.emit import email_hash_metadata, emit_auth_audit
-from app.audit.schemas import AuditAction
+from app.audit.schemas import AuditAction, hash_email
+from app.auth.consent import (
+    anonymize_user_for_erasure,
+    get_consent_grant,
+    record_consents,
+    validate_consent_grant,
+)
 from app.auth.oauth import (
     OAuthProvider,
     build_authorize_url,
     exchange_code,
     new_oauth_state,
 )
+from app.auth.oauth_state import pop_oauth_pending, store_oauth_pending
 from app.core import security
 from app.core.config import settings
 from app.core.cookies import clear_auth_cookies, set_auth_cookies
@@ -40,8 +47,11 @@ from app.core.token_store import get_token_store
 from app.models import (
     REGISTERABLE_ROLES,
     AuthSession,
+    ConsentGrant,
+    ConsentPublic,
     ErrorResponse,
     LoginRequest,
+    OAuthStartRequest,
     RefreshRequest,
     TokenPair,
     TokenPayload,
@@ -162,6 +172,7 @@ async def register(
         tenant_id=settings.TENANT_ID,
     )
     user = await crud.create_user(session=session, user_create=user_create)
+    await record_consents(session=session, user=user, consent=body.consent)
     pair = await _issue_token_pair(session, user)
     await emit_auth_audit(
         request=request,
@@ -409,9 +420,98 @@ async def refresh(
     return _session_from_pair(response, pair)
 
 
-@router.get("/oauth/{provider}/start")
-async def oauth_start(provider: Literal["google", "linkedin"]) -> RedirectResponse:
+@router.get("/consent", response_model=ConsentPublic)
+async def read_consent(
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> ConsentPublic:
+    return await get_consent_grant(session, user_id=current_user.id)
+
+
+@router.patch("/consent", response_model=ConsentPublic)
+async def update_consent(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    current_user: CurrentUser,
+    body: ConsentGrant,
+) -> ConsentPublic:
+    await record_consents(session=session, user=current_user, consent=body)
+    await emit_auth_audit(
+        request=request,
+        background_tasks=background_tasks,
+        action=AuditAction.CONSENT_UPDATE,
+        tenant_id=current_user.tenant_id,
+        user_id=current_user.id,
+        entity_id=current_user.id,
+        metadata={"reason": "consent_update"},
+    )
+    grant = await get_consent_grant(session, user_id=current_user.id)
+    return grant
+
+
+@router.post(
+    "/forget-me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={401: {"model": ErrorResponse}, 403: {"model": ErrorResponse}},
+)
+async def forget_me(
+    request: Request,
+    response: Response,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    current_user: CurrentUser,
+    creds: Annotated[str | None, Depends(bearer_scheme)],
+    body: Annotated[RefreshRequest | None, Body()] = None,
+) -> Response:
+    """
+    GDPR Art.17 / RK §3.3 — revoke consents, anonymize auth identity, clear session.
+    """
+    if role_str(current_user.role) == UserRole.ADMINISTRATOR.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrators cannot self-erase via forget-me",
+        )
+    email_digest = hash_email(current_user.email)
+    refresh_raw = _resolve_refresh_token(request, body)
+    if refresh_raw:
+        try:
+            payload = security.decode_token(refresh_raw)
+            token_data = TokenPayload(**payload)
+            if token_data.jti and token_data.type == security.TOKEN_TYPE_REFRESH:
+                get_token_store().revoke_refresh(
+                    token_data.jti,
+                    grace_seconds=None,
+                    tenant_id=token_data.tenant_id or settings.TENANT_ID,
+                )
+        except (InvalidTokenError, ValidationError):
+            pass
+    access = extract_access_token(request, creds)
+    _blacklist_access_token(access)
+    await anonymize_user_for_erasure(session, user=current_user)
+    await emit_auth_audit(
+        request=request,
+        background_tasks=background_tasks,
+        action=AuditAction.FORGET_ME,
+        tenant_id=current_user.tenant_id,
+        user_id=current_user.id,
+        entity_id=current_user.id,
+        metadata={"reason": "forget_me", "email_hash": email_digest},
+        force_sync=True,
+    )
+    clear_auth_cookies(response)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
+
+
+@router.post("/oauth/{provider}/start")
+async def oauth_start(
+    provider: Literal["google", "linkedin"],
+    body: OAuthStartRequest,
+) -> RedirectResponse:
+    validate_consent_grant(body.consent)
     state = new_oauth_state()
+    store_oauth_pending(state=state, provider=provider, consent=body.consent)
     url = build_authorize_url(provider, state)
     redirect = RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
     redirect.set_cookie(
@@ -503,6 +603,12 @@ async def _oauth_callback(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid OAuth state",
         )
+    consent = pop_oauth_pending(state)
+    if consent is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OAuth consent missing or expired",
+        )
     profile = await exchange_code(provider, code)
     try:
         user = await _provision_oauth_user(session, profile)
@@ -515,6 +621,7 @@ async def _oauth_callback(
             force_sync=True,
         )
         raise
+    await record_consents(session=session, user=user, consent=consent)
     pair = await _issue_token_pair(session, user)
     await emit_auth_audit(
         request=request,
