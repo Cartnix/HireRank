@@ -48,6 +48,7 @@ See [SELF-HOSTED.md](docs/SELF-HOSTED.md) and [RBAC.md](docs/RBAC.md).
 | [RBAC.md](docs/RBAC.md) | Roles, JWT, token store |
 | [AUTOMATION.md](docs/AUTOMATION.md) | Implements UC-08 (detail) |
 | [MEMORY.md](docs/MEMORY.md) | Option-choice history + run memory |
+| [COMPLIANCE_AUDIT_ISSUE_33.md](docs/COMPLIANCE_AUDIT_ISSUE_33.md) | GDPR + RK ATS compliance audit with must-fix and MVP waiver statuses |
 | [SOT_COMPLIANCE_AUDIT_ISSUE_34.md](docs/SOT_COMPLIANCE_AUDIT_ISSUE_34.md) | UC-to-OpenAPI-to-backend traceability audit for issue #34 |
 | [ROADMAP.md](docs/ROADMAP.md) | Delivery phases |
 | [FEAUTERS.md](docs/FEAUTERS.md) | Feature catalog (must match use-cases) |
