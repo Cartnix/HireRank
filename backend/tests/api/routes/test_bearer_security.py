@@ -154,7 +154,9 @@ def test_inactive_user_banned_mid_session(client: TestClient) -> None:
         algorithms=[security.ALGORITHM],
     )
     with bypass_rls_session() as session:
-        user = session.exec(select(User).where(User.id == UUID(payload["sub"]))).one()
+        user: User = session.exec(
+            select(User).where(User.id == UUID(payload["sub"]))
+        ).one()
         user.is_active = False
         session.add(user)
         session.commit()

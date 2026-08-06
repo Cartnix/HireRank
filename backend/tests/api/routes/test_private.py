@@ -1,12 +1,14 @@
+from typing import Any
+
 from fastapi.testclient import TestClient
-from sqlmodel import Session, select
+from sqlmodel import select
 
 from app.core.config import settings
 from app.models import User
 from tests.utils.utils import random_email
 
 
-def test_create_user(client: TestClient, db: Session) -> None:
+def test_create_user(client: TestClient, db: Any) -> None:
     email = random_email()
     r = client.post(
         f"{settings.API_V1_STR}/private/users/",

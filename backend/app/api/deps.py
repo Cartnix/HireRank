@@ -1,5 +1,5 @@
 import uuid
-from collections.abc import Callable, Collection, Generator
+from collections.abc import AsyncGenerator, Callable, Collection
 from typing import Annotated
 
 import structlog
@@ -9,14 +9,14 @@ from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlalchemy import event, text
 from sqlalchemy.engine import Connection
-from sqlmodel import Session
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app import crud
 from app.auth.permissions import has_permission
 from app.core import security
 from app.core.config import settings
 from app.core.context import set_tenant_id, set_user_id, set_user_role
-from app.core.db import engine
+from app.core.db import async_session_maker
 from app.core.token_store import get_token_store
 from app.models import TokenPayload, User, UserRole, role_str
 
@@ -43,6 +43,23 @@ def set_user_gucs(
         {"user_id": str(user_id)},
     )
     connection.execute(
+        text("SELECT set_config('app.current_user_role', :role, true)"),
+        {"role": role},
+    )
+
+
+async def set_user_gucs_async(
+    session: AsyncSession,
+    *,
+    user_id: uuid.UUID | str,
+    role: str,
+) -> None:
+    connection = await session.connection()
+    await connection.execute(
+        text("SELECT set_config('app.current_user_id', :user_id, true)"),
+        {"user_id": str(user_id)},
+    )
+    await connection.execute(
         text("SELECT set_config('app.current_user_role', :role, true)"),
         {"role": role},
     )
@@ -75,41 +92,41 @@ def apply_rls_context(
         set_user_gucs(connection, user_id=user_id, role=role)
 
 
-def get_db() -> Generator[Session]:
-    with Session(engine) as session:
+async def get_db() -> AsyncGenerator[AsyncSession]:
+    async with async_session_maker() as session:
         if settings.BYPASS_RLS:
 
-            def _bypass(_sess: Session, _trans: object, connection: Connection) -> None:
+            def _bypass(_sess: object, _trans: object, connection: Connection) -> None:
                 connection.execute(text("SET LOCAL row_security = off"))
 
-            event.listen(session, "after_begin", _bypass)
+            event.listen(session.sync_session, "after_begin", _bypass)
             try:
-                session.execute(text("SELECT 1"))
+                await session.execute(text("SELECT 1"))
                 yield session
             finally:
-                event.remove(session, "after_begin", _bypass)
+                event.remove(session.sync_session, "after_begin", _bypass)
         else:
             tenant_id = settings.TENANT_ID
 
-            def _set_rls(
-                _sess: Session, _trans: object, connection: Connection
-            ) -> None:
+            def _set_rls(_sess: object, _trans: object, connection: Connection) -> None:
                 apply_rls_context(connection, tenant_id=tenant_id)
 
-            event.listen(session, "after_begin", _set_rls)
+            event.listen(session.sync_session, "after_begin", _set_rls)
             try:
                 # Start a transaction so after_begin fires and GUC/ROLE are set
-                session.execute(text("SELECT 1"))
+                await session.execute(text("SELECT 1"))
                 yield session
             finally:
-                event.remove(session, "after_begin", _set_rls)
+                event.remove(session.sync_session, "after_begin", _set_rls)
 
 
-SessionDep = Annotated[Session, Depends(get_db)]
+SessionDep = Annotated[AsyncSession, Depends(get_db)]
 TokenDep = Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)]
 
 
-def get_current_user(request: Request, session: SessionDep, creds: TokenDep) -> User:
+async def get_current_user(
+    request: Request, session: SessionDep, creds: TokenDep
+) -> User:
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -156,7 +173,7 @@ def get_current_user(request: Request, session: SessionDep, creds: TokenDep) -> 
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
-    user = crud.get_user_by_id(session=session, user_id=user_id)
+    user = await crud.get_user_by_id(session=session, user_id=user_id)
     if not user:
         # Prefer 404 over 403 so cross-tenant probes cannot confirm foreign IDs
         raise HTTPException(status_code=404, detail="User not found")
@@ -167,8 +184,8 @@ def get_current_user(request: Request, session: SessionDep, creds: TokenDep) -> 
     request.state.permissions = frozenset(token_data.permissions or [])
 
     # Future RLS: bind actor identity into the current transaction
-    set_user_gucs(
-        session.connection(),
+    await set_user_gucs_async(
+        session,
         user_id=user.id,
         role=role_str(user.role),
     )

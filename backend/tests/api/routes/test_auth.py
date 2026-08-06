@@ -1,6 +1,7 @@
+from typing import Any
+
 import jwt
 from fastapi.testclient import TestClient
-from sqlmodel import Session
 
 from app import crud
 from app.auth.permissions import has_permission
@@ -146,12 +147,22 @@ def test_rbac_candidate_forbidden_on_users_manage(
     assert r.json()["detail"] == "Insufficient permissions"
 
 
-def test_rbac_permissions_matrix_from_db(db: Session) -> None:
-    admin = set(crud.get_permissions_for_role(session=db, role_name="administrator"))
-    hr = set(crud.get_permissions_for_role(session=db, role_name="hr"))
-    manager = set(crud.get_permissions_for_role(session=db, role_name="manager"))
-    recruiter = set(crud.get_permissions_for_role(session=db, role_name="recruiter"))
-    candidate = set(crud.get_permissions_for_role(session=db, role_name="candidate"))
+def test_rbac_permissions_matrix_from_db(db: Any) -> None:
+    admin = set(
+        db.run(
+            crud.get_permissions_for_role(session=db.session, role_name="administrator")
+        )
+    )
+    hr = set(db.run(crud.get_permissions_for_role(session=db.session, role_name="hr")))
+    manager = set(
+        db.run(crud.get_permissions_for_role(session=db.session, role_name="manager"))
+    )
+    recruiter = set(
+        db.run(crud.get_permissions_for_role(session=db.session, role_name="recruiter"))
+    )
+    candidate = set(
+        db.run(crud.get_permissions_for_role(session=db.session, role_name="candidate"))
+    )
 
     assert "admin.panel" in admin
     assert "users.manage" in admin

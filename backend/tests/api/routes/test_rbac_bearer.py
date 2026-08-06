@@ -8,14 +8,13 @@ from uuid import uuid4
 import jwt
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-from sqlmodel import Session, select
+from sqlmodel import select
 
 from app.api.deps import apply_rls_context, get_current_user
 from app.core import security
 from app.core.config import settings
-from app.core.db import engine
 from app.models import Permission, Role, RolePermission
-from tests.conftest import bypass_rls_session
+from tests.conftest import bypass_rls_session, session_context
 from tests.utils.utils import random_email, random_lower_string
 
 USERS_URL = f"{settings.API_V1_STR}/users/"
@@ -150,8 +149,10 @@ def test_db_permission_change_picked_up_after_refresh(client: TestClient) -> Non
     assert client.get(USERS_URL, headers=headers).status_code == 403
 
     with bypass_rls_session() as session:
-        recruiter = session.exec(select(Role).where(Role.name == "recruiter")).one()
-        users_manage = session.exec(
+        recruiter: Role = session.exec(
+            select(Role).where(Role.name == "recruiter")
+        ).one()
+        users_manage: Permission = session.exec(
             select(Permission).where(Permission.name == "users.manage")
         ).one()
         session.add(RolePermission(role_id=recruiter.id, permission_id=users_manage.id))
@@ -213,15 +214,17 @@ def test_authenticated_session_sets_user_gucs(
     request = Request(scope)
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
-    with Session(engine) as session:
+    with session_context() as session:
 
-        def _set_rls(_sess: Session, _trans: object, connection: object) -> None:
+        def _set_rls(_sess: object, _trans: object, connection: object) -> None:
             apply_rls_context(connection, tenant_id=settings.TENANT_ID)  # type: ignore[arg-type]
 
-        event.listen(session, "after_begin", _set_rls)
+        event.listen(session.session.sync_session, "after_begin", _set_rls)
         try:
             session.execute(text("SELECT 1"))
-            user = get_current_user(request=request, session=session, creds=creds)
+            user = session.run(
+                get_current_user(request=request, session=session.session, creds=creds)
+            )
             assert str(user.id) == payload["sub"]
 
             row = session.execute(
@@ -235,4 +238,4 @@ def test_authenticated_session_sets_user_gucs(
             assert row[1] == "administrator"
             assert row[2] == str(settings.TENANT_ID)
         finally:
-            event.remove(session, "after_begin", _set_rls)
+            event.remove(session.session.sync_session, "after_begin", _set_rls)

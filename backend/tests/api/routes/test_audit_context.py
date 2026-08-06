@@ -94,18 +94,21 @@ def test_audit_service_log_reads_contextvars_without_explicit_ids() -> None:
     entity = uuid.uuid4()
 
     service = get_audit_service()
-    service.log(
-        background_tasks=None,
-        action="candidate.cv.download",
-        entity_type="candidate",
-        entity_id=entity,
-        payload={
-            "reason": "Manual export by recruiter",
-            "field": "cv",
-            "changed": True,
-        },
-        force_sync=True,
-    )
+    with bypass_rls_session() as session:
+        session.run(
+            service.log(
+                background_tasks=None,
+                action="candidate.cv.download",
+                entity_type="candidate",
+                entity_id=entity,
+                payload={
+                    "reason": "Manual export by recruiter",
+                    "field": "cv",
+                    "changed": True,
+                },
+                force_sync=True,
+            )
+        )
 
     with bypass_rls_session() as session:
         row = session.exec(
@@ -144,13 +147,16 @@ def test_audit_service_snapshots_context_before_background_clears() -> None:
 
     bg = _FakeBG()
     service = AuditLogService()
-    service.log(
-        background_tasks=bg,
-        action="vacancy.status.changed",
-        entity_type="vacancy",
-        entity_id=uuid.uuid4(),
-        payload={"reason": "closed", "updated_fields": ["status"]},
-    )
+    with bypass_rls_session() as session:
+        session.run(
+            service.log(
+                background_tasks=bg,
+                action="vacancy.status.changed",
+                entity_type="vacancy",
+                entity_id=uuid.uuid4(),
+                payload={"reason": "closed", "updated_fields": ["status"]},
+            )
+        )
     assert len(captured) == 1
 
     # Simulate end of request: wipe contextvars before BG runs
@@ -159,7 +165,8 @@ def test_audit_service_snapshots_context_before_background_clears() -> None:
     assert user_id_ctx.get() is None
 
     func, args, kwargs = captured[0]
-    func(*args, **kwargs)
+    with bypass_rls_session() as session:
+        session.run(func(*args, **kwargs))
 
     with bypass_rls_session() as session:
         row = session.exec(

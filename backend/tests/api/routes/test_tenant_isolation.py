@@ -14,20 +14,19 @@ from datetime import timedelta
 import jwt
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-from sqlmodel import Session, select
+from sqlmodel import select
 
 from app.core import security
 from app.core.config import settings
-from app.core.db import engine
 from app.core.security import get_password_hash
 from app.models import Tenant, User, UserRole
-from tests.conftest import bypass_rls_session
+from tests.conftest import SyncSessionAdapter, bypass_rls_session, session_context
 from tests.utils.utils import random_email, random_lower_string
 
 FOREIGN_TENANT_ID = uuid.UUID("11111111-1111-4111-8111-111111111111")
 
 
-def _ensure_foreign_tenant(session: Session) -> Tenant:
+def _ensure_foreign_tenant(session: SyncSessionAdapter) -> Tenant:
     tenant = session.get(Tenant, FOREIGN_TENANT_ID)
     if tenant:
         return tenant
@@ -42,7 +41,9 @@ def _ensure_foreign_tenant(session: Session) -> Tenant:
     return tenant
 
 
-def _seed_foreign_user(session: Session, *, email: str | None = None) -> User:
+def _seed_foreign_user(
+    session: SyncSessionAdapter, *, email: str | None = None
+) -> User:
     _ensure_foreign_tenant(session)
     user = User(
         email=email or random_email(),
@@ -63,7 +64,7 @@ def _seed_foreign_user(session: Session, *, email: str | None = None) -> User:
 
 def _rls_bound_ids(tenant_id: uuid.UUID) -> set[uuid.UUID]:
     """Query users under the non-BYPASSRLS app role + tenant GUC."""
-    with Session(engine) as session:
+    with session_context() as session:
         session.execute(text("BEGIN"))
         session.execute(text("SET row_security = on"))
         session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
@@ -71,7 +72,8 @@ def _rls_bound_ids(tenant_id: uuid.UUID) -> set[uuid.UUID]:
             text("SELECT set_config('app.current_tenant', :tenant, true)"),
             {"tenant": str(tenant_id)},
         )
-        ids = {u.id for u in session.exec(select(User)).all()}
+        users = session.exec(select(User)).all()
+        ids = {user.id for user in users}
         session.execute(text("ROLLBACK"))
         return ids
 
@@ -178,7 +180,7 @@ def test_cross_tenant_jwt_sub_of_foreign_user_returns_404(
 
 
 def test_write_exploit_admin_create_ignores_body_tenant_id(
-    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+    client: TestClient, superuser_token_headers: dict[str, str], db: SyncSessionAdapter
 ) -> None:
     """POST /users with tenant_id of Tenant B must still bind to Core TENANT_ID."""
     with bypass_rls_session() as seed:
@@ -212,7 +214,7 @@ def test_write_exploit_admin_create_ignores_body_tenant_id(
 
 
 def test_write_exploit_register_ignores_body_tenant_and_persists_core(
-    client: TestClient, db: Session
+    client: TestClient, db: SyncSessionAdapter
 ) -> None:
     email = random_email()
     r = client.post(
@@ -244,7 +246,7 @@ def test_write_exploit_register_ignores_body_tenant_and_persists_core(
 
 def test_rls_force_enabled_on_user_and_tenant_tables() -> None:
     """Table owner must not silently bypass policies (FORCE ROW LEVEL SECURITY)."""
-    with Session(engine) as session:
+    with session_context() as session:
         rows = session.execute(
             text(
                 """
@@ -263,7 +265,7 @@ def test_rls_force_enabled_on_user_and_tenant_tables() -> None:
 
 def test_rls_policies_use_nullif_uuid_cast() -> None:
     """Empty/missing GUC must not raise on ::uuid — policies use NULLIF."""
-    with Session(engine) as session:
+    with session_context() as session:
         quals = session.execute(
             text(
                 """
@@ -289,7 +291,7 @@ def test_empty_tenant_guc_hides_all_rows_without_error() -> None:
     with bypass_rls_session() as seed:
         _seed_foreign_user(seed)
 
-    with Session(engine) as session:
+    with session_context() as session:
         session.execute(text("SET row_security = on"))
         session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
         session.execute(text("SELECT set_config('app.current_tenant', '', true)"))
@@ -341,7 +343,7 @@ def test_rls_guc_isolated_across_parallel_sessions() -> None:
 
 def test_superuser_bypassrls_pitfall_is_mitigated_by_app_role() -> None:
     """Document the pitfall: login role may BYPASSRLS; app role must not."""
-    with Session(engine) as session:
+    with session_context() as session:
         login_bypass = session.execute(
             text("SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user")
         ).scalar_one()

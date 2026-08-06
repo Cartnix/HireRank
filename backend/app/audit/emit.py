@@ -24,7 +24,7 @@ def sanitize_ip(raw: str | None) -> str | None:
         return None
 
 
-def emit_auth_audit(
+async def emit_auth_audit(
     *,
     request: Request,
     background_tasks: BackgroundTasks | None,
@@ -48,7 +48,7 @@ def emit_auth_audit(
             "method": request.method,
         }
     )
-    get_audit_service().log(
+    await get_audit_service().log(
         background_tasks=background_tasks,
         action=str(action),
         entity_type="user",

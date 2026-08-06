@@ -1,8 +1,8 @@
+from typing import Any
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from pwdlib.hashers.bcrypt import BcryptHasher
-from sqlmodel import Session
 
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
@@ -79,7 +79,7 @@ def test_recovery_password_user_not_exits(
     }
 
 
-def test_reset_password(client: TestClient, db: Session) -> None:
+def test_reset_password(client: TestClient, db: Any) -> None:
     email = random_email()
     password = random_lower_string()
     new_password = random_lower_string()
@@ -93,7 +93,7 @@ def test_reset_password(client: TestClient, db: Session) -> None:
         role=UserRole.CANDIDATE,
         tenant_id=settings.TENANT_ID,
     )
-    user = create_user(session=db, user_create=user_create)
+    user = db.run(create_user(session=db.session, user_create=user_create))
     token = generate_password_reset_token(email=email)
     headers = user_authentication_headers(client=client, email=email, password=password)
     data = {"new_password": new_password, "token": token}
@@ -129,7 +129,7 @@ def test_reset_password_invalid_token(
 
 
 def test_login_with_bcrypt_password_upgrades_to_argon2(
-    client: TestClient, db: Session
+    client: TestClient, db: Any
 ) -> None:
     email = random_email()
     password = random_lower_string()
@@ -166,7 +166,7 @@ def test_login_with_bcrypt_password_upgrades_to_argon2(
     assert updated_hash is None
 
 
-def test_login_with_argon2_password_keeps_hash(client: TestClient, db: Session) -> None:
+def test_login_with_argon2_password_keeps_hash(client: TestClient, db: Any) -> None:
     email = random_email()
     password = random_lower_string()
 

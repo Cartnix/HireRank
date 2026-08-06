@@ -10,20 +10,19 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError, ProgrammingError
-from sqlmodel import Session, col, select
+from sqlmodel import col, select
 
 from app.audit.schemas import AuditAction, AuditEvent
 from app.audit.service import insert_audit_log
 from app.core.config import settings
-from app.core.db import engine
 from app.models import AuditLog, Tenant
-from tests.conftest import bypass_rls_session
+from tests.conftest import SyncSessionAdapter, bypass_rls_session, session_context
 from tests.utils.utils import random_email, random_lower_string
 
 FOREIGN_TENANT_ID = uuid.UUID("11111111-1111-4111-8111-111111111111")
 
 
-def _ensure_foreign_tenant(session: Session) -> Tenant:
+def _ensure_foreign_tenant(session: SyncSessionAdapter) -> Tenant:
     tenant = session.get(Tenant, FOREIGN_TENANT_ID)
     if tenant:
         return tenant
@@ -48,7 +47,7 @@ def _count_actions(action: str, *, tenant_id: uuid.UUID | None = None) -> int:
 
 def _latest_action(action: str) -> AuditLog | None:
     with bypass_rls_session() as session:
-        rows = list(
+        rows: list[AuditLog] = list(
             session.exec(
                 select(AuditLog)
                 .where(AuditLog.action == action)
@@ -195,7 +194,7 @@ def test_tenant_rls_hides_foreign_audit_rows() -> None:
         )
         seed.commit()
 
-    with Session(engine) as session:
+    with session_context() as session:
         session.execute(text("BEGIN"))
         session.execute(text("SET row_security = on"))
         session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
@@ -203,7 +202,7 @@ def test_tenant_rls_hides_foreign_audit_rows() -> None:
             text("SELECT set_config('app.current_tenant', :tenant, true)"),
             {"tenant": str(settings.TENANT_ID)},
         )
-        rows = list(session.exec(select(AuditLog)).all())
+        rows: list[AuditLog] = list(session.exec(select(AuditLog)).all())
         session.execute(text("ROLLBACK"))
 
     assert all(r.tenant_id == settings.TENANT_ID for r in rows)
@@ -219,7 +218,7 @@ def test_hirerank_app_cannot_update_or_delete_audit_log() -> None:
     )
     insert_audit_log(event)
 
-    with Session(engine) as session:
+    with session_context() as session:
         session.execute(text("BEGIN"))
         session.execute(text("SET row_security = on"))
         session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
@@ -235,7 +234,7 @@ def test_hirerank_app_cannot_update_or_delete_audit_log() -> None:
             session.commit()
         session.rollback()
 
-    with Session(engine) as session:
+    with session_context() as session:
         session.execute(text("BEGIN"))
         session.execute(text("SET row_security = on"))
         session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
@@ -274,7 +273,7 @@ def test_connection_pooling_guc_does_not_leak_audit_rows() -> None:
         seed.commit()
 
     def _visible(tenant_id: uuid.UUID) -> set[str]:
-        with Session(engine) as session:
+        with session_context() as session:
             session.execute(text("BEGIN"))
             session.execute(text("SET row_security = on"))
             session.execute(text(f"SET LOCAL ROLE {settings.RLS_APP_ROLE}"))
@@ -283,11 +282,11 @@ def test_connection_pooling_guc_does_not_leak_audit_rows() -> None:
                 {"tenant": str(tenant_id)},
             )
             tags = {
-                (r.metadata_ or {}).get("seed", "")
-                for r in session.exec(
+                (row.metadata_ or {}).get("seed", "")
+                for row in session.exec(
                     select(AuditLog).where(AuditLog.action == AuditAction.LOGOUT)
                 ).all()
-                if (r.metadata_ or {}).get("seed") in {"core-pool", "foreign-pool"}
+                if (row.metadata_ or {}).get("seed") in {"core-pool", "foreign-pool"}
             }
             session.execute(text("ROLLBACK"))
             return tags

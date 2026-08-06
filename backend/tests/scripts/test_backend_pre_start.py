@@ -1,4 +1,5 @@
-from unittest.mock import MagicMock, patch
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from sqlmodel import select
 
@@ -8,20 +9,22 @@ from app.backend_pre_start import init, logger
 def test_init_successful_connection() -> None:
     engine_mock = MagicMock()
 
-    session_mock = MagicMock()
-    session_mock.__enter__.return_value = session_mock
+    session_mock = AsyncMock()
+    session_cm = AsyncMock()
+    session_cm.__aenter__.return_value = session_mock
+    session_cm.__aexit__.return_value = None
 
     select1 = select(1)
 
     with (
-        patch("app.backend_pre_start.Session", return_value=session_mock),
+        patch("app.backend_pre_start.async_session_maker", return_value=session_cm),
         patch("app.backend_pre_start.select", return_value=select1),
         patch.object(logger, "info"),
         patch.object(logger, "error"),
         patch.object(logger, "warn"),
     ):
         try:
-            init(engine_mock)
+            asyncio.run(init(engine_mock))
             connection_successful = True
         except Exception:
             connection_successful = False
@@ -30,4 +33,4 @@ def test_init_successful_connection() -> None:
             "The database connection should be successful and not raise an exception."
         )
 
-        session_mock.exec.assert_called_once_with(select1)
+        session_mock.exec.assert_awaited_once_with(select1)

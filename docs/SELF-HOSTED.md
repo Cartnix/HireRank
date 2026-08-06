@@ -20,6 +20,47 @@ This repository is the **Core** product: one company per deployment, Open Source
 
 **Rule of thumb:** one company, one Compose stack, one backend replica → keep `TOKEN_STORE=memory`. Multiple backend pods sharing one company → set `TOKEN_STORE=redis` and point `REDIS_*` at your Redis.
 
+## PostgreSQL pooling
+
+The backend uses async SQLAlchemy sessions on top of `asyncpg` and initializes
+request-local PostgreSQL state for RLS with:
+
+- `SET LOCAL ROLE hirerank_app`
+- `SET LOCAL app.current_tenant`
+- request/user GUCs such as `app.current_user_id` and `app.current_user_role`
+
+Because that state is transaction-local and must be re-established reliably on
+every request, `PgBouncer` transaction pooling is **not supported**. If you use
+PgBouncer at all, it must preserve session semantics; otherwise RLS context can
+be lost or applied to the wrong transaction.
+
+### Default async engine settings
+
+The application defaults are tuned for a production-safe single-process backend:
+
+- `pool_pre_ping=true`
+- `pool_size=20`
+- `max_overflow=10`
+- `pool_recycle=1800`
+- `expire_on_commit=false`
+
+These are sensible defaults, not hard limits. Operators should tune them to the
+actual PostgreSQL `max_connections`, replica count, and workload shape.
+
+### Pool sizing guidance
+
+- Single backend replica: start with `pool_size=10-20`, `max_overflow=5-10`
+  unless the database is extremely small.
+- Multiple backend replicas: size pools so the worst-case total connection
+  count across all replicas stays comfortably below PostgreSQL
+  `max_connections`, leaving headroom for migrations, admin access, and
+  monitoring.
+- Small self-hosted installs: prefer fewer replicas with modest pool sizes over
+  many replicas with large pools. RLS safety depends on predictable transaction
+  boundaries more than raw connection fan-out.
+- If you see idle-connection pressure before request saturation, reduce
+  `pool_size` first and only increase `max_overflow` for short-lived bursts.
+
 ## Auth token store
 
 Both backends implement the same repository contract (`TokenStore` in `backend/app/core/token_store.py`):
