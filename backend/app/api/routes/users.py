@@ -3,7 +3,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc
-from sqlmodel import col, delete, func, select
+from sqlmodel import col, func, select
 
 from app import crud
 from app.api.deps import (
@@ -15,7 +15,6 @@ from app.auth.consent import build_user_public, record_consents, stamp_legal_acc
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
-    Item,
     Message,
     UpdatePassword,
     User,
@@ -235,8 +234,6 @@ async def delete_user(
             status_code=403,
             detail="Administrators are not allowed to delete themselves",
         )
-    statement = delete(Item).where(col(Item.owner_id) == user_id)
-    await session.exec(statement)
     await session.delete(user)
     await session.commit()
     return Message(message="User deleted successfully")

@@ -10,7 +10,7 @@ HireRank is positioned as **on-prem / in-perimeter** ATS + HireRank Automation (
 
 A cross-tenant leak is a severe breach. Absolute isolation is required.
 
-* **Database isolation:** PostgreSQL Row-Level Security (RLS) as a baseline on shared schemas — inject `tenant_id = current_setting('app.current_tenant_id')` at the engine level.
+* **Database isolation:** PostgreSQL Row-Level Security (RLS) as a baseline on shared schemas — inject `tenant_id = current_setting('app.current_tenant')` at the engine level (fail-closed via `NULLIF(..., '')::uuid` in policies).
 * **Enterprise / government tier:** Database-per-tenant where the deployer requires independent audit boundaries.
 * **Object storage:** Do not mix resumes across tenants in one unmanaged folder; separate buckets or strict prefix + IAM/ACL per `tenant_id`.
 * **MCP:** mutations only under the authenticated `tenant_id`; refuse cross-tenant tools.

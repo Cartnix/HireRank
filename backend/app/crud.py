@@ -7,8 +7,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
-    Item,
-    ItemCreate,
     OAuthIdentity,
     Permission,
     Role,
@@ -152,13 +150,3 @@ async def authenticate(
         await session.commit()
         await session.refresh(db_user)
     return db_user
-
-
-async def create_item(
-    *, session: AsyncSession, item_in: ItemCreate, owner_id: uuid.UUID
-) -> Item:
-    db_item = Item.model_validate(item_in, update={"owner_id": owner_id})
-    session.add(db_item)
-    await session.commit()
-    await session.refresh(db_item)
-    return db_item

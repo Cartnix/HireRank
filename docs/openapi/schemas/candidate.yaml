@@ -1,4 +1,7 @@
 # schemas/candidate.yaml
+# DB persistence: table `candidate`; assignment via `application` join
+# (not a stored `assigned_vacancy_id` column). API may project
+# `assigned_vacancy_id` from the active application — docs/ATS_SCHEMA.md.
 
 CandidateStatus:
   type: string

@@ -37,7 +37,7 @@ Manager scope and candidate “own” checks are enforced on domain endpoints (A
 
 1. **Persistence** — role ↔ permission links live in Postgres.
 2. **Performance** — at login / refresh, permissions are loaded once and signed into the access JWT `permissions` claim. FastAPI `require_permission()` checks that claim in O(1) (no DB round-trip per request).
-3. **Future RLS** — authenticated sessions set `app.current_user_id` and `app.current_user_role` via `SET LOCAL` alongside existing `app.current_tenant`. Resource-level policies (vacancies, candidates) can be added in later migrations without changing the Python session lifecycle.
+3. **Future RLS** — authenticated sessions set `app.current_user_id` and `app.current_user_role` via `SET LOCAL` alongside existing `app.current_tenant`. Resource-level policies on ATS entities (`vacancy`, `candidate`, `application`, `pipeline_stage`, `interview`, `scorecard` — see [ATS_SCHEMA.md](ATS_SCHEMA.md)) can be added in later migrations without changing the Python session lifecycle. Tenant isolation FORCE RLS on those tables is already in place.
 
 Permission changes in the DB take effect on the next login or refresh (existing access tokens keep their claim until expiry).
 
