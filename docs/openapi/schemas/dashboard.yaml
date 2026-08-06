@@ -12,7 +12,7 @@ AdminDashboard:
     pending_hitl:
       type: integer
       example: 4
-      description: Кандидаты / packages в ожидании Telegram HITL
+      description: Candidates / packages awaiting Telegram HITL
     total_vacancies:
       type: integer
       example: 8
@@ -27,7 +27,7 @@ AdminDashboard:
       example: 3
     recent_pending_packages:
       type: array
-      description: Недавние pending Automation packages (не rank-score)
+      description: Recent pending Automation packages (not rank-score)
       items:
         type: object
         properties:
@@ -39,7 +39,7 @@ AdminDashboard:
             format: uuid
           full_name:
             type: string
-            example: Алибек Сейткали
+            example: Alibek Seitkali
           scenario_count:
             type: integer
             example: 3

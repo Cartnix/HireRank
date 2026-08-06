@@ -5,21 +5,21 @@ paths:
     get:
       tags: [Users]
       operationId: getMyProfile
-      summary: Получить собственный профиль
+      summary: Get own profile
       responses:
         '200':
-          description: Профиль текущего пользователя
+          description: Current user profile
           content:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/User'
         '401':
-          description: Не авторизован
+          description: Unauthorized
 
     patch:
       tags: [Users]
       operationId: updateMyProfile
-      summary: Обновить собственный профиль
+      summary: Update own profile
       requestBody:
         required: true
         content:
@@ -28,24 +28,24 @@ paths:
               $ref: '../schemas/user.yaml#/UpdateUserRequest'
       responses:
         '200':
-          description: Профиль обновлён
+          description: Profile updated
           content:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/User'
         '400':
-          description: Ошибка валидации
+          description: Validation error
         '401':
-          description: Не авторизован
+          description: Unauthorized
 
   /users:
     get:
       tags: [Users]
       operationId: listUsers
-      summary: Список пользователей tenant
+      summary: List tenant users
       description: |
-        Доступно только **administrator**.
-        Возвращает только пользователей текущего tenant (`tenant_id` из JWT).
+        Available only to **administrator**.
+        Returns only users of the current tenant (`tenant_id` from JWT).
       parameters:
         - name: role
           in: query
@@ -64,13 +64,13 @@ paths:
             maximum: 100
       responses:
         '200':
-          description: Список пользователей
+          description: User list
           content:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/PagedUserResponse'
         '403':
-          description: Недостаточно прав
+          description: Insufficient permissions
 
   /users/{id}:
     parameters:
@@ -84,16 +84,16 @@ paths:
     get:
       tags: [Users]
       operationId: getUserById
-      summary: Получить пользователя по ID
-      description: Доступно только **administrator**.
+      summary: Get user by ID
+      description: Available only to **administrator**.
       responses:
         '200':
-          description: Пользователь найден
+          description: User found
           content:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/User'
         '403':
-          description: Недостаточно прав
+          description: Insufficient permissions
         '404':
-          description: Пользователь не найден
+          description: User not found

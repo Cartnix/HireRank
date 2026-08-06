@@ -5,11 +5,11 @@ paths:
     get:
       tags: [Dashboard]
       operationId: getDashboard
-      summary: Главная панель — данные зависят от роли пользователя
+      summary: Home dashboard — payload depends on user role
       description: |
-        Один endpoint, ответ которого зависит от `role` в JWT:
+        Single endpoint; response shape depends on `role` in JWT:
 
-        | Роль | Тип ответа |
+        | Role | Response type |
         |------|-----------|
         | `administrator` | `AdminDashboard` |
         | `hr` | `HRDashboard` |
@@ -17,14 +17,14 @@ paths:
         | `candidate` | `CandidateDashboard` |
       responses:
         '200':
-          description: Данные дашборда для текущей роли
+          description: Dashboard data for the current role
           content:
             application/json:
               schema:
                 $ref: '../schemas/dashboard.yaml#/DashboardResponse'
               examples:
                 administrator:
-                  summary: Ответ для Administrator
+                  summary: Response for Administrator
                   value:
                     total_candidates: 34
                     unassigned_candidates: 12
@@ -36,27 +36,27 @@ paths:
                     recent_pending_packages:
                       - package_id: c1d2e3f4-a5b6-7890-abcd-ef1234567890
                         candidate_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-                        full_name: Алибек Сейткали
+                        full_name: Alibek Seitkali
                         scenario_count: 3
                 hr:
-                  summary: Ответ для HR
+                  summary: Response for HR
                   value:
                     candidates_created_by_me: 7
                     total_candidates: 34
                     open_vacancies: 5
                     unread_notifications: 2
                 manager:
-                  summary: Ответ для Manager
+                  summary: Response for Manager
                   value:
                     assigned_candidates: 4
                     pending_hitl: 2
                     open_vacancies: 5
                     unread_notifications: 1
                 candidate:
-                  summary: Ответ для Candidate
+                  summary: Response for Candidate
                   value:
                     questionnaire_filled: true
                     status: unassigned
                     assigned_vacancy: null
         '401':
-          description: Не авторизован
+          description: Unauthorized

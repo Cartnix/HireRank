@@ -7,107 +7,107 @@ CandidateStatus:
 
 EducationEntry:
   type: object
-  description: Одна строка таблицы учебных заведений из ЛПК (п.7)
+  description: One row from the LPK educational institutions table (item 7)
   properties:
     institution:
       type: string
-      description: Название учебного заведения и его местонахождение
-      example: КазНУ им. аль-Фараби, г. Алматы
+      description: Educational institution name and location
+      example: Al-Farabi Kazakh National University, Almaty
     year_from:
       type: string
-      description: Год поступления (строка — форма не гарантирует число)
+      description: Year of admission (string — form does not guarantee a number)
       example: "2012"
     year_to:
       type: string
-      description: Год окончания или ухода
+      description: Year of graduation or departure
       example: "2016"
     dropped_at_year:
       type: string
       nullable: true
-      description: С какого курса ушёл (если не окончил)
+      description: Year/course left (if did not graduate)
       example: null
     specialty:
       type: string
-      description: Специальность, по которой обучался
-      example: Информационные системы
+      description: Specialty studied
+      example: Information Systems
     diploma:
       type: string
-      description: Квалификация и № диплома / удостоверения
-      example: Диплом бакалавра № 012345
+      description: Qualification and diploma / certificate number
+      example: "Bachelor's diploma No. 012345"
 
 Questionnaire:
   type: object
   description: |
-    Кадровая анкета кандидата — структура соответствует официальному
-    «Личному листку по учёту кадров» (ЛПК, форма lpk.html).
-    Поля пронумерованы в соответствии с пунктами формы.
+    Candidate personnel questionnaire — structure matches the official
+    Personal Personnel Record Sheet (LPK, form lpk.html).
+    Fields are numbered according to the form items.
   properties:
-    # п.1 — ФИО
+    # item 1 — Full name
     surname:
       type: string
-      description: "п.1 — Фамилия (name=surname в форме)"
-      example: Сейткали
+      description: "item 1 — Surname (form name=surname)"
+      example: Seitkali
     first_name:
       type: string
-      description: "п.1 — Имя (name=first_name)"
-      example: Алибек
+      description: "item 1 — First name (form name=first_name)"
+      example: Alibek
     patronymic:
       type: string
-      description: "п.1 — Отчество (name=patronymic)"
-      example: Серикович
-    # п.2 — Пол
+      description: "item 1 — Patronymic (form name=patronymic)"
+      example: Serikovich
+    # item 2 — Gender
     gender:
       type: string
-      description: "п.2 — Пол (free-text из формы)"
-      example: мужской
-    # п.3 — Дата рождения
+      description: "item 2 — Gender (free-text from form)"
+      example: male
+    # item 3 — Date of birth
     birth_date:
       type: string
       description: |
-        п.3 — Год, число и месяц рождения.
-        Принимается как string: форма free-text, нормализацию делает бэк.
+        item 3 — Year, day and month of birth.
+        Accepted as string: form is free-text; backend normalizes.
       example: "1995-03-15"
-    # п.4 — Место рождения
+    # item 4 — Place of birth
     birth_place:
       type: string
-      description: "п.4 — Место рождения (село/город, район, область, республика)"
-      example: г. Алматы, Алматинская обл., Казахстан
-    # п.5–6
+      description: "item 4 — Place of birth (village/city, district, region, republic)"
+      example: Almaty, Almaty Region, Kazakhstan
+    # items 5–6
     nationality:
       type: string
-      description: "п.5 — Национальность (Ұлты)"
-      example: казах
+      description: "item 5 — Nationality (form name=nationality)"
+      example: Kazakh
     citizenship:
       type: string
-      description: "п.6 — Гражданство (Азаматтығы)"
-      example: Казахстан
-    # п.7 — Образование
+      description: "item 6 — Citizenship (form name=citizenship)"
+      example: Kazakhstan
+    # item 7 — Education
     education_level:
       type: string
-      description: "п.7 — Уровень образования (free-text из формы)"
-      example: высшее
+      description: "item 7 — Education level (free-text from form)"
+      example: higher
     education:
       type: array
-      description: "п.7 — Таблица учебных заведений (до 4 строк в форме)"
+      description: "item 7 — Educational institutions table (up to 4 rows in form)"
       maxItems: 4
       items:
         $ref: '#/EducationEntry'
-    # п.8 — Языки
+    # item 8 — Languages
     languages:
       type: string
       description: |
-        п.8 — Родной язык и другие языки, степень владения (free-text).
-        Форма содержит одно поле name=languages.
-      example: "казахский (родной), русский (свободно), английский (читаю и перевожу со словарём)"
-    # п.9 — Учёная степень
+        item 8 — Native language and other languages, proficiency (free-text).
+        Form has a single field name=languages.
+      example: "Kazakh (native), Russian (fluent), English (read and translate with a dictionary)"
+    # item 9 — Academic degree
     academic_degree:
       type: string
-      description: "п.9 — Учёная степень / учёное звание"
+      description: "item 9 — Academic degree / academic title"
       example: ""
-    # п.10 — Научные труды
+    # item 10 — Scientific works
     scientific_works:
       type: array
-      description: "п.10 — Научные труды и изобретения (две строки в форме)"
+      description: "item 10 — Scientific works and inventions (two rows in form)"
       maxItems: 2
       items:
         type: string
@@ -127,7 +127,7 @@ Candidate:
     user_id:
       type: string
       format: uuid
-      description: Связанный User (если кандидат зарегистрировался сам)
+      description: Linked User (if the candidate registered themselves)
       nullable: true
     status:
       $ref: '#/CandidateStatus'
@@ -141,7 +141,7 @@ Candidate:
       type: string
       format: uuid
       nullable: true
-      description: Pending или последний Automation decision package
+      description: Pending or latest Automation decision package
     created_at:
       type: string
       format: date-time
@@ -151,7 +151,7 @@ Candidate:
 
 CreateCandidateRequest:
   type: object
-  description: Используется HR Operator для ручного создания карточки кандидата
+  description: Used by HR Operator to manually create a candidate card
   required: [questionnaire]
   properties:
     questionnaire:

@@ -3,16 +3,16 @@ paths:
     get:
       tags: [Admin]
       operationId: listAdminUsers
-      summary: Админ-панель — список пользователей tenant
+      summary: Admin panel — list tenant users
       description: |
-        Доступно только **administrator**.
-        Возвращает только пользователей текущего tenant (`tenant_id` из JWT).
+        Available only to **administrator**.
+        Returns only users of the current tenant (`tenant_id` from JWT).
       parameters:
         - name: role
           in: query
           schema:
             $ref: '../schemas/user.yaml#/UserRole'
-          description: Фильтр по роли
+          description: Filter by role
         - name: page
           in: query
           schema:
@@ -26,15 +26,15 @@ paths:
             maximum: 100
       responses:
         '200':
-          description: Список пользователей tenant
+          description: Tenant user list
           content:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/PagedUserResponse'
         '401':
-          description: Не авторизован
+          description: Unauthorized
         '403':
-          description: Только administrator
+          description: Only administrator
 
   /admin/users/{id}:
     parameters:
@@ -48,18 +48,18 @@ paths:
     get:
       tags: [Admin]
       operationId: getAdminUserById
-      summary: Админ-панель — карточка пользователя
-      description: Доступно только **administrator**.
+      summary: Admin panel — user card
+      description: Available only to **administrator**.
       responses:
         '200':
-          description: Пользователь найден
+          description: User found
           content:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/User'
         '401':
-          description: Не авторизован
+          description: Unauthorized
         '403':
-          description: Только administrator
+          description: Only administrator
         '404':
-          description: Пользователь не найден
+          description: User not found

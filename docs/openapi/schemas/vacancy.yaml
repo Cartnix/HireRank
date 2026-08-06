@@ -21,17 +21,17 @@ Vacancy:
       example: Backend Developer
     department:
       type: string
-      example: Разработка
+      example: Engineering
     description:
       type: string
       example: |
-        Ищем опытного Backend-разработчика для работы над核心 сервисами.
-        Требования: Python 3.10+, FastAPI, PostgreSQL.
+        Looking for an experienced Backend developer to work on core services.
+        Requirements: Python 3.10+, FastAPI, PostgreSQL.
     requirements:
       type: array
       items:
         type: string
-      example: [Python, FastAPI, PostgreSQL, 3+ года опыта]
+      example: [Python, FastAPI, PostgreSQL, 3+ years experience]
     status:
       $ref: '#/VacancyStatus'
     assigned_candidate_ids:
@@ -42,7 +42,7 @@ Vacancy:
     created_by:
       type: string
       format: uuid
-      description: id Administrator, создавшего вакансию
+      description: id of the Administrator who created the vacancy
     created_at:
       type: string
       format: date-time
@@ -59,7 +59,7 @@ CreateVacancyRequest:
       example: Backend Developer
     department:
       type: string
-      example: Разработка
+      example: Engineering
     description:
       type: string
     requirements:

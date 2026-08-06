@@ -10,12 +10,15 @@ from tests.utils.utils import random_email, random_lower_string
 async def user_authentication_headers(
     *, client: AsyncClient, email: str, password: str
 ) -> dict[str, str]:
+    """Bearer headers for dual-mode API clients (no access cookie → no CSRF)."""
     r = await client.post(
-        f"{settings.API_V1_STR}/auth/login",
-        json={"email": email, "password": password},
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": email, "password": password},
     )
     response = r.json()
     auth_token = response["access_token"]
+    # Drop cookies so CSRF is not required on subsequent mutating calls
+    client.cookies.clear()
     return {"Authorization": f"Bearer {auth_token}"}
 
 

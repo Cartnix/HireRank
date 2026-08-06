@@ -18,6 +18,7 @@ from app.audit.service import insert_audit_log_async
 from app.core.config import settings
 from app.models import AuditLog, Tenant
 from tests.conftest import bypass_rls_session, session_context
+from tests.utils.auth_types import register_bearer_pair
 from tests.utils.utils import random_email, random_lower_string
 
 FOREIGN_TENANT_ID = uuid.UUID("11111111-1111-4111-8111-111111111111")
@@ -134,13 +135,10 @@ async def test_register_logout_refresh_write_audit(client: AsyncClient) -> None:
     email = random_email()
     password = random_lower_string()
     before_reg = await _count_actions(AuditAction.REGISTER)
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={"email": email, "password": password, "role": "recruiter"},
+    pair = await register_bearer_pair(
+        client, role="recruiter", email=email, password=password
     )
-    assert r.status_code == 201
     assert await _count_actions(AuditAction.REGISTER) == before_reg + 1
-    pair = r.json()
 
     before_refresh = await _count_actions(AuditAction.REFRESH)
     r = await client.post(
@@ -149,13 +147,16 @@ async def test_register_logout_refresh_write_audit(client: AsyncClient) -> None:
     )
     assert r.status_code == 200
     assert await _count_actions(AuditAction.REFRESH) == before_refresh + 1
-    refreshed = r.json()
+    new_access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+    new_refresh = client.cookies.get(settings.AUTH_COOKIE_REFRESH_NAME)
+    assert new_access and new_refresh
+    client.cookies.clear()
 
     before_logout = await _count_actions(AuditAction.LOGOUT)
     r = await client.post(
         f"{settings.API_V1_STR}/auth/logout",
-        headers={"Authorization": f"Bearer {refreshed['access_token']}"},
-        json={"refresh_token": refreshed["refresh_token"]},
+        headers={"Authorization": f"Bearer {new_access}"},
+        json={"refresh_token": new_refresh},
     )
     assert r.status_code == 204
     assert await _count_actions(AuditAction.LOGOUT) == before_logout + 1

@@ -136,7 +136,7 @@ class UserBase(SQLModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=128)
+    password: str | None = Field(default=None, min_length=8, max_length=128)
     tenant_id: uuid.UUID | None = None
 
 
@@ -176,17 +176,42 @@ class User(UserBase, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     tenant_id: uuid.UUID = Field(foreign_key="tenant.id", index=True, nullable=False)
-    hashed_password: str
+    # Nullable for OAuth-only accounts (no local password)
+    hashed_password: str | None = Field(default=None, nullable=True)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     tenant: Tenant | None = Relationship(back_populates="users")
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+    oauth_identities: list["OAuthIdentity"] = Relationship(back_populates="user")
 
     @property
     def is_superuser(self) -> bool:
         return role_str(self.role) == UserRole.ADMINISTRATOR.value
+
+
+class OAuthIdentity(SQLModel, table=True):
+    """Immutable IdP subject ↔ HireRank user (email alone is not the join key)."""
+
+    __tablename__ = "oauth_identity"
+    __table_args__ = (
+        UniqueConstraint(
+            "provider", "provider_subject", name="uq_oauth_provider_subject"
+        ),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    provider: str = Field(max_length=32, index=True)
+    provider_subject: str = Field(max_length=255, index=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
+    # Encrypted IdP refresh token (AES/Fernet) — never put in session JWT
+    encrypted_refresh_token: str | None = Field(default=None, nullable=True)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    user: User | None = Relationship(back_populates="oauth_identities")
 
 
 class UserPublic(UserBase):
@@ -246,9 +271,18 @@ class Token(SQLModel):
 
 
 class TokenPair(SQLModel):
+    """Legacy / Swagger form login response (Bearer tooling)."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    expires_in: int
+
+
+class AuthSession(SQLModel):
+    """Browser cookie session metadata — no usable JWTs in body."""
+
+    token_type: str = "cookie"
     expires_in: int
 
 
@@ -258,7 +292,7 @@ class LoginRequest(SQLModel):
 
 
 class RefreshRequest(SQLModel):
-    refresh_token: str
+    refresh_token: str | None = None
 
 
 class TokenPayload(SQLModel):

@@ -1,30 +1,45 @@
 from datetime import UTC, datetime, timedelta
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import (
     APIRouter,
     BackgroundTasks,
+    Body,
     Depends,
     HTTPException,
     Request,
     Response,
     status,
 )
-from fastapi.security import HTTPAuthorizationCredentials
+from fastapi.responses import RedirectResponse
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app import crud
-from app.api.deps import CurrentUser, SessionDep, bearer_scheme
+from app.api.deps import (
+    CurrentUser,
+    SessionDep,
+    bearer_scheme,
+    extract_access_token,
+)
 from app.audit.emit import email_hash_metadata, emit_auth_audit
 from app.audit.schemas import AuditAction
+from app.auth.oauth import (
+    OAuthProvider,
+    build_authorize_url,
+    exchange_code,
+    new_oauth_state,
+)
 from app.core import security
 from app.core.config import settings
+from app.core.cookies import clear_auth_cookies, set_auth_cookies
+from app.core.crypto import encrypt_secret
 from app.core.token_store import get_token_store
 from app.models import (
     REGISTERABLE_ROLES,
+    AuthSession,
     ErrorResponse,
     LoginRequest,
     RefreshRequest,
@@ -34,10 +49,13 @@ from app.models import (
     UserCreate,
     UserPublic,
     UserRegister,
+    UserRole,
     role_str,
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+OAUTH_STATE_COOKIE = "oauth_state"
 
 
 async def _issue_token_pair(session: AsyncSession, user: User) -> TokenPair:
@@ -72,13 +90,20 @@ async def _issue_token_pair(session: AsyncSession, user: User) -> TokenPair:
     )
 
 
-def _blacklist_access_from_creds(
-    creds: HTTPAuthorizationCredentials | None,
-) -> None:
-    if creds is None or creds.scheme.lower() != "bearer":
+def _session_from_pair(response: Response, pair: TokenPair) -> AuthSession:
+    set_auth_cookies(
+        response,
+        access_token=pair.access_token,
+        refresh_token=pair.refresh_token,
+    )
+    return AuthSession(token_type="cookie", expires_in=pair.expires_in)
+
+
+def _blacklist_access_token(token: str | None) -> None:
+    if not token:
         return
     try:
-        payload = security.decode_token(creds.credentials)
+        payload = security.decode_token(token)
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
         return
@@ -95,9 +120,15 @@ def _blacklist_access_from_creds(
     )
 
 
+def _resolve_refresh_token(request: Request, body: RefreshRequest | None) -> str | None:
+    if body and body.refresh_token:
+        return body.refresh_token
+    return request.cookies.get(settings.AUTH_COOKIE_REFRESH_NAME)
+
+
 @router.post(
     "/register",
-    response_model=TokenPair,
+    response_model=AuthSession,
     status_code=status.HTTP_201_CREATED,
     responses={
         409: {"model": ErrorResponse},
@@ -106,10 +137,11 @@ def _blacklist_access_from_creds(
 )
 async def register(
     request: Request,
+    response: Response,
     background_tasks: BackgroundTasks,
     session: SessionDep,
     body: UserRegister,
-) -> TokenPair:
+) -> AuthSession:
     if body.role not in REGISTERABLE_ROLES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -140,20 +172,21 @@ async def register(
         entity_id=user.id,
         metadata={"reason": "register"},
     )
-    return pair
+    return _session_from_pair(response, pair)
 
 
 @router.post(
     "/login",
-    response_model=TokenPair,
+    response_model=AuthSession,
     responses={401: {"model": ErrorResponse}},
 )
 async def login(
     request: Request,
+    response: Response,
     background_tasks: BackgroundTasks,
     session: SessionDep,
     body: LoginRequest,
-) -> TokenPair:
+) -> AuthSession:
     user = await crud.authenticate(
         session=session, email=body.email, password=body.password
     )
@@ -194,7 +227,7 @@ async def login(
         entity_id=user.id,
         metadata={"reason": "login"},
     )
-    return pair
+    return _session_from_pair(response, pair)
 
 
 @router.post(
@@ -203,22 +236,28 @@ async def login(
     responses={
         401: {"model": ErrorResponse},
         403: {"model": ErrorResponse},
-        422: {"description": "Missing refresh_token body"},
     },
 )
 async def logout(
     request: Request,
+    response: Response,
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
-    creds: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-    body: RefreshRequest,
+    creds: Annotated[str | None, Depends(bearer_scheme)],
+    body: Annotated[RefreshRequest | None, Body()] = None,
 ) -> Response:
     """
-    Server-side logout: Bearer access authorizes the call; refresh_token in body
-    is hard-revoked so stolen refresh cannot mint new access tokens.
+    Cookie or Bearer access authorizes; refresh from cookie or optional body
+    is hard-revoked. Clears auth cookies.
     """
+    refresh_raw = _resolve_refresh_token(request, body)
+    if not refresh_raw:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Missing refresh_token",
+        )
     try:
-        payload = security.decode_token(body.refresh_token)
+        payload = security.decode_token(refresh_raw)
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
         raise HTTPException(
@@ -246,7 +285,8 @@ async def logout(
         grace_seconds=None,
         tenant_id=token_data.tenant_id or settings.TENANT_ID,
     )
-    _blacklist_access_from_creds(creds)
+    access = extract_access_token(request, creds)
+    _blacklist_access_token(access)
     await emit_auth_audit(
         request=request,
         background_tasks=background_tasks,
@@ -256,7 +296,9 @@ async def logout(
         entity_id=current_user.id,
         metadata={"reason": "logout"},
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    clear_auth_cookies(response)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @router.get("/me", response_model=UserPublic)
@@ -266,17 +308,24 @@ def me(current_user: CurrentUser) -> Any:
 
 @router.post(
     "/refresh",
-    response_model=TokenPair,
+    response_model=AuthSession,
     responses={401: {"model": ErrorResponse}},
 )
 async def refresh(
     request: Request,
+    response: Response,
     background_tasks: BackgroundTasks,
     session: SessionDep,
-    body: RefreshRequest,
-) -> TokenPair:
+    body: Annotated[RefreshRequest | None, Body()] = None,
+) -> AuthSession:
+    refresh_raw = _resolve_refresh_token(request, body)
+    if not refresh_raw:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token is invalid or expired",
+        )
     try:
-        payload = security.decode_token(body.refresh_token)
+        payload = security.decode_token(refresh_raw)
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
         await emit_auth_audit(
@@ -339,6 +388,9 @@ async def refresh(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or expired",
         )
+    # Blacklist old access if present
+    old_access = request.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+    _blacklist_access_token(old_access)
     store.revoke_refresh(
         token_data.jti,
         grace_seconds=settings.REFRESH_TOKEN_GRACE_SECONDS,
@@ -354,4 +406,169 @@ async def refresh(
         entity_id=user.id,
         metadata={"reason": "refresh"},
     )
-    return pair
+    return _session_from_pair(response, pair)
+
+
+@router.get("/oauth/{provider}/start")
+async def oauth_start(provider: Literal["google", "linkedin"]) -> RedirectResponse:
+    state = new_oauth_state()
+    url = build_authorize_url(provider, state)
+    redirect = RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
+    redirect.set_cookie(
+        key=OAUTH_STATE_COOKIE,
+        value=state,
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
+        path="/",
+        max_age=600,
+    )
+    return redirect
+
+
+async def _provision_oauth_user(session: AsyncSession, profile: Any) -> User:
+    identity = await crud.get_oauth_identity(
+        session=session,
+        provider=profile.provider,
+        provider_subject=profile.provider_subject,
+    )
+    if identity:
+        user = await crud.get_user_by_id(session=session, user_id=identity.user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="OAuth identity is orphaned",
+            )
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Inactive user",
+            )
+        enc = encrypt_secret(profile.refresh_token) if profile.refresh_token else None
+        await crud.upsert_oauth_identity(
+            session=session,
+            provider=profile.provider,
+            provider_subject=profile.provider_subject,
+            user_id=user.id,
+            encrypted_refresh_token=enc,
+        )
+        return user
+
+    # Link by email within tenant if local account already exists
+    existing = await crud.get_user_by_email(session=session, email=profile.email)
+    if existing:
+        if not existing.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Inactive user",
+            )
+        user = existing
+    else:
+        # Core: always candidate on singleton tenant (Postgres is SoT for roles)
+        user = await crud.create_user(
+            session=session,
+            user_create=UserCreate(
+                email=profile.email,
+                password=None,
+                role=UserRole.CANDIDATE,
+                first_name=profile.first_name,
+                last_name=profile.last_name,
+                tenant_id=settings.TENANT_ID,
+            ),
+        )
+
+    enc = encrypt_secret(profile.refresh_token) if profile.refresh_token else None
+    await crud.upsert_oauth_identity(
+        session=session,
+        provider=profile.provider,
+        provider_subject=profile.provider_subject,
+        user_id=user.id,
+        encrypted_refresh_token=enc,
+    )
+    return user
+
+
+async def _oauth_callback(
+    *,
+    provider: OAuthProvider,
+    code: str,
+    state: str,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession,
+) -> RedirectResponse:
+    cookie_state = request.cookies.get(OAUTH_STATE_COOKIE)
+    if not cookie_state or not state or cookie_state != state:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid OAuth state",
+        )
+    profile = await exchange_code(provider, code)
+    try:
+        user = await _provision_oauth_user(session, profile)
+    except HTTPException as exc:
+        await emit_auth_audit(
+            request=request,
+            background_tasks=background_tasks,
+            action=AuditAction.LOGIN_FAILURE,
+            metadata={"reason": f"oauth_{provider}_failed", "detail": str(exc.detail)},
+            force_sync=True,
+        )
+        raise
+    pair = await _issue_token_pair(session, user)
+    await emit_auth_audit(
+        request=request,
+        background_tasks=background_tasks,
+        action=AuditAction.LOGIN_SUCCESS,
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        entity_id=user.id,
+        metadata={"reason": f"oauth_{provider}"},
+    )
+    redirect = RedirectResponse(
+        url=f"{settings.FRONTEND_HOST}/auth",
+        status_code=status.HTTP_302_FOUND,
+    )
+    set_auth_cookies(
+        redirect,
+        access_token=pair.access_token,
+        refresh_token=pair.refresh_token,
+    )
+    redirect.delete_cookie(key=OAUTH_STATE_COOKIE, path="/")
+    return redirect
+
+
+@router.get("/callback/google")
+async def google_callback(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    code: str,
+    state: str = "",
+) -> RedirectResponse:
+    return await _oauth_callback(
+        provider="google",
+        code=code,
+        state=state,
+        request=request,
+        background_tasks=background_tasks,
+        session=session,
+    )
+
+
+@router.get("/callback/linkedin")
+async def linkedin_callback(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    code: str,
+    state: str = "",
+) -> RedirectResponse:
+    return await _oauth_callback(
+        provider="linkedin",
+        code=code,
+        state=state,
+        request=request,
+        background_tasks=background_tasks,
+        session=session,
+    )

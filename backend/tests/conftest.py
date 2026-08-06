@@ -26,7 +26,7 @@ from app.core.token_store import (
     reset_token_store,
 )
 from app.main import app
-from app.models import Item, User
+from app.models import Item, OAuthIdentity, User
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
 
@@ -110,6 +110,7 @@ async def db() -> AsyncIterator[AsyncSession]:
         try:
             await session.rollback()
             await session.execute(delete(Item))
+            await session.execute(delete(OAuthIdentity))
             await session.execute(delete(User))
             await session.commit()
         except Exception:

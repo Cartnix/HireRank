@@ -1,10 +1,11 @@
+import secrets
 import uuid
 from collections.abc import AsyncGenerator, Callable, Collection
 from typing import Annotated
 
 import structlog
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import APIKeyCookie, OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlalchemy import event, text
@@ -20,7 +21,18 @@ from app.core.db import async_session_maker
 from app.core.token_store import get_token_store
 from app.models import TokenPayload, User, UserRole, role_str
 
-bearer_scheme = HTTPBearer(auto_error=False)
+# OpenAPI: OAuth2 password flow (Swagger Authorize) + documented access cookie.
+# Runtime: cookie-first, then Bearer from Authorization (dual mode).
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/login/access-token",
+    auto_error=False,
+)
+access_cookie_scheme = APIKeyCookie(
+    name=settings.AUTH_COOKIE_ACCESS_NAME,
+    auto_error=False,
+)
+# Back-compat alias for route Depends that previously used HTTPBearer
+bearer_scheme = oauth2_scheme
 
 
 def set_tenant_guc(connection: Connection, tenant_id: uuid.UUID | str) -> None:
@@ -121,19 +133,57 @@ async def get_db() -> AsyncGenerator[AsyncSession]:
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
-TokenDep = Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)]
+TokenDep = Annotated[str | None, Depends(oauth2_scheme)]
+AccessCookieDep = Annotated[str | None, Depends(access_cookie_scheme)]
+
+_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
+
+
+def extract_access_token(
+    request: Request,
+    bearer_token: str | None,
+    *,
+    cookie_token: str | None = None,
+) -> str | None:
+    """Cookie-first, then Authorization Bearer (dual mode)."""
+    access = cookie_token or request.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+    if access:
+        return access
+    return bearer_token or None
+
+
+async def verify_csrf(request: Request) -> None:
+    """
+    Double-submit CSRF when an access cookie is present.
+    Bearer-only API clients (no access cookie) skip CSRF.
+    """
+    if request.method in _SAFE_METHODS:
+        return
+    if not request.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME):
+        return
+    header = request.headers.get("X-CSRF-Token")
+    cookie = request.cookies.get(settings.AUTH_COOKIE_CSRF_NAME)
+    if not header or not cookie or not secrets.compare_digest(header, cookie):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSRF Token missing or invalid",
+        )
 
 
 async def get_current_user(
-    request: Request, session: SessionDep, creds: TokenDep
+    request: Request,
+    session: SessionDep,
+    creds: TokenDep,
+    _access_cookie: AccessCookieDep,
 ) -> User:
-    if creds is None or creds.scheme.lower() != "bearer":
+    await verify_csrf(request)
+    token = extract_access_token(request, creds, cookie_token=_access_cookie)
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    token = creds.credentials
     try:
         payload = security.decode_token(token)
         token_data = TokenPayload(**payload)

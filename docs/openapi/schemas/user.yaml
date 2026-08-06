@@ -25,10 +25,10 @@ User:
       $ref: '#/UserRole'
     first_name:
       type: string
-      example: Иван
+      example: Ivan
     last_name:
       type: string
-      example: Петров
+      example: Petrov
     is_active:
       type: boolean
       example: true
@@ -42,10 +42,10 @@ UpdateUserRequest:
   properties:
     first_name:
       type: string
-      example: Иван
+      example: Ivan
     last_name:
       type: string
-      example: Петров
+      example: Petrov
     email:
       type: string
       format: email

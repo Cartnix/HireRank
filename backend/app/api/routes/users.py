@@ -68,7 +68,7 @@ async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
         tenant_id=settings.TENANT_ID,
     )
     user = await crud.create_user(session=session, user_create=user_in)
-    if settings.emails_enabled and user_in.email:
+    if settings.emails_enabled and user_in.email and user_in.password:
         email_data = generate_new_account_email(
             email_to=user_in.email, username=user_in.email, password=user_in.password
         )
@@ -104,6 +104,10 @@ async def update_user_me(
 async def update_password_me(
     *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
 ) -> Any:
+    if not current_user.hashed_password:
+        raise HTTPException(
+            status_code=400, detail="Password login is not available for this account"
+        )
     verified, _ = verify_password(body.current_password, current_user.hashed_password)
     if not verified:
         raise HTTPException(status_code=400, detail="Incorrect password")

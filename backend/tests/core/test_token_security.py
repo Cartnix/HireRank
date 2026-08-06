@@ -10,7 +10,7 @@ from httpx import AsyncClient
 from app.core import security
 from app.core.config import settings
 from app.core.token_store import get_token_store, reset_token_store
-from tests.utils.utils import random_email, random_lower_string
+from tests.utils.auth_types import register_bearer_pair
 
 
 async def test_blacklist_ttl_matches_remaining_access_token_lifetime(
@@ -20,14 +20,7 @@ async def test_blacklist_ttl_matches_remaining_access_token_lifetime(
     reset_token_store()
     store = get_token_store()
 
-    email = random_email()
-    password = random_lower_string()
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={"email": email, "password": password, "role": "candidate"},
-    )
-    assert r.status_code == 201
-    pair = r.json()
+    pair = await register_bearer_pair(client)
     payload = security.decode_token(pair["access_token"])
     jti = payload["jti"]
     exp = int(payload["exp"])
@@ -56,14 +49,8 @@ async def test_refresh_rotation_grace_allows_parallel_duplicate_refresh(
     treated as token theft (401).
     """
     reset_token_store()
-    email = random_email()
-    password = random_lower_string()
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={"email": email, "password": password, "role": "candidate"},
-    )
-    assert r.status_code == 201
-    refresh_token = r.json()["refresh_token"]
+    pair = await register_bearer_pair(client)
+    refresh_token = pair["refresh_token"]
 
     async def _refresh() -> int:
         resp = await client.post(
@@ -82,13 +69,8 @@ async def test_refresh_after_grace_expires_is_rejected(client: AsyncClient) -> N
     reset_token_store()
     store = get_token_store()
 
-    email = random_email()
-    password = random_lower_string()
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={"email": email, "password": password, "role": "candidate"},
-    )
-    refresh_token = r.json()["refresh_token"]
+    pair = await register_bearer_pair(client)
+    refresh_token = pair["refresh_token"]
     payload = security.decode_token(refresh_token)
     jti = payload["jti"]
 
@@ -97,6 +79,7 @@ async def test_refresh_after_grace_expires_is_rejected(client: AsyncClient) -> N
         json={"refresh_token": refresh_token},
     )
     assert r.status_code == 200
+    client.cookies.clear()
 
     store.force_expire_grace(jti, tenant_id=settings.TENANT_ID)
 
@@ -109,13 +92,7 @@ async def test_refresh_after_grace_expires_is_rejected(client: AsyncClient) -> N
 
 async def test_logout_hard_revokes_refresh_without_grace(client: AsyncClient) -> None:
     reset_token_store()
-    email = random_email()
-    password = random_lower_string()
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={"email": email, "password": password, "role": "candidate"},
-    )
-    pair = r.json()
+    pair = await register_bearer_pair(client)
 
     r = await client.post(
         f"{settings.API_V1_STR}/auth/logout",

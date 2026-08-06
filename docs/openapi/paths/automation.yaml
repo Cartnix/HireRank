@@ -5,10 +5,10 @@ paths:
     get:
       tags: [Automations]
       operationId: listDecisionPackages
-      summary: Список decision packages tenant
+      summary: List tenant decision packages
       description: |
-        Пакеты HITL-опций, созданные Automation после `resume.uploaded`.
-        Доступ: **administrator**, **hr**, **manager** (manager — read).
+        HITL option packages created by Automation after `resume.uploaded`.
+        Access: **administrator**, **hr**, **manager** (manager — read).
       parameters:
         - name: status
           in: query
@@ -32,13 +32,13 @@ paths:
             maximum: 100
       responses:
         '200':
-          description: Список packages
+          description: Package list
           content:
             application/json:
               schema:
                 $ref: '../schemas/automation.yaml#/PagedDecisionPackageResponse'
         '401':
-          description: Не авторизован
+          description: Unauthorized
 
   /automations/packages/{id}:
     parameters:
@@ -51,7 +51,7 @@ paths:
     get:
       tags: [Automations]
       operationId: getDecisionPackage
-      summary: Карточка decision package
+      summary: Decision package card
       responses:
         '200':
           description: Package
@@ -60,7 +60,7 @@ paths:
               schema:
                 $ref: '../schemas/automation.yaml#/DecisionPackage'
         '404':
-          description: Не найден
+          description: Not found
 
   /automations/packages/{id}/accept:
     parameters:
@@ -73,11 +73,11 @@ paths:
     post:
       tags: [Automations]
       operationId: acceptDecisionPackage
-      summary: Принять HITL-опцию (Telegram callback → API)
+      summary: Accept HITL option (Telegram callback → API)
       description: |
-        Человек выбирает одну опцию. FastMCP исполняет **только** выбранный MCP tool под `tenant_id`.
-        Пишется Outcome (история выбора опции) в Memory — [MEMORY.md](../../MEMORY.md).
-        Без human pick исполнение запрещено.
+        A human selects one option. FastMCP executes **only** the chosen MCP tool under `tenant_id`.
+        An Outcome (option-choice history) is written to Memory — [MEMORY.md](../../MEMORY.md).
+        Execution without a human pick is forbidden.
       requestBody:
         required: true
         content:
@@ -86,25 +86,25 @@ paths:
               $ref: '../schemas/automation.yaml#/AcceptScenarioRequest'
       responses:
         '200':
-          description: Опция принята, MCP выполнен
+          description: Option accepted, MCP executed
           content:
             application/json:
               schema:
                 $ref: '../schemas/automation.yaml#/AcceptScenarioResponse'
         '400':
-          description: Package не в pending_hitl или невалидный scenario_id
+          description: Package not in pending_hitl or invalid scenario_id
         '403':
-          description: Недостаточно прав
+          description: Insufficient permissions
         '404':
-          description: Package не найден
+          description: Package not found
 
   /automations/outcomes:
     get:
       tags: [Automations]
       operationId: listOutcomes
-      summary: Список Outcomes tenant (Memory)
+      summary: List tenant Outcomes (Memory)
       description: |
-        Outcome = запись о выборе HITL-опции. Канон продукта: [MEMORY.md](../../MEMORY.md).
+        Outcome = record of a HITL option choice. Product canon: [MEMORY.md](../../MEMORY.md).
       parameters:
         - name: candidate_id
           in: query
@@ -124,13 +124,13 @@ paths:
             maximum: 100
       responses:
         '200':
-          description: Список Outcomes
+          description: Outcome list
           content:
             application/json:
               schema:
                 $ref: '../schemas/automation.yaml#/PagedOutcomeResponse'
         '401':
-          description: Не авторизован
+          description: Unauthorized
 
   /automations/precedents:
     get:
@@ -154,10 +154,10 @@ paths:
             maximum: 100
       responses:
         '200':
-          description: Список Precedents
+          description: Precedent list
           content:
             application/json:
               schema:
                 $ref: '../schemas/automation.yaml#/PagedPrecedentResponse'
         '401':
-          description: Не авторизован
+          description: Unauthorized

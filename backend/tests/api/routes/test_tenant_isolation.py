@@ -230,8 +230,10 @@ async def test_write_exploit_register_ignores_body_tenant_and_persists_core(
         },
     )
     assert r.status_code == 201
+    access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+    assert access
     payload = jwt.decode(
-        r.json()["access_token"],
+        access,
         settings.SECRET_KEY,
         algorithms=[security.ALGORITHM],
     )

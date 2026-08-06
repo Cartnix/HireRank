@@ -6,6 +6,7 @@ from app import crud
 from app.auth.permissions import has_permission
 from app.core import security
 from app.core.config import settings
+from tests.utils.auth_types import register_bearer_pair
 from tests.utils.utils import random_email, random_lower_string
 
 
@@ -13,18 +14,9 @@ async def test_auth_register_login_me_refresh_logout(client: AsyncClient) -> Non
     email = random_email()
     password = random_lower_string()
 
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": email,
-            "password": password,
-            "role": "recruiter",
-            "first_name": "Rec",
-            "last_name": "Ruiter",
-        },
+    pair = await register_bearer_pair(
+        client, role="recruiter", email=email, password=password
     )
-    assert r.status_code == 201
-    pair = r.json()
     assert pair["token_type"] == "bearer"
     assert pair["access_token"]
     assert pair["refresh_token"]
@@ -54,17 +46,20 @@ async def test_auth_register_login_me_refresh_logout(client: AsyncClient) -> Non
         json={"refresh_token": pair["refresh_token"]},
     )
     assert r.status_code == 200
-    refreshed = r.json()
-    assert refreshed["access_token"]
-    assert refreshed["refresh_token"] != pair["refresh_token"]
+    # Cookie session body has no tokens; dual-mode refresh with body returns cookies
+    # Extract new tokens from Set-Cookie via client jar then clear for Bearer use
+    new_access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+    new_refresh = client.cookies.get(settings.AUTH_COOKIE_REFRESH_NAME)
+    assert new_access and new_refresh
+    assert new_refresh != pair["refresh_token"]
     refreshed_payload = jwt.decode(
-        refreshed["access_token"],
+        new_access,
         settings.SECRET_KEY,
         algorithms=[security.ALGORITHM],
     )
     assert set(refreshed_payload["permissions"]) == {"vacancy.read", "resume.upload"}
+    client.cookies.clear()
 
-    # Within grace window a twin refresh may still succeed; force-expire grace
     from app.core.token_store import get_token_store
 
     store = get_token_store()
@@ -81,12 +76,13 @@ async def test_auth_register_login_me_refresh_logout(client: AsyncClient) -> Non
     )
     assert r.status_code == 401
 
-    r = await client.post(
-        f"{settings.API_V1_STR}/auth/login",
-        json={"email": email, "password": password},
+    form = await client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": email, "password": password},
     )
-    assert r.status_code == 200
-    login_pair = r.json()
+    assert form.status_code == 200
+    login_pair = form.json()
+    client.cookies.clear()
 
     r = await client.post(
         f"{settings.API_V1_STR}/auth/logout",
@@ -125,10 +121,11 @@ async def test_auth_register_ignores_client_tenant(client: AsyncClient) -> None:
             "tenant_id": "11111111-1111-4111-8111-111111111111",
         },
     )
-    # tenant_id is not in schema — ignored / validation may strip extra
     assert r.status_code == 201
+    access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+    assert access
     payload = jwt.decode(
-        r.json()["access_token"],
+        access,
         settings.SECRET_KEY,
         algorithms=[security.ALGORITHM],
     )

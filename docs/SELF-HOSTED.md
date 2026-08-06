@@ -8,6 +8,8 @@ This repository is the **Core** product: one company per deployment, Open Source
 - PostgreSQL with RLS bound to a single `TENANT_ID`
 - JWT access + refresh with optional Redis-backed token store
 - Default **in-memory** token store (`TOKEN_STORE=memory`) — no Redis required for auth sessions
+- Browser session via **HttpOnly Secure cookies** + CSRF; set `COOKIE_SECURE=true` (and prefer `AUTH_COOKIE_HOST_PREFIX`) behind HTTPS
+- Optional Google/LinkedIn OAuth (`GOOGLE_*` / `LINKEDIN_*` env) — identity only; roles from Postgres
 
 ## Recommended defaults (single replica)
 

@@ -1,4 +1,4 @@
-# Compliance and Best Practices for ATS in the Republic of Kazakhstan (2026)
+# Compliance for ATS in the Republic of Kazakhstan (2026)
 
 **Compliance Source of Truth (RK — primary)** — obeyed **strictly** with [GDPR.md](GDPR.md) (EU / West) and [use-cases/](use-cases/) (MVP behavioral north star). See [use-cases/README.md](use-cases/README.md). If a use-case or feature conflicts with this document, **fix the product** — do not weaken RK requirements for MVP speed.
 
@@ -121,8 +121,7 @@ Regulators demand: “Who looked at citizen X’s data, and when?”
 
 
 
-## 3. Data lifecycle and UI best practices
-
+## 3. Data lifecycle and UI
 
 
 ### 3.1 UI masking
@@ -161,7 +160,7 @@ Regulators demand: “Who looked at citizen X’s data, and when?”
 ## 4. Product team cheat sheet
 
 
-| ATS function         | Wrong (fines / blocks)                        | Right (RK best practice)                                                      |
+| ATS function         | Wrong (fines / blocks)                        | Right (RK)                                                      |
 | -------------------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
 | Registration / apply | “By registering you agree to everything”      | Separate empty checkboxes: vacancy processing vs talent pool vs cross-border  |
 | Resume import        | Parse from hh.kz / LinkedIn and keep forever  | Import → pending consent → notify → no reply in 3 business days → hard-delete |
