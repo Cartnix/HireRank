@@ -356,3 +356,53 @@ async def test_structlog_emits_audit_event_fields(client: AsyncClient) -> None:
     ]
     assert audit_events, f"expected structlog audit event, got: {cap!r}"
     assert str(audit_events[-1].get("tenant_id")) == str(settings.TENANT_ID)
+
+
+async def test_consent_update_and_legal_accept_write_audit(client: AsyncClient) -> None:
+    from tests.utils.consent import register_json, valid_consent
+
+    await client.post(
+        f"{settings.API_V1_STR}/auth/register",
+        json=register_json(email=random_email(), password=random_lower_string()),
+    )
+    csrf = client.cookies.get(settings.AUTH_COOKIE_CSRF_NAME) or ""
+    before = await _count_actions(AuditAction.CONSENT_UPDATE)
+    r = await client.patch(
+        f"{settings.API_V1_STR}/auth/consent",
+        headers={"X-CSRF-Token": csrf},
+        json=valid_consent(talent_pool=True),
+    )
+    assert r.status_code == 200
+    assert await _count_actions(AuditAction.CONSENT_UPDATE) == before + 1
+
+    before_legal = await _count_actions(AuditAction.LEGAL_ACCEPT)
+    r = await client.post(
+        f"{settings.API_V1_STR}/auth/accept-legal",
+        headers={"X-CSRF-Token": csrf},
+        json={},
+    )
+    assert r.status_code == 200
+    assert await _count_actions(AuditAction.LEGAL_ACCEPT) == before_legal + 1
+
+
+async def test_login_audit_uses_x_forwarded_for(client: AsyncClient) -> None:
+    email = random_email()
+    password = random_lower_string()
+    from tests.utils.consent import register_json
+
+    await client.post(
+        f"{settings.API_V1_STR}/auth/register",
+        json=register_json(email=email, password=password),
+    )
+    client.cookies.clear()
+    before = await _count_actions(AuditAction.LOGIN_SUCCESS)
+    r = await client.post(
+        f"{settings.API_V1_STR}/auth/login",
+        headers={"X-Forwarded-For": "203.0.113.55, 10.0.0.1"},
+        json={"email": email, "password": password},
+    )
+    assert r.status_code == 200
+    assert await _count_actions(AuditAction.LOGIN_SUCCESS) == before + 1
+    row = await _latest_action(AuditAction.LOGIN_SUCCESS)
+    assert row is not None
+    assert str(row.ip_address) == "203.0.113.55"

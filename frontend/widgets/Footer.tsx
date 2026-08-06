@@ -6,7 +6,7 @@ export const Footer = () => (
       <span>HireRank © 2026</span>
       <div className="flex gap-6">
         <Link href="/privacy" className="hover:text-foreground/80 transition-colors">
-          Политика
+          Политика ПД
         </Link>
         <Link href="/terms" className="hover:text-foreground/80 transition-colors">
           Условия

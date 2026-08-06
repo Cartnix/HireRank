@@ -231,6 +231,12 @@ class User(UserBase, table=True):
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+    # Accepted edition of Terms + Политика сбора и обработки ПД
+    legal_policy_version: str | None = Field(default=None, max_length=32)
+    legal_accepted_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
     tenant: Tenant | None = Relationship(back_populates="users")
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     oauth_identities: list["OAuthIdentity"] = Relationship(back_populates="user")
@@ -258,6 +264,10 @@ class UserConsent(SQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     revoked_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    expires_at: datetime | None = Field(
         default=None,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
@@ -291,6 +301,27 @@ class UserPublic(UserBase):
     id: uuid.UUID
     tenant_id: uuid.UUID
     created_at: datetime | None = None
+    legal_policy_version: str | None = None
+    legal_accepted_at: datetime | None = None
+    legal_acceptance_required: bool = False
+    consent_refresh_required: bool = False
+    current_legal_policy_version: str = ""
+
+
+class CheckEmailRequest(SQLModel):
+    model_config = ConfigDict(extra="forbid")  # type: ignore[assignment]
+
+    email: EmailStr = Field(max_length=255)
+
+
+class CheckEmailResponse(SQLModel):
+    registered: bool
+
+
+class AcceptLegalRequest(SQLModel):
+    model_config = ConfigDict(extra="forbid")  # type: ignore[assignment]
+
+    consent: ConsentGrant | None = None
 
 
 class UsersPublic(SQLModel):

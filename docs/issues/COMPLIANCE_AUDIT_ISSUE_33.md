@@ -37,7 +37,10 @@ As a result, many compliance obligations for candidate processing are still desi
 
 | Requirement | Compliance source | Current evidence | Status | Classification | Notes |
 |---|---|---|---|---|---|
-| Granular consent UI with separate unchecked boxes | `docs/laws/ATS_COMPLIANCE_RK.md` §1.4 | `AuthModal` + `ConsentGrant` on `/auth/register` and OAuth POST start; `user_consent` table | Implemented | `implemented` | Empty-by-default checkboxes; `account_processing` required |
+| Granular consent UI with separate unchecked boxes | `docs/laws/ATS_COMPLIANCE_RK.md` §1.4 | `AuthModal` + `ConsentGrant` on `/auth/register` and OAuth POST start; `user_consent` table with TTL | Implemented | `implemented` | Empty-by-default checkboxes; `account_processing` required; login uses implicit consent + statutory PD policy naming |
+| Auth legal lifecycle (policy version + consent TTL) | RK consent duration / §1.4.1 | `LEGAL_POLICY_VERSION`, `expires_at`, `/auth/accept-legal`, `LegalAcceptModal`, `/auth/check-email` | Implemented | `implemented` | Force-major update gate + universal auth email check |
+| OAuth scope minimization + no IIN login | RK §1.5 / §1.4.1 | `openid email` only; `UserRegister` `extra=forbid` | Implemented | `implemented` | |
+| Login rate limit + auth audit IP/UA | RK §1.3 / breach ops | In-memory rate limit; audit with XFF-aware IP + UA | Partial | `implemented` | Device fingerprint / session revoke UI and 1-day regulator notify runbook remain ops/horizon |
 | No IIN / ID scans during initial apply | `docs/laws/ATS_COMPLIANCE_RK.md` §1.5 | `UserRegister` `extra=forbid` rejects `iin` and other unknown PD fields | Implemented | `implemented` | Auth register path hardened; candidate apply forms still future |
 | “Forget Me” / consent withdrawal workflow | `docs/laws/GDPR.md` §3, RK §3.3 | `POST /auth/forget-me` anonymizes auth identity, revokes consents, clears session | Partial | `implemented` | Auth-scoped erasure done; candidate-profile purge remains MVP when candidate domain ships |
 | Personal-data masking in list views with audited reveal | `docs/ATS_COMPLIANCE_RK.md` §3.1 | No candidate pool/dashboard/list UI in frontend; no masking serializers or reveal endpoints in backend | Missing | `MVP waiver` | Required for future list views, but those views are not implemented yet |

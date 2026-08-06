@@ -28,8 +28,10 @@ from app.audit.emit import email_hash_metadata, emit_auth_audit
 from app.audit.schemas import AuditAction, hash_email
 from app.auth.consent import (
     anonymize_user_for_erasure,
+    build_user_public,
     get_consent_grant,
     record_consents,
+    stamp_legal_acceptance,
     validate_consent_grant,
 )
 from app.auth.oauth import (
@@ -39,6 +41,13 @@ from app.auth.oauth import (
     new_oauth_state,
 )
 from app.auth.oauth_state import pop_oauth_pending, store_oauth_pending
+from app.auth.rate_limit import (
+    clear_rate_limit,
+    enforce_check_email_rate_limit,
+    enforce_login_rate_limit,
+    login_rate_key,
+)
+from app.auth.request_meta import client_ip
 from app.core import security
 from app.core.config import settings
 from app.core.cookies import clear_auth_cookies, set_auth_cookies
@@ -46,7 +55,10 @@ from app.core.crypto import encrypt_secret
 from app.core.token_store import get_token_store
 from app.models import (
     REGISTERABLE_ROLES,
+    AcceptLegalRequest,
     AuthSession,
+    CheckEmailRequest,
+    CheckEmailResponse,
     ConsentGrant,
     ConsentPublic,
     ErrorResponse,
@@ -172,6 +184,10 @@ async def register(
         tenant_id=settings.TENANT_ID,
     )
     user = await crud.create_user(session=session, user_create=user_create)
+    stamp_legal_acceptance(user)
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
     await record_consents(session=session, user=user, consent=body.consent)
     pair = await _issue_token_pair(session, user)
     await emit_auth_audit(
@@ -198,6 +214,8 @@ async def login(
     session: SessionDep,
     body: LoginRequest,
 ) -> AuthSession:
+    ip = client_ip(request)
+    enforce_login_rate_limit(ip=ip, email=body.email)
     user = await crud.authenticate(
         session=session, email=body.email, password=body.password
     )
@@ -228,6 +246,7 @@ async def login(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user",
         )
+    clear_rate_limit(login_rate_key(ip=ip, email=body.email))
     pair = await _issue_token_pair(session, user)
     await emit_auth_audit(
         request=request,
@@ -313,8 +332,60 @@ async def logout(
 
 
 @router.get("/me", response_model=UserPublic)
-def me(current_user: CurrentUser) -> Any:
-    return current_user
+async def me(session: SessionDep, current_user: CurrentUser) -> Any:
+    return await build_user_public(session, current_user)
+
+
+@router.post("/check-email", response_model=CheckEmailResponse)
+async def check_email(
+    request: Request,
+    session: SessionDep,
+    body: CheckEmailRequest,
+) -> CheckEmailResponse:
+    """Universal auth: detect whether email already has an account (rate-limited)."""
+    enforce_check_email_rate_limit(ip=client_ip(request))
+    existing = await crud.get_user_by_email(session=session, email=body.email)
+    return CheckEmailResponse(registered=existing is not None)
+
+
+@router.post("/accept-legal", response_model=UserPublic)
+async def accept_legal(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    current_user: CurrentUser,
+    body: AcceptLegalRequest,
+) -> UserPublic:
+    """
+    Force-major policy update + consent TTL refresh (RK).
+    Blocks product use in FE until accepted after login.
+    """
+    public = await build_user_public(session, current_user)
+    if public.consent_refresh_required:
+        if body.consent is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="consent is required to refresh expired account processing",
+            )
+        await record_consents(session=session, user=current_user, consent=body.consent)
+    elif body.consent is not None:
+        await record_consents(session=session, user=current_user, consent=body.consent)
+
+    stamp_legal_acceptance(current_user)
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(current_user)
+
+    await emit_auth_audit(
+        request=request,
+        background_tasks=background_tasks,
+        action=AuditAction.LEGAL_ACCEPT,
+        tenant_id=current_user.tenant_id,
+        user_id=current_user.id,
+        entity_id=current_user.id,
+        metadata={"reason": "legal_accept", "detail": settings.LEGAL_POLICY_VERSION},
+    )
+    return await build_user_public(session, current_user)
 
 
 @router.post(
@@ -622,6 +693,10 @@ async def _oauth_callback(
         )
         raise
     await record_consents(session=session, user=user, consent=consent)
+    stamp_legal_acceptance(user)
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
     pair = await _issue_token_pair(session, user)
     await emit_auth_audit(
         request=request,

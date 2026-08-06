@@ -18,13 +18,14 @@ import {
 } from "@/features/auth/model/FormSchema";
 import { useAuthForm } from "@/features/auth/useAuthForm";
 import { useAuthSession } from "@/features/auth/AuthProvider";
-import { startOAuth } from "@/shared/api/auth";
+import { checkEmail, startOAuth } from "@/shared/api/auth";
 
 const consentDefaults = {
   role: "candidate" as const,
   consent_account_processing: false as const,
   consent_talent_pool: false,
   consent_cross_border: false,
+  consent_cross_border_countries: "",
 };
 
 function LegalLinks() {
@@ -33,12 +34,12 @@ function LegalLinks() {
       <Link href="/terms" className="underline underline-offset-2 hover:text-foreground">
         Условиями использования
       </Link>
-      {" и "}
+      {" и актуальной "}
       <Link
         href="/privacy"
         className="underline underline-offset-2 hover:text-foreground"
       >
-        Политикой конфиденциальности
+        Политикой сбора и обработки персональных данных
       </Link>
     </>
   );
@@ -50,6 +51,7 @@ export const AuthModal = () => {
   const router = useRouter();
   const { refreshSession } = useAuthSession();
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [emailHint, setEmailHint] = useState<string | null>(null);
 
   const {
     register,
@@ -58,6 +60,7 @@ export const AuthModal = () => {
     reset,
     control,
     getValues,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValuesType>({
     resolver: zodResolver(isRegister ? RegisterFormValues : LoginFormValues),
@@ -68,6 +71,11 @@ export const AuthModal = () => {
   const consentAccount = useWatch({
     control,
     name: "consent_account_processing",
+    defaultValue: false,
+  });
+  const crossBorder = useWatch({
+    control,
+    name: "consent_cross_border",
     defaultValue: false,
   });
   const consentReady = !isRegister || consentAccount === true;
@@ -84,10 +92,32 @@ export const AuthModal = () => {
   const isPending = isSubmitting || isLoading;
   const blockSubmit = isPending || (isRegister && !consentReady);
 
-  const toggleView = () => {
-    setView(isRegister ? "login" : "register");
+  const switchTo = (next: "login" | "register", preserveEmail = true) => {
+    const email = preserveEmail ? getValues("email") : "";
+    setView(next);
     setOauthError(null);
-    reset({ ...consentDefaults });
+    setEmailHint(null);
+    reset({ ...consentDefaults, email: email || undefined });
+  };
+
+  const onEmailBlur = async () => {
+    if (isRegister) return;
+    const email = getValues("email")?.trim();
+    if (!email || !email.includes("@")) return;
+    try {
+      const status = await checkEmail(email);
+      if (!status.registered) {
+        setEmailHint(
+          "Аккаунт с этим email не найден — откроем регистрацию с согласием на обработку ПД.",
+        );
+        setValue("email", email);
+        switchTo("register", true);
+      } else {
+        setEmailHint(null);
+      }
+    } catch {
+      /* soft-fail: user can still try login */
+    }
   };
 
   const onOAuth = async (provider: "google" | "linkedin") => {
@@ -99,6 +129,7 @@ export const AuthModal = () => {
         consent_account_processing: Boolean(values.consent_account_processing),
         consent_talent_pool: Boolean(values.consent_talent_pool),
         consent_cross_border: Boolean(values.consent_cross_border),
+        consent_cross_border_countries: values.consent_cross_border_countries,
       };
       if (!hasRequiredConsent(flags)) {
         setError("consent_account_processing", {
@@ -114,7 +145,6 @@ export const AuthModal = () => {
       return;
     }
 
-    // Returning login via OAuth: implicit consent (CTA = acceptance).
     try {
       await startOAuth(provider, implicitLoginConsentPayload());
     } catch (err) {
@@ -129,6 +159,7 @@ export const AuthModal = () => {
           consent_account_processing: Boolean(data.consent_account_processing),
           consent_talent_pool: Boolean(data.consent_talent_pool),
           consent_cross_border: Boolean(data.consent_cross_border),
+          consent_cross_border_countries: data.consent_cross_border_countries,
         })
       ) {
         setError("consent_account_processing", {
@@ -162,7 +193,7 @@ export const AuthModal = () => {
         </h2>
         <p className="text-foreground-secondary mt-2">
           {isRegister
-            ? "Создайте аккаунт — согласия разделены и выключены по умолчанию (закон РК о ПД §1.4)"
+            ? "Согласия разделены и выключены по умолчанию (закон РК о ПД §1.4)"
             : "Войдите через Google, LinkedIn или email"}
         </p>
       </div>
@@ -170,7 +201,7 @@ export const AuthModal = () => {
       {isRegister && (
         <fieldset className="flex flex-col gap-3 rounded-2xl border border-border-subtle p-4">
           <legend className="px-1 text-sm text-foreground-secondary">
-            Согласия при регистрации (раздельные, без предзаполнения)
+            Согласия при регистрации
           </legend>
           <label className="flex items-start gap-3 text-sm text-foreground">
             <input
@@ -179,8 +210,8 @@ export const AuthModal = () => {
               {...register("consent_account_processing")}
             />
             <span>
-              Обработка моих ПД для создания и работы аккаунта HireRank
-              (обязательно). Документы: <LegalLinks />.
+              Я даю согласие на сбор и обработку моих персональных данных в
+              соответствии с <LegalLinks /> (обязательно).
             </span>
           </label>
           {errors.consent_account_processing?.message && (
@@ -204,6 +235,15 @@ export const AuthModal = () => {
             />
             <span>Трансграничная передача ПД (опционально)</span>
           </label>
+          {crossBorder && (
+            <InputField
+              {...register("consent_cross_border_countries")}
+              type="text"
+              placeholder="KZ, RU"
+              label="Страны передачи"
+              error={errors.consent_cross_border_countries?.message}
+            />
+          )}
         </fieldset>
       )}
 
@@ -231,9 +271,8 @@ export const AuthModal = () => {
         )}
         {!isRegister && (
           <p className="text-xs text-foreground-secondary text-center leading-relaxed">
-            Нажимая кнопку входа через Google или LinkedIn, вы соглашаетесь с{" "}
-            <LegalLinks />. Запрашиваются только идентификатор и email провайдера.
-            При первом входе через соцсеть создаётся аккаунт HireRank.
+            Нажимая кнопку входа через Google или LinkedIn, вы подтверждаете
+            согласие с <LegalLinks />. Запрашиваются только openid и email.
           </p>
         )}
         <div className="flex items-center gap-3 text-xs text-foreground-secondary uppercase tracking-wide">
@@ -245,12 +284,19 @@ export const AuthModal = () => {
 
       <div className="flex flex-col gap-4">
         <InputField
-          {...register("email")}
+          {...register("email", {
+            onBlur: () => {
+              void onEmailBlur();
+            },
+          })}
           type="email"
           placeholder="name@company.kz"
           label="Email"
           error={errors.email?.message}
         />
+        {emailHint && (
+          <p className="text-xs text-foreground-secondary -mt-2">{emailHint}</p>
+        )}
         <InputField
           {...register("password")}
           type="password"
@@ -295,7 +341,7 @@ export const AuthModal = () => {
             : isRegister && !consentReady
               ? "Отметьте обязательное согласие"
               : isRegister
-                ? "Создать аккаунт"
+                ? "Зарегистрироваться"
                 : "Войти"
         }
         className="mt-4 py-3.5 rounded-2xl font-semibold text-base"
@@ -303,15 +349,15 @@ export const AuthModal = () => {
 
       {!isRegister && (
         <p className="text-xs text-foreground-secondary text-center leading-relaxed -mt-2">
-          Нажимая «Войти», вы соглашаетесь с <LegalLinks />. Обрабатываются
-          email, технические данные сессии (IP, cookie) и факт входа для
-          защиты аккаунта.
+          Нажимая кнопку «Войти», вы подтверждаете согласие с <LegalLinks />.
+          Обрабатываются email, технические данные сессии (IP, cookie) и факт
+          входа.
         </p>
       )}
 
       <button
         type="button"
-        onClick={toggleView}
+        onClick={() => switchTo(isRegister ? "login" : "register")}
         className="text-center text-sm text-foreground-secondary hover:text-brand-primary transition-colors mt-1 underline underline-offset-4"
       >
         {isRegister

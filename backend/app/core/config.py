@@ -103,6 +103,18 @@ class Settings(BaseSettings):
     # Fernet key (url-safe base64) or empty → derived from SECRET_KEY
     OAUTH_TOKEN_ENCRYPTION_KEY: str = ""
 
+    # RK legal docs version (must bump when Terms / PD policy change materially)
+    LEGAL_POLICY_VERSION: str = "2026-08-06"
+    # Consent TTL (RK: consent cannot be indefinite; equals purpose horizon)
+    CONSENT_ACCOUNT_TTL_DAYS: int = 365
+    CONSENT_TALENT_POOL_TTL_DAYS: int = 180
+    CONSENT_CROSS_BORDER_TTL_DAYS: int = 365
+    # Brute-force soft gate (per IP+email for login; per IP for check-email)
+    LOGIN_RATE_LIMIT_ATTEMPTS: int = 20
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 300
+    CHECK_EMAIL_RATE_LIMIT_ATTEMPTS: int = 60
+    CHECK_EMAIL_RATE_LIMIT_WINDOW_SECONDS: int = 300
+
     @model_validator(mode="after")
     def _apply_cookie_defaults(self) -> Self:
         if self.ENVIRONMENT == "production":

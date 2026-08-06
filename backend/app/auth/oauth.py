@@ -84,7 +84,8 @@ def build_authorize_url(provider: OAuthProvider, state: str) -> str:
             "client_id": settings.GOOGLE_CLIENT_ID,
             "redirect_uri": redirect,
             "response_type": "code",
-            "scope": "openid email profile",
+            # RK minimization: identity only — no profile/contacts/avatar scopes
+            "scope": "openid email",
             "state": state,
             "access_type": "offline",
             "prompt": "consent",
@@ -102,7 +103,8 @@ def build_authorize_url(provider: OAuthProvider, state: str) -> str:
         "client_id": settings.LINKEDIN_CLIENT_ID,
         "redirect_uri": redirect,
         "response_type": "code",
-        "scope": "openid profile email",
+        # RK minimization: openid + email only (no profile scope)
+        "scope": "openid email",
         "state": state,
     }
     return f"{LINKEDIN_AUTH_URL}?{urlencode(params)}"

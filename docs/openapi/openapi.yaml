@@ -93,6 +93,10 @@ paths:
     $ref: './paths/auth.yaml#/paths/~1auth~1logout'
   /auth/me:
     $ref: './paths/auth.yaml#/paths/~1auth~1me'
+  /auth/check-email:
+    $ref: './paths/auth.yaml#/paths/~1auth~1check-email'
+  /auth/accept-legal:
+    $ref: './paths/auth.yaml#/paths/~1auth~1accept-legal'
   /auth/refresh:
     $ref: './paths/auth.yaml#/paths/~1auth~1refresh'
   /auth/consent:

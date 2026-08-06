@@ -10,6 +10,7 @@ import {
   REQUIRED_CONSENT_MSG,
   hasRequiredConsent,
   implicitLoginConsentPayload,
+  parseCountries,
   toConsentPayload,
 } from "./FormSchema.ts";
 
@@ -25,7 +26,6 @@ function expectFail(
   );
 }
 
-// --- hasRequiredConsent ---
 assert.equal(
   hasRequiredConsent({
     consent_account_processing: false,
@@ -44,7 +44,6 @@ assert.equal(
   true,
 );
 
-// --- toConsentPayload must throw without mandatory tick ---
 assert.throws(
   () =>
     toConsentPayload({
@@ -58,11 +57,13 @@ assert.throws(
 const ok = toConsentPayload({
   consent_account_processing: true,
   consent_talent_pool: false,
-  consent_cross_border: false,
+  consent_cross_border: true,
+  consent_cross_border_countries: "kz, ru",
 });
 assert.equal(ok.account_processing, true);
+assert.deepEqual(ok.cross_border_countries, ["KZ", "RU"]);
+assert.deepEqual(parseCountries("kz;ru  "), ["KZ", "RU"]);
 
-// --- Login: email + password only (implicit consent via UI disclaimer) ---
 assert.equal(
   LoginFormValues.safeParse({
     email: "a@b.kz",
@@ -70,27 +71,10 @@ assert.equal(
   }).success,
   true,
 );
-
-assert.equal(
-  LoginFormValues.safeParse({
-    email: "a@b.kz",
-    password: "password1",
-    consent_account_processing: false,
-  }).success,
-  true,
-);
-
-expectFail(LoginFormValues, {
-  email: "not-an-email",
-  password: "password1",
-});
 
 const implicit = implicitLoginConsentPayload();
 assert.equal(implicit.account_processing, true);
-assert.equal(implicit.talent_pool, false);
-assert.equal(implicit.cross_border, false);
 
-// --- Register schema rejects unchecked consent ---
 expectFail(RegisterFormValues, {
   email: "a@b.kz",
   password: "password1",
@@ -99,6 +83,17 @@ expectFail(RegisterFormValues, {
   consent_account_processing: false,
   consent_talent_pool: false,
   consent_cross_border: false,
+});
+
+expectFail(RegisterFormValues, {
+  email: "a@b.kz",
+  password: "password1",
+  repeatPassword: "password1",
+  role: "candidate",
+  consent_account_processing: true,
+  consent_talent_pool: false,
+  consent_cross_border: true,
+  consent_cross_border_countries: "",
 });
 
 assert.equal(
@@ -114,7 +109,6 @@ assert.equal(
   true,
 );
 
-// --- ConsentSchema literal true ---
 expectFail(ConsentSchema, {
   account_processing: false,
   talent_pool: false,

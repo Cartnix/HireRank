@@ -112,6 +112,9 @@ paths:
       tags: [Auth]
       operationId: getCurrentUser
       summary: Current user (cookie or Bearer)
+      description: |
+        Includes `legal_acceptance_required`, `consent_refresh_required`, and
+        `current_legal_policy_version` for the policy-update gate (RK).
       responses:
         '200':
           description: Current user data
@@ -121,6 +124,67 @@ paths:
                 $ref: '../schemas/user.yaml#/User'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /auth/check-email:
+    post:
+      tags: [Auth]
+      operationId: checkEmailRegistered
+      summary: Universal auth — whether email already has an account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              additionalProperties: false
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Registration status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [registered]
+                properties:
+                  registered:
+                    type: boolean
+        '429':
+          description: Rate limited
+
+  /auth/accept-legal:
+    post:
+      tags: [Auth]
+      operationId: acceptLegalDocuments
+      summary: Accept current Terms + PD policy version (and refresh consent if expired)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                consent:
+                  $ref: '../schemas/auth.yaml#/ConsentGrant'
+      responses:
+        '200':
+          description: Updated user public profile
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '400':
+          description: Consent required when account processing expired
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: CSRF Token missing or invalid
 
   /auth/refresh:
     post:

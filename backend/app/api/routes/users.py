@@ -11,7 +11,7 @@ from app.api.deps import (
     SessionDep,
     require_permission,
 )
-from app.auth.consent import record_consents
+from app.auth.consent import build_user_public, record_consents, stamp_legal_acceptance
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
@@ -165,8 +165,12 @@ async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
         tenant_id=settings.TENANT_ID,
     )
     user = await crud.create_user(session=session, user_create=user_create)
+    stamp_legal_acceptance(user)
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
     await record_consents(session=session, user=user, consent=user_in.consent)
-    return user
+    return await build_user_public(session, user)
 
 
 @router.get("/{user_id}", response_model=UserPublic)

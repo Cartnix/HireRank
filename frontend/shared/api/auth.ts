@@ -10,6 +10,11 @@ export type UserPublic = {
   first_name?: string | null;
   last_name?: string | null;
   is_active: boolean;
+  legal_policy_version?: string | null;
+  legal_accepted_at?: string | null;
+  legal_acceptance_required?: boolean;
+  consent_refresh_required?: boolean;
+  current_legal_policy_version?: string;
 };
 
 export type AuthSession = {
@@ -56,6 +61,25 @@ export async function refresh(): Promise<AuthSession> {
 
 export async function forgetMe(): Promise<void> {
   await apiFetch<void>("/auth/forget-me", { method: "POST" });
+}
+
+export async function checkEmail(
+  email: string,
+): Promise<{ registered: boolean }> {
+  return apiFetch<{ registered: boolean }>("/auth/check-email", {
+    method: "POST",
+    json: { email },
+    skipCsrf: true,
+  });
+}
+
+export async function acceptLegal(
+  consent?: ConsentPayload,
+): Promise<UserPublic> {
+  return apiFetch<UserPublic>("/auth/accept-legal", {
+    method: "POST",
+    json: consent ? { consent } : {},
+  });
 }
 
 /** POST start with consent → follow redirect to IdP (RK §1.4). */

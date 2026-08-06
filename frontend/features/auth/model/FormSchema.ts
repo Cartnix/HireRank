@@ -7,7 +7,7 @@ const passwordSchema = z
   .min(8, "Пароль должен состоять минимум из 8 символов");
 
 const REQUIRED_CONSENT_MSG =
-  "Согласие на обработку ПД для аккаунта обязательно";
+  "Согласие на сбор и обработку персональных данных обязательно";
 
 /** RK §1.4 — separated consents, empty by default (no pre-ticks). */
 export const ConsentSchema = z
@@ -30,12 +30,12 @@ export const ConsentSchema = z
   });
 
 const registerConsentFields = {
-  /** Explicit tick required on registration only (RK §1.4). */
   consent_account_processing: z.literal(true, {
     errorMap: () => ({ message: REQUIRED_CONSENT_MSG }),
   }),
   consent_talent_pool: z.boolean(),
   consent_cross_border: z.boolean(),
+  consent_cross_border_countries: z.string().optional(),
 };
 
 /** Login: no checkboxes — acceptance is implicit via CTA + policy links. */
@@ -57,6 +57,18 @@ export const RegisterFormValues = z
   .refine((data) => data.password === data.repeatPassword, {
     message: "Пароли не совпадают",
     path: ["repeatPassword"],
+  })
+  .superRefine((data, ctx) => {
+    if (data.consent_cross_border) {
+      const countries = parseCountries(data.consent_cross_border_countries);
+      if (countries.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Укажите страны (например: KZ, RU)",
+          path: ["consent_cross_border_countries"],
+        });
+      }
+    }
   });
 
 export type LoginFormValuesType = z.infer<typeof LoginFormValues>;
@@ -68,7 +80,16 @@ export type ConsentFlags = {
   consent_account_processing: boolean;
   consent_talent_pool: boolean;
   consent_cross_border: boolean;
+  consent_cross_border_countries?: string;
 };
+
+export function parseCountries(raw: string | undefined): string[] {
+  if (!raw?.trim()) return [];
+  return raw
+    .split(/[,;\s]+/)
+    .map((c) => c.trim().toUpperCase())
+    .filter(Boolean);
+}
 
 /** Gate for register UI + submit — request must not fire without explicit tick. */
 export function hasRequiredConsent(flags: ConsentFlags): boolean {
@@ -77,7 +98,7 @@ export function hasRequiredConsent(flags: ConsentFlags): boolean {
 
 /**
  * Implicit account-processing grant for returning login / OAuth on login view
- * (clicking «Войти» / OAuth = acceptance of linked Terms & Privacy).
+ * (clicking «Войти» / OAuth = acceptance of linked Terms & PD policy).
  */
 export function implicitLoginConsentPayload(): ConsentPayload {
   return {
@@ -92,11 +113,15 @@ export function toConsentPayload(data: ConsentFlags): ConsentPayload {
   if (!hasRequiredConsent(data)) {
     throw new Error(REQUIRED_CONSENT_MSG);
   }
+  const crossBorder = data.consent_cross_border === true;
+  const countries = crossBorder
+    ? parseCountries(data.consent_cross_border_countries)
+    : [];
   return {
     account_processing: true,
     talent_pool: data.consent_talent_pool === true,
-    cross_border: data.consent_cross_border === true,
-    cross_border_countries: [],
+    cross_border: crossBorder,
+    cross_border_countries: countries,
   };
 }
 

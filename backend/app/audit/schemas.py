@@ -50,6 +50,7 @@ class AuditAction(StrEnum):
     REFRESH = "auth.refresh"
     CONSENT_UPDATE = "auth.consent.update"
     FORGET_ME = "auth.forget_me"
+    LEGAL_ACCEPT = "auth.legal.accept"
 
 
 def hash_email(email: str) -> str:

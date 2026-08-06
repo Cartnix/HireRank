@@ -60,6 +60,18 @@ Regulators demand: “Who looked at citizen X’s data, and when?”
   - [ ] Cross-border transfer of my PD to `[list of countries]` *(optional; required if foreign HR or foreign processors apply)*.
 - Candidate may accept vacancy review and refuse talent-pool storage.
 
+### 1.4.1 Auth UX (login / register) — RK 2026 practice
+
+- **Login (existing account):** no hard checkboxes. Under «Войти» use implicit consent copy with links to **Условия использования** and **Политика сбора и обработки персональных данных** (RK statutory naming — not a generic “Privacy Policy” label alone).
+- **Universal auth:** if email is not registered, switch to registration and show empty required consent checkbox; block «Зарегистрироваться» until ticked (`POST /auth/check-email`).
+- **Policy major update:** gate product after login via `legal_acceptance_required` / `POST /auth/accept-legal` until the subject accepts the current `LEGAL_POLICY_VERSION`.
+- **Consent TTL:** grants store `expires_at` (not indefinite); expired `account_processing` forces refresh checkbox in the legal modal.
+- **OAuth minimization:** authorize scopes `openid email` only; do not use IIN as login.
+- **Auth page trackers:** no marketing/analytics pixels before auth; technical Session/CSRF cookies only.
+- **Login audit:** append-only rows with timestamp, user_id (when known), IP (X-Forwarded-For aware), User-Agent — foundation for 1-day breach notification ops.
+- **Rate limit:** soft 429 on repeated failed logins (per IP+email).
+- **Horizon (not Core MVP):** Passkeys/WebAuthn; dedicated local IdP (Keycloak / RK cloud); per-device session revoke UI.
+
 
 
 ### 1.5 Data minimization (IIN and ID scans)
