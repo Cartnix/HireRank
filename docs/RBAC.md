@@ -7,7 +7,7 @@ Roles and permission matrix for the self-hosted (Core) ATS.
 | Role | Description |
 |------|-------------|
 | `administrator` | Admin panel and user management; full vacancy CRUD; resume upload |
-| `hr` | Vacancy CRUD; candidate intake; resume upload |
+| `hr` | Candidate intake; resume upload |
 | `manager` | Read vacancies; scoped candidate read (assigned + pending HITL); HITL decisions via Telegram |
 | `recruiter` | Resume upload; read all enterprise vacancies |
 | `candidate` | Resume upload; read vacancies; own candidate profile |
@@ -24,9 +24,9 @@ Stored in PostgreSQL tables `role`, `permission`, and `role_permission` (M2M). S
 |------------|:-------------:|:--:|:-------:|:---------:|:---------:|
 | `admin.panel` | yes | no | no | no | no |
 | `users.manage` | yes | no | no | no | no |
-| `vacancy.create` | yes | yes | no | no | no |
-| `vacancy.update` | yes | yes | no | no | no |
-| `vacancy.delete` | yes | yes | no | no | no |
+| `vacancy.create` | yes | no | no | no | no |
+| `vacancy.update` | yes | no | no | no | no |
+| `vacancy.delete` | yes | no | no | no | no |
 | `vacancy.read` | yes | yes | yes | yes | yes |
 | `resume.upload` | yes | yes | no | yes | yes |
 | `candidate.read` | yes (all) | yes (all) | scoped | no | own |
