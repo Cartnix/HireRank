@@ -1,10 +1,17 @@
+import { UseFormSetError } from "react-hook-form";
 import { useAuthStore } from "./model/auth-store"
 import { RegisterFormValues } from "./model/FormSchema";
 
-export const useAuthForm = ({ view, setError, onSuccess }) => {
+interface AuthFormProps {
+    view: 'register' | 'login',
+    setError: UseFormSetError<RegisterFormValues>,
+    onSuccess?: () => void,
+}
+
+export const useAuthForm = ({ view, setError, onSuccess }: AuthFormProps) => {
     const login = useAuthStore((s) => s.login);
     const register = useAuthStore((s) => s.register);
-    const isloading = useAuthStore((s) => s.isLoading);
+    const isLoading = useAuthStore((s) => s.isLoading);
 
     const onSubmit = async (data: RegisterFormValues) => {
         try {
@@ -28,5 +35,5 @@ export const useAuthForm = ({ view, setError, onSuccess }) => {
         }
     };
 
-    return { onSubmit, isloading }
+    return { onSubmit, isLoading }
 }

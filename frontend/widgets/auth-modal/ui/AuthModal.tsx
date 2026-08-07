@@ -8,7 +8,7 @@ import { MainButton } from "@/shared/ui/buttons/MainButton";
 import {
   loginFormSchema,
   registerFormSchema,
-  RegisterFormValuesType,
+  RegisterFormValues,
 } from "@/features/auth/model/FormSchema";
 import { useAuthForm } from "@/features/auth/useAuthForm";
 import { useRouter } from "next/navigation";
@@ -24,7 +24,7 @@ export const AuthModal = () => {
     setError,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterFormValuesType>({
+  } = useForm<RegisterFormValues>({
     resolver: zodResolver(isRegister ? registerFormSchema : loginFormSchema),
     mode: "onChange",
   });
