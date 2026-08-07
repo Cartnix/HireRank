@@ -1,5 +1,5 @@
 import { Stage } from "@/entities/job";
-import { Card } from "@/shared/ui/Card";
+import { Card } from "@/shared/ui/card";
 
 export function HiringFunnel({ pipelineCounts, maxPipeline }: { pipelineCounts: { stage: Stage; count: number }[]; maxPipeline: number }) {
   return (

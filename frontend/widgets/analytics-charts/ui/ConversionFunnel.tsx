@@ -1,5 +1,5 @@
 import { Stage } from "@/entities/job";
-import { Card } from "@/shared/ui/Card";
+import { Card } from "@/shared/ui/card";
 
 export const funnelStages: { stage: Stage; count: number }[] = [
   { stage: "Отклик", count: 46 },

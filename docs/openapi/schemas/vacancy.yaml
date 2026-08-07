@@ -1,13 +1,30 @@
 # schemas/vacancy.yaml
+# DB persistence: table `vacancy` (+ `pipeline_stage`, `application`).
+# See docs/ATS_SCHEMA.md. `assigned_candidate_ids` is an API projection of
+# active applications — not a denormalized column on vacancy.
 
 VacancyStatus:
   type: string
   enum: [open, closed, draft]
   example: open
 
+PipelineStage:
+  type: object
+  required: [id, stage_name, sort_order]
+  properties:
+    id:
+      type: string
+      format: uuid
+    stage_name:
+      type: string
+      example: Applied
+    sort_order:
+      type: integer
+      example: 0
+
 Vacancy:
   type: object
-  required: [id, tenant_id, title, status, created_at]
+  required: [id, tenant_id, title, status, created_by]
   properties:
     id:
       type: string
@@ -21,17 +38,19 @@ Vacancy:
       example: Backend Developer
     department:
       type: string
-      example: Разработка
+      nullable: true
+      example: Engineering
     description:
       type: string
+      nullable: true
       example: |
-        Ищем опытного Backend-разработчика для работы над核心 сервисами.
-        Требования: Python 3.10+, FastAPI, PostgreSQL.
+        Looking for an experienced Backend developer to work on core services.
+        Requirements: Python 3.10+, FastAPI, PostgreSQL.
     requirements:
       type: array
       items:
         type: string
-      example: [Python, FastAPI, PostgreSQL, 3+ года опыта]
+      example: [Python, FastAPI, PostgreSQL, 3+ years experience]
     status:
       $ref: '#/VacancyStatus'
     assigned_candidate_ids:
@@ -39,45 +58,59 @@ Vacancy:
       items:
         type: string
         format: uuid
+    stages:
+      type: array
+      items:
+        $ref: '#/PipelineStage'
+      description: Default pipeline on create — Applied, Screen, Interview, Offer
     created_by:
       type: string
       format: uuid
-      description: id Administrator, создавшего вакансию
+      description: id of the Administrator who created the vacancy
     created_at:
       type: string
       format: date-time
+      nullable: true
     updated_at:
       type: string
       format: date-time
+      nullable: true
 
 CreateVacancyRequest:
   type: object
-  required: [title, status]
+  required: [title]
+  additionalProperties: false
   properties:
     title:
       type: string
       example: Backend Developer
     department:
       type: string
-      example: Разработка
+      nullable: true
+      example: Engineering
     description:
       type: string
+      nullable: true
     requirements:
       type: array
       items:
         type: string
     status:
       $ref: '#/VacancyStatus'
+      default: draft
 
 UpdateVacancyRequest:
   type: object
+  additionalProperties: false
   properties:
     title:
       type: string
     department:
       type: string
+      nullable: true
     description:
       type: string
+      nullable: true
     requirements:
       type: array
       items:

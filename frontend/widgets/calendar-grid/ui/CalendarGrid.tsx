@@ -4,7 +4,7 @@ import { Fragment, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Candidate } from "@/entities/candidate";
 import { interviews } from "@/entities/interview";
-import { Card } from "@/shared/ui/Card";
+import { Card } from "@/shared/ui/card";
 import { dayFull, weekDays } from "@/shared/lib/constants";
 import { Segmented } from "@/shared/ui/Segmanted";
 

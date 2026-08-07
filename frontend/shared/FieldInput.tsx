@@ -14,7 +14,7 @@ interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
   (
     {
-      type,
+      type = "text",
       placeholder,
       label,
       error,

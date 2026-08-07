@@ -1,39 +1,61 @@
+import { useAuth } from "./useAuth";
 import { UseFormSetError } from "react-hook-form";
-import { useAuthStore } from "./model/auth-store"
-import { RegisterFormValues } from "./model/FormSchema";
+import {
+  REQUIRED_CONSENT_MSG,
+  RegisterFormValuesType,
+  hasRequiredConsent,
+  toConsentPayload,
+} from "./model/FormSchema";
 
-interface AuthFormProps {
-    view: 'register' | 'login',
-    setError: UseFormSetError<RegisterFormValues>,
-    onSuccess?: () => void,
-}
+type useAuthFormParams = {
+  view: "login" | "register";
+  setError: UseFormSetError<RegisterFormValuesType>;
+  onSuccess?: () => void;
+};
 
-export const useAuthForm = ({ view, setError, onSuccess }: AuthFormProps) => {
-    const login = useAuthStore((s) => s.login);
-    const register = useAuthStore((s) => s.register);
-    const isLoading = useAuthStore((s) => s.isLoading);
+export const useAuthForm = ({ view, setError, onSuccess }: useAuthFormParams) => {
+  const { signIn, signUp, isLoading } = useAuth();
 
-    const onSubmit = async (data: RegisterFormValues) => {
-        try {
-            if (view === "register") {
-                await register({
-                    email: data.email,
-                    password: data.password,
-                    role: data.role,
-                    first_name: data.first_name,
-                    last_name: data.last_name,
-                });
-            } else {
-                await login(data.email, data.password);
-            }
+  const onSubmit = async (data: RegisterFormValuesType) => {
+    if (view === "register") {
+      if (
+        !hasRequiredConsent({
+          consent_account_processing: data.consent_account_processing,
+          consent_talent_pool: Boolean(data.consent_talent_pool),
+          consent_cross_border: Boolean(data.consent_cross_border),
+        })
+      ) {
+        setError("consent_account_processing", {
+          message: REQUIRED_CONSENT_MSG,
+        });
+        return;
+      }
 
-            onSuccess?.();
-        } catch (e) {
-            setError("email", {
-                message: e instanceof Error ? e.message : "Ошибка авторизации",
-            });
-        }
-    };
+      const result = await signUp({
+        email: data.email,
+        password: data.password,
+        role: data.role,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        consent: toConsentPayload(data),
+      });
 
-    return { onSubmit, isLoading }
-}
+      if (result.error) {
+        setError("email", { message: result.error.message });
+        return;
+      }
+      onSuccess?.();
+      return;
+    }
+
+    // Login: no checkbox gate — Terms/Privacy accepted by clicking «Войти».
+    const result = await signIn(data.email, data.password);
+    if (result.error) {
+      setError("email", { message: result.error.message });
+      return;
+    }
+    onSuccess?.();
+  };
+
+  return { onSubmit, isLoading };
+};

@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import type { Job } from "@/entities/job";
-import { Card } from "@/shared/ui/Card";
+import { Card } from "@/shared/ui/card";
 import { GhostButton } from "@/shared/ui/buttons/GhostButton";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { useNewJobForm } from "../model/useNewJobForm";

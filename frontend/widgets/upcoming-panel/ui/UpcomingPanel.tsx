@@ -2,7 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 import { Candidate } from "@/entities/candidate";
 import { Job } from "@/entities/job";
 import { Interview } from "@/entities/interview";
-import { Card } from "@/shared/ui/Card";
+import { Card } from "@/shared/ui/card";
 import { Avatar } from "@/shared/ui/Avatar";
 
 const tasks = [

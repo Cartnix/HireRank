@@ -1,6 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
-import { Card } from "@/shared/ui/Card";
+import { Card } from "@/shared/ui/card";
 import { ConversionFunnel } from "@/widgets/analytics-charts/ui/ConversionFunnel";
 import { SourcesChart } from "@/widgets/analytics-charts/ui/SourcesChart";
 

@@ -2,7 +2,7 @@
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { chartdata } from "../model/chartData";
-import { Card } from "@/shared/ui/Card";
+import { Card } from "@/shared/ui/card";
 
 const ACCENT = "#007aff";
 

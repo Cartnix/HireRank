@@ -1,0 +1,163 @@
+# paths/automation.yaml
+
+paths:
+  /automations/packages:
+    get:
+      tags: [Automations]
+      operationId: listDecisionPackages
+      summary: List tenant decision packages
+      description: |
+        HITL option packages created by Automation after `resume.uploaded`.
+        Access: **administrator**, **hr**, **manager** (manager — read).
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '../schemas/automation.yaml#/DecisionPackageStatus'
+        - name: candidate_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Package list
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/automation.yaml#/PagedDecisionPackageResponse'
+        '401':
+          description: Unauthorized
+
+  /automations/packages/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Automations]
+      operationId: getDecisionPackage
+      summary: Decision package card
+      responses:
+        '200':
+          description: Package
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/automation.yaml#/DecisionPackage'
+        '404':
+          description: Not found
+
+  /automations/packages/{id}/accept:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Automations]
+      operationId: acceptDecisionPackage
+      summary: Accept HITL option (Telegram callback → API)
+      description: |
+        A human selects one option. FastMCP executes **only** the chosen MCP tool under `tenant_id`.
+        An Outcome (option-choice history) is written to Memory — [MEMORY.md](../../MEMORY.md).
+        Execution without a human pick is forbidden.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/automation.yaml#/AcceptScenarioRequest'
+      responses:
+        '200':
+          description: Option accepted, MCP executed
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/automation.yaml#/AcceptScenarioResponse'
+        '400':
+          description: Package not in pending_hitl or invalid scenario_id
+        '403':
+          description: Insufficient permissions
+        '404':
+          description: Package not found
+
+  /automations/outcomes:
+    get:
+      tags: [Automations]
+      operationId: listOutcomes
+      summary: List tenant Outcomes (Memory)
+      description: |
+        Outcome = record of a HITL option choice. Product canon: [MEMORY.md](../../MEMORY.md).
+      parameters:
+        - name: candidate_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Outcome list
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/automation.yaml#/PagedOutcomeResponse'
+        '401':
+          description: Unauthorized
+
+  /automations/precedents:
+    get:
+      tags: [Automations]
+      operationId: listPrecedents
+      summary: Memory tenant (decision + run history)
+      description: |
+        API path may still say `precedents`; product name is **Memory** — [MEMORY.md](../../MEMORY.md)
+        (Outcomes + other Automation run memory; storage TBD).
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Precedent list
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/automation.yaml#/PagedPrecedentResponse'
+        '401':
+          description: Unauthorized

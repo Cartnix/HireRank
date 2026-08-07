@@ -1,6 +1,6 @@
 "use client"
 
-import { Card } from "@/shared/ui/Card"
+import { Card } from "@/shared/ui/card"
 import { Layers, Filter, MessageSquareText, BarChart3 } from "lucide-react"
 
 const features = [
