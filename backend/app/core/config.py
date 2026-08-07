@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = secrets.token_urlsafe(32)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 14
-    FRONTEND_HOST: str = "http://localhost:5173"
+    FRONTEND_HOST: str = "http://localhost:3000"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
     BACKEND_CORS_ORIGINS: Annotated[
@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
+    SQLALCHEMY_ECHO: bool = False
+    SQLALCHEMY_POOL_MODE: Literal["queue", "null"] = "queue"
+    SQLALCHEMY_POOL_SIZE: int = 20
+    SQLALCHEMY_MAX_OVERFLOW: int = 10
+    SQLALCHEMY_POOL_RECYCLE: int = 1800
 
     # Hidden multi-tenancy (Core): single enterprise per deploy
     TENANT_ID: uuid.UUID = DEFAULT_TENANT_ID
@@ -78,11 +83,71 @@ class Settings(BaseSettings):
     # Soft-revoke window after refresh rotation (parallel mobile retries)
     REFRESH_TOKEN_GRACE_SECONDS: int = 20
 
+    # Cookie session (issue #31). Prefer __Host- names only when COOKIE_SECURE
+    # and same-host deploy; local HTTP uses non-__Host- names.
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+    AUTH_COOKIE_ACCESS_NAME: str = "access_token"
+    AUTH_COOKIE_REFRESH_NAME: str = "refresh_token"
+    AUTH_COOKIE_CSRF_NAME: str = "csrf_token"
+    # When True and COOKIE_SECURE, use __Host- prefixed cookie names
+    AUTH_COOKIE_HOST_PREFIX: bool = False
+
+    # Social OAuth (identity only; session is first-party JWT cookies)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = ""
+    LINKEDIN_CLIENT_ID: str = ""
+    LINKEDIN_CLIENT_SECRET: str = ""
+    LINKEDIN_REDIRECT_URI: str = ""
+    # Fernet key (url-safe base64) or empty → derived from SECRET_KEY
+    OAUTH_TOKEN_ENCRYPTION_KEY: str = ""
+
+    # RK legal docs version (must bump when Terms / PD policy change materially)
+    LEGAL_POLICY_VERSION: str = "2026-08-06"
+    # Consent TTL (RK: consent cannot be indefinite; equals purpose horizon)
+    CONSENT_ACCOUNT_TTL_DAYS: int = 365
+    CONSENT_TALENT_POOL_TTL_DAYS: int = 180
+    CONSENT_CROSS_BORDER_TTL_DAYS: int = 365
+    # Brute-force soft gate (per IP+email for login; per IP for check-email)
+    LOGIN_RATE_LIMIT_ATTEMPTS: int = 20
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 300
+    CHECK_EMAIL_RATE_LIMIT_ATTEMPTS: int = 60
+    CHECK_EMAIL_RATE_LIMIT_WINDOW_SECONDS: int = 300
+    # Aggregate dashboard joins (Attack 4: pool/CPU exhaustion via unbounded fan-out)
+    DASHBOARD_RATE_LIMIT_ATTEMPTS: int = 120
+    DASHBOARD_RATE_LIMIT_WINDOW_SECONDS: int = 60
+
+    @model_validator(mode="after")
+    def _apply_cookie_defaults(self) -> Self:
+        if self.ENVIRONMENT == "production":
+            object.__setattr__(self, "COOKIE_SECURE", True)
+            if self.AUTH_COOKIE_HOST_PREFIX:
+                object.__setattr__(
+                    self, "AUTH_COOKIE_ACCESS_NAME", "__Host-access_token"
+                )
+                object.__setattr__(
+                    self, "AUTH_COOKIE_REFRESH_NAME", "__Host-refresh_token"
+                )
+        return self
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         return PostgresDsn.build(
             scheme="postgresql+psycopg",
+            username=self.POSTGRES_USER,
+            password=self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_SERVER,
+            port=self.POSTGRES_PORT,
+            path=self.POSTGRES_DB,
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def SQLALCHEMY_ASYNC_DATABASE_URI(self) -> PostgresDsn:
+        return PostgresDsn.build(
+            scheme="postgresql+asyncpg",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
@@ -133,9 +198,19 @@ class Settings(BaseSettings):
             else:
                 raise ValueError(message)
 
+    def _check_secret_key_strength(self) -> None:
+        # PyJWT HS256 / RFC 7518 §3.2: key length should be >= 32 bytes.
+        key_len = len(self.SECRET_KEY.encode("utf-8"))
+        if key_len < 32:
+            raise ValueError(
+                f"SECRET_KEY must be at least 32 bytes for HS256 (got {key_len}). "
+                'Use e.g. `python -c "import secrets; print(secrets.token_urlsafe(32))"`.'
+            )
+
     @model_validator(mode="after")
     def _enforce_non_default_secrets(self) -> Self:
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
+        self._check_secret_key_strength()
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
         self._check_default_secret(
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD

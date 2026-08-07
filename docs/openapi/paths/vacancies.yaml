@@ -5,21 +5,21 @@ paths:
     get:
       tags: [Vacancies]
       operationId: listVacancies
-      summary: Список вакансий tenant
+      summary: List tenant vacancies
       description: |
-        Доступно всем авторизованным пользователям tenant.
-        Manager и HR Operator видят только вакансии своего `tenant_id`.
+        Available to all authenticated tenant users.
+        Manager and HR Operator see only vacancies for their `tenant_id`.
       parameters:
         - name: status
           in: query
           schema:
             $ref: '../schemas/vacancy.yaml#/VacancyStatus'
-          description: Фильтр по статусу
+          description: Filter by status
         - name: search
           in: query
           schema:
             type: string
-          description: Поиск по названию или отделу
+          description: Search by title or department
         - name: page
           in: query
           schema:
@@ -33,19 +33,19 @@ paths:
             maximum: 100
       responses:
         '200':
-          description: Список вакансий
+          description: Vacancy list
           content:
             application/json:
               schema:
                 $ref: '../schemas/vacancy.yaml#/PagedVacancyResponse'
         '401':
-          description: Не авторизован
+          description: Unauthorized
 
     post:
       tags: [Vacancies]
       operationId: createVacancy
-      summary: Создать вакансию
-      description: Доступно только **administrator**.
+      summary: Create vacancy
+      description: Available only to **administrator**.
       requestBody:
         required: true
         content:
@@ -54,15 +54,15 @@ paths:
               $ref: '../schemas/vacancy.yaml#/CreateVacancyRequest'
       responses:
         '201':
-          description: Вакансия создана
+          description: Vacancy created
           content:
             application/json:
               schema:
                 $ref: '../schemas/vacancy.yaml#/Vacancy'
         '400':
-          description: Ошибка валидации
+          description: Validation error
         '403':
-          description: Только administrator
+          description: Only administrator
 
   /vacancies/{id}:
     parameters:
@@ -76,25 +76,25 @@ paths:
     get:
       tags: [Vacancies]
       operationId: getVacancyById
-      summary: Карточка вакансии
+      summary: Vacancy card
       description: |
-        Доступно всем авторизованным пользователям tenant.
+        Available to all authenticated tenant users.
         Tenant isolation enforced by `tenant_id`.
       responses:
         '200':
-          description: Вакансия найдена
+          description: Vacancy found
           content:
             application/json:
               schema:
                 $ref: '../schemas/vacancy.yaml#/Vacancy'
         '404':
-          description: Вакансия не найдена
+          description: Vacancy not found
 
     patch:
       tags: [Vacancies]
       operationId: updateVacancy
-      summary: Обновить вакансию
-      description: Доступно только **administrator**.
+      summary: Update vacancy
+      description: Available only to **administrator**.
       requestBody:
         required: true
         content:
@@ -103,30 +103,30 @@ paths:
               $ref: '../schemas/vacancy.yaml#/UpdateVacancyRequest'
       responses:
         '200':
-          description: Вакансия обновлена
+          description: Vacancy updated
           content:
             application/json:
               schema:
                 $ref: '../schemas/vacancy.yaml#/Vacancy'
         '403':
-          description: Только administrator
+          description: Only administrator
         '404':
-          description: Вакансия не найдена
+          description: Vacancy not found
 
     delete:
       tags: [Vacancies]
       operationId: deleteVacancy
-      summary: Удалить вакансию
-      description: Доступно только **administrator**.
+      summary: Delete vacancy
+      description: Available only to **administrator**.
       responses:
         '204':
-          description: Вакансия удалена
+          description: Vacancy deleted
         '403':
-          description: Только administrator
+          description: Only administrator
         '404':
-          description: Вакансия не найдена
+          description: Vacancy not found
         '409':
-          description: Нельзя удалить вакансию с закреплёнными кандидатами
+          description: Cannot delete vacancy with assigned candidates
           content:
             application/json:
               schema:

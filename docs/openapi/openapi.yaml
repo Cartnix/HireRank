@@ -4,28 +4,17 @@ info:
   title: HireRank API
   version: 1.0.0
   description: |
-    REST API контракт платформы **HireRank** (HIRERANK) с **AIDE** (AI Decision Engine).
+    **Implemented** REST contract for HireRank (matches FastAPI routes under `/api/v1`).
 
-    Канон: PASSPORT — AIDE предлагает 2–3 сценария; человек выбирает в Telegram;
-    FastMCP исполняет только выбранное действие под `tenant_id` и пишет Outcome в Precedent Memory.
-    AI **не** делает auto-hire / auto-reject.
+    Speculative / future paths (notifications, `/admin/*`, automations) live in
+    [`future/`](./future/README.md) and are **not** part of this document or FE codegen.
 
-    **Hidden multi-tenancy**: Core (self-hosted) — один enterprise на инстанс;
-    `tenant_id` в JWT/БД фиксирован через `TENANT_ID` (env). PostgreSQL RLS фильтрует строки.
-    SaaS позже снимет жёсткую привязку без смены схемы.
+    **Behavioral Source of Truth:** [use-cases/README](../use-cases/README.md).
+    **Compliance:** [ATS_COMPLIANCE_RK](../laws/ATS_COMPLIANCE_RK.md), [GDPR](../laws/GDPR.md).
+    **RBAC:** [docs/RBAC.md](../RBAC.md).
+    **Auth:** HttpOnly cookie session + optional Bearer; CSRF `X-CSRF-Token` on mutating cookie requests.
 
-    **RBAC**: роли `administrator`, `hr`, `manager`, `recruiter`, `candidate`.
-    Матрица: [docs/RBAC.md](../RBAC.md).
-
-    **Auth**: Bearer JWT. Получить токен через `POST /auth/login`.
-
-    **Business rules**:
-
-    * кандидат и recruiter загружают резюме; HR создаёт/ведёт вакансии;
-    * кандидат после сохранения попадает в пул `unassigned` и публикуется intake-событие для AIDE;
-    * AIDE генерирует 2–3 сценария → Telegram HITL → MCP → Outcome;
-    * Administrator — админ-панель и управление пользователями; HR — vacancy CRUD;
-    * Manager в web — read-only; решение по сценариям — кнопка в Telegram.
+    **Hidden multi-tenancy:** Core uses fixed `TENANT_ID`; PostgreSQL FORCE RLS.
 
 servers:
   - url: http://localhost:8000/api/v1
@@ -35,31 +24,34 @@ servers:
 
 tags:
   - name: Auth
-    description: Регистрация, вход, сессия
+    description: Registration, login, session, consent, OAuth
   - name: Users
-    description: Профиль пользователя и управление пользователями (admin)
+    description: Profile and administrator user management (`/users*`)
   - name: Candidates
-    description: Кандидаты, анкеты, назначение на вакансию
+    description: Candidates, questionnaires, assign, resume URL stub
   - name: Vacancies
-    description: Вакансии tenant
-  - name: Notifications
-    description: Уведомления
+    description: Vacancy CRUD (administrator writes)
   - name: Dashboard
-    description: Сводные данные по ролям
-  - name: Admin
-    description: Админ-панель, управление пользователями и правами доступа
-  - name: AIDE
-    description: Decision packages, scenarios, HITL accept, precedents / outcomes
+    description: Role-shaped summary aggregates
 
 security:
+  - CookieAuth: []
   - BearerAuth: []
 
 components:
   securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: |
+        HttpOnly access JWT cookie (name may be `__Host-access_token` in prod).
+        Mutating requests also require `X-CSRF-Token` matching `csrf_token` cookie.
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: Dual-mode for scripts/Swagger (`POST /login/access-token`).
 
   schemas:
     $ref: './schemas/_index.yaml'
@@ -74,12 +66,28 @@ paths:
     $ref: './paths/auth.yaml#/paths/~1auth~1logout'
   /auth/me:
     $ref: './paths/auth.yaml#/paths/~1auth~1me'
+  /auth/check-email:
+    $ref: './paths/auth.yaml#/paths/~1auth~1check-email'
+  /auth/accept-legal:
+    $ref: './paths/auth.yaml#/paths/~1auth~1accept-legal'
   /auth/refresh:
     $ref: './paths/auth.yaml#/paths/~1auth~1refresh'
+  /auth/consent:
+    $ref: './paths/auth.yaml#/paths/~1auth~1consent'
+  /auth/forget-me:
+    $ref: './paths/auth.yaml#/paths/~1auth~1forget-me'
+  /auth/oauth/{provider}/start:
+    $ref: './paths/auth.yaml#/paths/~1auth~1oauth~1{provider}~1start'
+  /auth/callback/google:
+    $ref: './paths/auth.yaml#/paths/~1auth~1callback~1google'
+  /auth/callback/linkedin:
+    $ref: './paths/auth.yaml#/paths/~1auth~1callback~1linkedin'
 
   # Users
   /users/me:
     $ref: './paths/users.yaml#/paths/~1users~1me'
+  /users/me/password:
+    $ref: './paths/users.yaml#/paths/~1users~1me~1password'
   /users:
     $ref: './paths/users.yaml#/paths/~1users'
   /users/{id}:
@@ -94,6 +102,8 @@ paths:
     $ref: './paths/candidates.yaml#/paths/~1candidates~1{id}~1assign'
   /candidates/{id}/questionnaire:
     $ref: './paths/candidates.yaml#/paths/~1candidates~1{id}~1questionnaire'
+  /candidates/{id}/resume-url:
+    $ref: './paths/candidates.yaml#/paths/~1candidates~1{id}~1resume-url'
 
   # Vacancies
   /vacancies:
@@ -101,32 +111,6 @@ paths:
   /vacancies/{id}:
     $ref: './paths/vacancies.yaml#/paths/~1vacancies~1{id}'
 
-  # Notifications
-  /notifications:
-    $ref: './paths/notifications.yaml#/paths/~1notifications'
-  /notifications/{id}/read:
-    $ref: './paths/notifications.yaml#/paths/~1notifications~1{id}~1read'
-  /notifications/read-all:
-    $ref: './paths/notifications.yaml#/paths/~1notifications~1read-all'
-
   # Dashboard
   /dashboard:
     $ref: './paths/dashboard.yaml#/paths/~1dashboard'
-
-  # Admin
-  /admin/users:
-    $ref: './paths/admin.yaml#/paths/~1admin~1users'
-  /admin/users/{id}:
-    $ref: './paths/admin.yaml#/paths/~1admin~1users~1{id}'
-
-  # AIDE
-  /aide/packages:
-    $ref: './paths/aide.yaml#/paths/~1aide~1packages'
-  /aide/packages/{id}:
-    $ref: './paths/aide.yaml#/paths/~1aide~1packages~1{id}'
-  /aide/packages/{id}/accept:
-    $ref: './paths/aide.yaml#/paths/~1aide~1packages~1{id}~1accept'
-  /aide/outcomes:
-    $ref: './paths/aide.yaml#/paths/~1aide~1outcomes'
-  /aide/precedents:
-    $ref: './paths/aide.yaml#/paths/~1aide~1precedents'

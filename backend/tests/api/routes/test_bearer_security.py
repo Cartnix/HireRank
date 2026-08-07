@@ -3,31 +3,21 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from typing import Any
 from uuid import UUID, uuid4
 
 import jwt
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 from app.core import security
 from app.core.config import settings
-from tests.utils.auth_types import TokenPairDict
-from tests.utils.utils import random_email, random_lower_string
+from tests.utils.auth_types import TokenPairDict, register_bearer_pair
 
 PROTECTED = f"{settings.API_V1_STR}/auth/me"
 
 
-def _register(client: TestClient) -> TokenPairDict:
-    r = client.post(
-        f"{settings.API_V1_STR}/auth/register",
-        json={
-            "email": random_email(),
-            "password": random_lower_string(),
-            "role": "candidate",
-        },
-    )
-    assert r.status_code == 201
-    return cast(TokenPairDict, r.json())
+async def _register(client: AsyncClient) -> TokenPairDict:
+    return await register_bearer_pair(client, role="candidate")
 
 
 def _forge(
@@ -59,60 +49,63 @@ def _forge(
     )
 
 
-def test_bearer_happy_path(client: TestClient) -> None:
-    pair = _register(client)
-    r = client.get(
+async def test_bearer_happy_path(client: AsyncClient) -> None:
+    pair = await _register(client)
+    r = await client.get(
         PROTECTED,
         headers={"Authorization": f"Bearer {pair['access_token']}"},
     )
     assert r.status_code == 200
 
 
-def test_missing_authorization_header(client: TestClient) -> None:
-    r = client.get(PROTECTED)
+async def test_missing_authorization_header(client: AsyncClient) -> None:
+    r = await client.get(PROTECTED)
     assert r.status_code == 401
 
 
-def test_malformed_wrong_scheme_prefix(client: TestClient) -> None:
-    pair = _register(client)
-    r = client.get(
+async def test_malformed_wrong_scheme_prefix(client: AsyncClient) -> None:
+    pair = await _register(client)
+    r = await client.get(
         PROTECTED,
         headers={"Authorization": f"Token {pair['access_token']}"},
     )
     assert r.status_code == 401
 
 
-def test_malformed_bearer_without_token(client: TestClient) -> None:
-    r = client.get(PROTECTED, headers={"Authorization": "Bearer"})
+async def test_malformed_bearer_without_token(client: AsyncClient) -> None:
+    r = await client.get(PROTECTED, headers={"Authorization": "Bearer"})
     assert r.status_code == 401
 
 
-def test_expired_access_token(client: TestClient) -> None:
-    pair = _register(client)
+async def test_expired_access_token(client: AsyncClient) -> None:
+    pair = await _register(client)
     sub = jwt.decode(
         pair["access_token"],
         settings.SECRET_KEY,
         algorithms=[security.ALGORITHM],
     )["sub"]
     expired = _forge(sub=sub, exp_delta=timedelta(minutes=-5))
-    r = client.get(PROTECTED, headers={"Authorization": f"Bearer {expired}"})
+    r = await client.get(PROTECTED, headers={"Authorization": f"Bearer {expired}"})
     assert r.status_code == 401
 
 
-def test_signature_tampering_wrong_secret(client: TestClient) -> None:
-    pair = _register(client)
+async def test_signature_tampering_wrong_secret(client: AsyncClient) -> None:
+    pair = await _register(client)
     sub = jwt.decode(
         pair["access_token"],
         settings.SECRET_KEY,
         algorithms=[security.ALGORITHM],
     )["sub"]
-    tampered = _forge(sub=sub, secret="attacker-secret-key-not-ours")
-    r = client.get(PROTECTED, headers={"Authorization": f"Bearer {tampered}"})
+    tampered = _forge(
+        sub=sub,
+        secret="attacker-secret-key-not-ours-32b-min!!",
+    )
+    r = await client.get(PROTECTED, headers={"Authorization": f"Bearer {tampered}"})
     assert r.status_code == 401
 
 
-def test_algorithm_none_confusion(client: TestClient) -> None:
-    pair = _register(client)
+async def test_algorithm_none_confusion(client: AsyncClient) -> None:
+    pair = await _register(client)
     sub = jwt.decode(
         pair["access_token"],
         settings.SECRET_KEY,
@@ -128,38 +121,40 @@ def test_algorithm_none_confusion(client: TestClient) -> None:
         "exp": exp,
     }
     unsigned = jwt.encode(payload, key="", algorithm="none")
-    r = client.get(PROTECTED, headers={"Authorization": f"Bearer {unsigned}"})
+    r = await client.get(PROTECTED, headers={"Authorization": f"Bearer {unsigned}"})
     assert r.status_code == 401
 
 
-def test_refresh_token_rejected_as_bearer_access(client: TestClient) -> None:
-    pair = _register(client)
-    r = client.get(
+async def test_refresh_token_rejected_as_bearer_access(client: AsyncClient) -> None:
+    pair = await _register(client)
+    r = await client.get(
         PROTECTED,
         headers={"Authorization": f"Bearer {pair['refresh_token']}"},
     )
     assert r.status_code == 401
 
 
-def test_inactive_user_banned_mid_session(client: TestClient) -> None:
+async def test_inactive_user_banned_mid_session(client: AsyncClient) -> None:
     from sqlmodel import select
 
     from app.models import User
     from tests.conftest import bypass_rls_session
 
-    pair = _register(client)
+    pair = await _register(client)
     payload = jwt.decode(
         pair["access_token"],
         settings.SECRET_KEY,
         algorithms=[security.ALGORITHM],
     )
-    with bypass_rls_session() as session:
-        user = session.exec(select(User).where(User.id == UUID(payload["sub"]))).one()
+    async with bypass_rls_session() as session:
+        user: User = (
+            await session.exec(select(User).where(User.id == UUID(payload["sub"])))
+        ).one()
         user.is_active = False
         session.add(user)
-        session.commit()
+        await session.commit()
 
-    r = client.get(
+    r = await client.get(
         PROTECTED,
         headers={"Authorization": f"Bearer {pair['access_token']}"},
     )

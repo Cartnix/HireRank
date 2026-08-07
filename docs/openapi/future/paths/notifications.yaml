@@ -1,0 +1,73 @@
+# paths/notifications.yaml
+
+paths:
+  /notifications:
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      summary: List notifications for the current user
+      description: |
+        Returns notifications addressed to the current user,
+        sorted by `created_at` descending.
+        Managers additionally receive email notifications via SMTP/Outlook.
+      parameters:
+        - name: is_read
+          in: query
+          schema:
+            type: boolean
+          description: Filter by read status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Notification list
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification.yaml#/PagedNotificationResponse'
+        '401':
+          description: Unauthorized
+
+  /notifications/{id}/read:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    patch:
+      tags: [Notifications]
+      operationId: markNotificationRead
+      summary: Mark notification as read
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification.yaml#/Notification'
+        '403':
+          description: Notification does not belong to the current user
+        '404':
+          description: Notification not found
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      operationId: markAllNotificationsRead
+      summary: Mark all notifications as read
+      responses:
+        '204':
+          description: All notifications marked as read
+        '401':
+          description: Unauthorized

@@ -1,25 +1,25 @@
-# paths/users.yaml
+# paths/users.yaml — matches backend/app/api/routes/users.py
 
 paths:
   /users/me:
     get:
       tags: [Users]
       operationId: getMyProfile
-      summary: Получить собственный профиль
+      summary: Get own profile
       responses:
         '200':
-          description: Профиль текущего пользователя
+          description: Current user profile
           content:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/User'
         '401':
-          description: Не авторизован
+          description: Unauthorized
 
     patch:
       tags: [Users]
       operationId: updateMyProfile
-      summary: Обновить собственный профиль
+      summary: Update own profile
       requestBody:
         required: true
         content:
@@ -28,49 +28,110 @@ paths:
               $ref: '../schemas/user.yaml#/UpdateUserRequest'
       responses:
         '200':
-          description: Профиль обновлён
+          description: Profile updated
           content:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/User'
-        '400':
-          description: Ошибка валидации
         '401':
-          description: Не авторизован
+          description: Unauthorized
+        '409':
+          description: Email already exists
+
+    delete:
+      tags: [Users]
+      operationId: deleteMyAccount
+      summary: Delete own account
+      description: Administrators cannot delete themselves.
+      responses:
+        '200':
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/Message'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Administrators cannot self-delete
+
+  /users/me/password:
+    patch:
+      tags: [Users]
+      operationId: changeMyPassword
+      summary: Change own password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/user.yaml#/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password updated
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/Message'
+        '400':
+          description: Incorrect password or OAuth-only account
+        '401':
+          description: Unauthorized
 
   /users:
     get:
       tags: [Users]
       operationId: listUsers
-      summary: Список пользователей tenant
+      summary: List tenant users
       description: |
-        Доступно только **administrator**.
-        Возвращает только пользователей текущего tenant (`tenant_id` из JWT).
+        Requires `users.manage` (administrator).
+        Offset pagination via `skip` / `limit` (backend UsersPublic).
       parameters:
-        - name: role
-          in: query
-          schema:
-            $ref: '../schemas/user.yaml#/UserRole'
-        - name: page
+        - name: skip
           in: query
           schema:
             type: integer
-            default: 1
-        - name: page_size
+            default: 0
+            minimum: 0
+        - name: limit
           in: query
           schema:
             type: integer
-            default: 20
+            default: 100
+            minimum: 1
             maximum: 100
       responses:
         '200':
-          description: Список пользователей
+          description: User list
           content:
             application/json:
               schema:
-                $ref: '../schemas/user.yaml#/PagedUserResponse'
+                $ref: '../schemas/user.yaml#/UsersPublic'
         '403':
-          description: Недостаточно прав
+          description: Insufficient permissions
+
+    post:
+      tags: [Users]
+      operationId: createUser
+      summary: Create user (administrator)
+      description: Requires `users.manage`. `tenant_id` is always `settings.TENANT_ID`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/user.yaml#/CreateUserRequest'
+      responses:
+        '200':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '400':
+          description: Email already exists
+        '403':
+          description: Insufficient permissions
 
   /users/{id}:
     parameters:
@@ -84,16 +145,58 @@ paths:
     get:
       tags: [Users]
       operationId: getUserById
-      summary: Получить пользователя по ID
-      description: Доступно только **administrator**.
+      summary: Get user by ID
+      description: Self or administrator.
       responses:
         '200':
-          description: Пользователь найден
+          description: User found
           content:
             application/json:
               schema:
                 $ref: '../schemas/user.yaml#/User'
         '403':
-          description: Недостаточно прав
+          description: Insufficient permissions
         '404':
-          description: Пользователь не найден
+          description: User not found
+
+    patch:
+      tags: [Users]
+      operationId: updateUserById
+      summary: Update user (administrator)
+      description: Requires `users.manage`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/user.yaml#/AdminUpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '403':
+          description: Insufficient permissions
+        '404':
+          description: User not found
+        '409':
+          description: Email conflict
+
+    delete:
+      tags: [Users]
+      operationId: deleteUserById
+      summary: Delete user (administrator)
+      description: Requires `users.manage`. Cannot delete self.
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/Message'
+        '403':
+          description: Insufficient permissions or self-delete
+        '404':
+          description: User not found

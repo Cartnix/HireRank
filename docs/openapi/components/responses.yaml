@@ -1,0 +1,31 @@
+# Shared HTTP response objects
+
+Unauthorized:
+  description: Unauthorized
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/common.yaml#/ErrorResponse'
+      example:
+        code: UNAUTHORIZED
+        message: Not authenticated
+
+Forbidden:
+  description: Forbidden
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/common.yaml#/ErrorResponse'
+      example:
+        code: FORBIDDEN
+        message: Insufficient permissions
+
+NotFound:
+  description: Not found
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/common.yaml#/ErrorResponse'
+      example:
+        code: NOT_FOUND
+        message: Resource not found

@@ -1,13 +1,23 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
 
 const patterns = {
     outer: "12 18 4 18 4 18",
     middle: "8 12 16 12 8 12",
     inner: "20 4 4 4 20 4"
 };
+
+type BrokenCircleProps = {
+    size: string | number
+    dash: string
+    rotate: number
+    strokeWidth?: number
+    duration?: number
+    direction?: 1 | -1
+    style?: CSSProperties
+}
 
 export const Hero = () => {
     return (
@@ -28,7 +38,7 @@ export const Hero = () => {
 
                     <div className="absolute inset-x-[6%] inset-y-[6%]">
                         <BrokenCircle
-                            size="100%" 
+                            size="100%"
                             dash={patterns.middle}
                             rotate={35}
                             duration={45}
@@ -40,7 +50,7 @@ export const Hero = () => {
 
                     <div className="absolute inset-x-[8%] inset-y-[8%]">
                         <BrokenCircle
-                            size="100%" 
+                            size="100%"
                             dash={patterns.inner}
                             rotate={-20}
                             duration={30}
@@ -67,7 +77,7 @@ const BrokenCircle = ({
     size, dash, rotate,
     strokeWidth = 0.8, duration = 20, direction = 1,
     style = {}
-}: any) => {
+}: BrokenCircleProps) => {
     const id = useId();
     const gradientId = `gradient-${id}`;
 

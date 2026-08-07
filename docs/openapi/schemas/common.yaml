@@ -56,3 +56,11 @@ Pagination:
     total_pages:
       type: integer
       example: 3
+
+Message:
+  type: object
+  required: [message]
+  properties:
+    message:
+      type: string
+      example: Password updated successfully
