@@ -32,7 +32,7 @@ jobs:
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
       POSTGRES_N8N_DB: n8n
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      SECRET_KEY: ci-hirerank-secret-key-for-tests-only-32b+
       FRONTEND_HOST: ${{ secrets.FRONTEND_HOST }}
 
       SMTP_HOST: ${{ secrets.SMTP_HOST }}
