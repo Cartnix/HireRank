@@ -182,6 +182,15 @@ async def delete_vacancy(*, session: AsyncSession, vacancy: Vacancy) -> None:
                 "message": "Cannot delete vacancy with assigned candidates",
             },
         )
+    # Delete stages explicitly: ORM nullify-on-delete trips RLS
+    # (UPDATE pipeline_stage SET vacancy_id=NULL is rejected).
+    stages = (
+        await session.exec(
+            select(PipelineStage).where(PipelineStage.vacancy_id == vacancy.id)
+        )
+    ).all()
+    for stage in stages:
+        await session.delete(stage)
     await session.delete(vacancy)
     await session.commit()
 

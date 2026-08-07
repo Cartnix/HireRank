@@ -25,7 +25,7 @@ Major tech, manufacturing, and government organizations face three parallel cris
 
 **Institutional:** The hiring logic lives in the heads of key HRs. Firing = losing the process. Manual scoring rules and SOPs in Word are not trained by real department decisions.
 
-### Cloud-based ATS vulnerabilities (2026–2030)
+### Cloud-based ATS vulnerabilities (2026)
 
 1. **Jurisdiction and data sovereignty** — CLOUD Act vs GDPR Art. 48 / national personal-data laws (e.g. 152-FZ); the controller is responsible, TIA/DPIA are complicated.
 2. **AI as high-risk (EU AI Act Annex III §4)** — screening/evaluating candidates; deployer-responsibilities by ~December 2027; the vendor often has a black box with no audit trail for the buyer.

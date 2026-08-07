@@ -2,7 +2,7 @@
 
 **Compliance Source of Truth (RK — primary)** — obeyed **strictly** with [GDPR.md](GDPR.md) (EU / West) and [use-cases/](use-cases/) (MVP behavioral north star). See [use-cases/README.md](use-cases/README.md). If a use-case or feature conflicts with this document, **fix the product** — do not weaken RK requirements for MVP speed.
 
-Developing or adapting an Applicant Tracking System (ATS) for Kazakhstan in **2026–2030** requires hard compliance with the Law of the Republic of Kazakhstan “On Personal Data and their Protection,” including tightening by the Ministry of Digital Development (MDDIAI / ICRIAP RK). State focus in this period: **cross-border transfer**, **total action logging**, and **automated consent withdrawal**.
+Developing or adapting an Applicant Tracking System (ATS) for Kazakhstan in **2026** requires hard compliance with the Law of the Republic of Kazakhstan “On Personal Data and their Protection,” including tightening by the Ministry of Digital Development (MDDIAI / ICRIAP RK). State focus in this period: **cross-border transfer**, **total action logging**, and **automated consent withdrawal**.
 
 This document is the product/architecture checklist for HireRank (Core on-prem first; Enterprise/SaaS later). It is not a substitute for local IT-legal counsel or the MDDIAI personal-data violators register.
 
@@ -81,7 +81,7 @@ Regulators demand: “Who looked at citizen X’s data, and when?”
 
 
 
-### 1.6 Government consent-control integration (Enterprise horizon 2026–2030)
+### 1.6 Government consent-control integration (Enterprise horizon 2026)
 
 - Integration with the state **personal-data consent control** service (citizens see which companies hold their PD via eGov.kz) becomes an **Enterprise expectation**.
 - Core MVP: design consent records and withdrawal APIs so a later connector can sync; do not invent opaque consent stores that block that path.
