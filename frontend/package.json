@@ -13,8 +13,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
-    "@supabase/ssr": "^0.12.1",
-    "@supabase/supabase-js": "^2.110.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.43.0",

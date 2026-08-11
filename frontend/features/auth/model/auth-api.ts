@@ -1,6 +1,5 @@
 import { User } from "@/entities/user/model/types";
 import { apiClient } from "@/shared/api/client";
-import { tokenStorage } from "@/shared/api/token-storage";
 import { TokenPair } from "@/shared/api/types";
 
 export type RegisterPayload = {
@@ -23,8 +22,7 @@ export const authApi = {
             body: JSON.stringify(body),
             auth: false,
         });
-        tokenStorage.setTokens(pair);
-        return pair
+        return pair;
     },
 
     login: async (body: LoginPayload) => {
@@ -33,20 +31,14 @@ export const authApi = {
             body: JSON.stringify(body),
             auth: false,
         });
-        tokenStorage.setTokens(pair);
         return pair;
     },
 
     me: () => apiClient<User>("/auth/me"),
 
     logout: async () => {
-        const refresh = tokenStorage.getRefresh();
-        if (refresh) {
-            await apiClient<void>("/auth/logout", {
-                method: "POST",
-                body: JSON.stringify({ refresh_token: refresh })
-            }).catch(() => { });
-        }
-        tokenStorage.clear()
+        await apiClient<void>("/auth/logout", {
+            method: "POST",
+        }).catch(() => {});
     }
 }

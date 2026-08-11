@@ -1,4 +1,4 @@
-import { AuthModal } from "@/widgets/auth-modal/ui/AuthModal";
+import { AuthModal } from "@/widgets/authModal/ui/AuthModal";
 
 export default function Page() {
     return (

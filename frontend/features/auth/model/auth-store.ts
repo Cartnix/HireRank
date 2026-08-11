@@ -1,7 +1,6 @@
 import { User } from "@/entities/user/model/types";
 import { authApi, RegisterPayload } from "./auth-api";
 import { create } from "zustand";
-import { tokenStorage } from "@/shared/api/token-storage";
 
 type AuthState = {
     user: User | null;
@@ -19,17 +18,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoading: true,
 
     bootstrap: async () => {
-        const token = tokenStorage.getAccess();
-        if (!token) {
-            set({ isLoading: false, user: null, isAuthenticated: false });
-            return;
-        }
-
         try {
             const user = await authApi.me();
             set({ user, isLoading: false, isAuthenticated: true });
         } catch {
-            tokenStorage.clear();
             set({ user: null, isLoading: false, isAuthenticated: false });
         }
     },

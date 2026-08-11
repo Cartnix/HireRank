@@ -3,7 +3,6 @@ import type { components } from "@/shared/api/schema";
 import { getApiV1Url } from "@/shared/config/env";
 import type { ConsentPayload } from "@/features/auth/model/FormSchema";
 
-/** Generated OpenAPI schema aliases — import here, not a hand-maintained mega-types file. */
 export type UserPublic = components["schemas"]["User"];
 export type AuthSession = components["schemas"]["AuthSession"];
 export type RegisterPayload = components["schemas"]["RegisterRequest"];
@@ -59,7 +58,6 @@ export async function acceptLegal(
   });
 }
 
-/** POST start with consent → follow redirect to IdP (RK §1.4). */
 export async function startOAuth(
   provider: "google" | "linkedin",
   consent: ConsentPayload,
@@ -78,7 +76,7 @@ export async function startOAuth(
       return;
     }
   }
-  // Some browsers hide Location on opaque redirects — fall back to reading JSON error
+
   let detail = "OAuth start failed";
   try {
     const data = (await res.json()) as { detail?: string };

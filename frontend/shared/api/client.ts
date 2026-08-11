@@ -15,7 +15,9 @@ export class ApiError extends Error {
 function readCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(
-    new RegExp(`(?:^|; )${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}=([^;]*)`),
+    new RegExp(
+      `(?:^|; )${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}=([^;]*)`,
+    ),
   );
   return match ? decodeURIComponent(match[1]) : null;
 }
@@ -27,6 +29,7 @@ export function getCsrfToken(): string | null {
 type ApiFetchOptions = Omit<RequestInit, "credentials"> & {
   json?: unknown;
   skipCsrf?: boolean;
+  auth?: boolean;
 };
 
 export async function apiFetch<T = unknown>(
@@ -83,3 +86,5 @@ export async function apiFetch<T = unknown>(
     throw new ApiError(0, message);
   }
 }
+
+export const apiClient = apiFetch;

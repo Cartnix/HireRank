@@ -85,7 +85,7 @@ export const AuthModal = () => {
     setError,
     onSuccess: async () => {
       await refreshSession();
-      router.push("/");
+      router.push("/dashboard");
     },
   });
 
