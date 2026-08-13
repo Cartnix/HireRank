@@ -76,7 +76,7 @@ export function Sidebar() {
             onClick={handleSignOut}
             className="text-red-600 focus:text-red-600 cursor-pointer"
           >
-            <LogOut size={16} className="mr-2" />
+            <LogOut size={16} className="mr-2" onClick={handleSignOut} />
             Выйти
           </DropdownMenuItem>
         </DropdownMenuContent>
