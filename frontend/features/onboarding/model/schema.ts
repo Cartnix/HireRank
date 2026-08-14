@@ -3,7 +3,6 @@ import { z } from "zod";
 export const onboardingFormSchema = z.object({
   firstName: z.string().min(1, "Обязательное поле"),
   lastName: z.string().min(1, "Обязательное поле"),
-  companyName: z.string().min(1, "Обязательное поле"),
   role: z.string().min(1, "Обязательное поле"),
 });
 
@@ -14,3 +13,4 @@ export const onBoardingFormSchemaUser = z.object({
 });
 
 export type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
+export type OnboardingFormUserValues = z.infer<typeof onBoardingFormSchemaUser>;
