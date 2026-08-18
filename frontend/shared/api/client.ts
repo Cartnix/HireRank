@@ -1,4 +1,5 @@
 import { getApiV1Url } from "@/shared/config/env";
+import { tokenStorage } from "@/shared/api/token-storage";
 
 export class ApiError extends Error {
   status: number;
@@ -36,11 +37,18 @@ export async function apiFetch<T = unknown>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<T> {
-  const { json, skipCsrf, headers: initHeaders, ...rest } = options;
+  const { json, skipCsrf, auth = true, headers: initHeaders, ...rest } = options;
   const headers = new Headers(initHeaders);
 
   if (json !== undefined) {
     headers.set("Content-Type", "application/json");
+  }
+
+  if (auth && !headers.has("Authorization")) {
+    const accessToken = tokenStorage.getAccess();
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    }
   }
 
   const method = (rest.method ?? "GET").toUpperCase();
