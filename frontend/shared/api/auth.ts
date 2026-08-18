@@ -52,6 +52,7 @@ export async function register(payload: RegisterPayload): Promise<AuthSession> {
   });
 
   persistSession(data);
+  await me();
   return data;
 }
 
