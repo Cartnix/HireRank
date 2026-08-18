@@ -3,6 +3,7 @@ import { tokenStorage } from "@/shared/api/token-storage";
 import type { components } from "@/shared/api/schema";
 import { getApiV1Url } from "@/shared/config/env";
 import type { ConsentPayload } from "@/features/auth/model/FormSchema";
+import { useAuthStore } from "./auth-store";
 
 export type UserPublic = components["schemas"]["User"];
 export type AuthSession = components["schemas"]["AuthSession"];
@@ -33,7 +34,12 @@ function persistSession(session: TokenPayloadLike | null | undefined): void {
   });
 }
 
-export async function login(email: string, password: string): Promise<AuthSession> {
+export async function login(
+  email: string,
+  password: string,
+): Promise<AuthSession> {
+  useAuthStore.getState().setLoading();
+
   const data = await apiFetch<AuthSession>("/auth/login", {
     method: "POST",
     json: { email, password },
@@ -41,10 +47,13 @@ export async function login(email: string, password: string): Promise<AuthSessio
   });
 
   persistSession(data);
+  await me();
   return data;
 }
 
 export async function register(payload: RegisterPayload): Promise<AuthSession> {
+  useAuthStore.getState().setLoading();
+
   const data = await apiFetch<AuthSession>("/auth/register", {
     method: "POST",
     json: payload,
@@ -58,11 +67,13 @@ export async function register(payload: RegisterPayload): Promise<AuthSession> {
 
 export async function logout(): Promise<void> {
   await apiFetch<void>("/auth/logout", { method: "POST" });
-  tokenStorage.clear();
+  useAuthStore.getState().clear();
 }
 
 export async function me(): Promise<UserPublic> {
-  return apiFetch<UserPublic>("/auth/me");
+  const user = await apiFetch<UserPublic>("/auth/me");
+  useAuthStore.getState().setUser(user);
+  return user;
 }
 
 export async function refresh(): Promise<AuthSession> {
@@ -73,7 +84,7 @@ export async function refresh(): Promise<AuthSession> {
 
 export async function forgetMe(): Promise<void> {
   await apiFetch<void>("/auth/forget-me", { method: "POST" });
-  tokenStorage.clear();
+  useAuthStore.getState().clear();
 }
 
 export async function checkEmail(
@@ -89,10 +100,12 @@ export async function checkEmail(
 export async function acceptLegal(
   consent?: ConsentPayload,
 ): Promise<UserPublic> {
-  return apiFetch<UserPublic>("/auth/accept-legal", {
+  const user = await apiFetch<UserPublic>("/auth/accept-legal", {
     method: "POST",
     json: consent ? { consent } : {},
   });
+  useAuthStore.getState().setUser(user);
+  return user;
 }
 
 export async function startOAuth(

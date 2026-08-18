@@ -2,11 +2,13 @@ import { memo } from "react";
 import { initials } from "../lib/initials";
 
 export const Avatar = memo(
-  ({ name, size = 32 }: { name: string; size?: number }) => {
+  ({ name, size = 32 }: { name?: string; size?: number }) => {
+    const displayName = name || "";
+
     return (
       <div
         role="img"
-        aria-label={`Avatar of ${name}`}
+        aria-label={`Avatar of ${displayName}`}
         style={{ 
           width: size, 
           height: size,
@@ -14,7 +16,7 @@ export const Avatar = memo(
         }}
         className="flex shrink-0 items-center justify-center rounded-full bg-avatar-bg text-background font-bold"
       >
-        {initials(name)}
+        {initials(displayName)}
       </div>
     );
   },

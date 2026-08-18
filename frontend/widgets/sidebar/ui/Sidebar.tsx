@@ -13,11 +13,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/shared/api/auth-store";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { signOut } = useAuth();
   const router = useRouter();
+  const user = useCurrentUser();
 
   const handleSignOut = async () => {
     const error = await signOut();
@@ -64,9 +66,14 @@ export function Sidebar() {
         <DropdownMenuTrigger asChild>
           <button className="flex w-full items-center justify-between rounded-[10px] border border-border px-3 py-2.5 transition-colors hover:bg-background-hover cursor-pointer outline-none">
             <div className="flex items-center gap-2">
-              <Avatar name="Анна Петрова" size={28} />
+              <Avatar
+                name={[user?.first_name, user?.last_name]
+                  .filter(Boolean)
+                  .join(" ")}
+                size={36}
+              />
               <div className="text-[12.5px] font-medium leading-tight">
-                Анна Петрова
+                {[user?.first_name, user?.last_name].filter(Boolean).join(" ")}
               </div>
             </div>
           </button>
