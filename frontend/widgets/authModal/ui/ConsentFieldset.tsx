@@ -1,5 +1,5 @@
 import { useController, FieldValues, Control } from "react-hook-form";
-import { InputField } from "@/shared/FieldInput";
+import { InputField } from "@/shared/ui/FieldInput";
 
 interface ConsentFieldsetProps<T extends FieldValues> {
   control: Control<T>;

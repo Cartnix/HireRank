@@ -60,7 +60,7 @@ export function useAuthModalState() {
     setError,
     onSuccess: async () => {
       await refreshSession();
-      router.push("/dashboard");
+      router.push(isRegister ? "/onboarding" : "/dashboard");
     },
   });
 

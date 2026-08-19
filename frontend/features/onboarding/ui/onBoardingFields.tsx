@@ -1,4 +1,4 @@
-import { InputField } from "@/shared/FieldInput";
+import { InputField } from "@/shared/ui/FieldInput";
 import { useFormContext } from "react-hook-form";
 import { OnboardingFormValues } from "../model/schema";
 

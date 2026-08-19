@@ -1,4 +1,4 @@
-import { InputField } from "@/shared/FieldInput";
+import { InputField } from "@/shared/ui/FieldInput";
 
 interface EmailPasswordFormProps {
   isRegister: boolean;

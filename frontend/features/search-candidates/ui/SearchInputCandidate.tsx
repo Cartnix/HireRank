@@ -1,4 +1,4 @@
-import { InputField } from "@/shared/FieldInput";
+import { InputField } from "@/shared/ui/FieldInput";
 import { Search } from "lucide-react";
 
 export function SearchInput({
