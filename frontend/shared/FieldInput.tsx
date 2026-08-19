@@ -20,6 +20,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       error,
       onFocus,
       onBlur,
+      onChange,
       LeftIcon,
       className,
       disabled,
@@ -31,12 +32,15 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
     const [focused, setFocused] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
+    const [hasContent, setHasContent] = useState(
+      Boolean(props.value ?? props.defaultValue),
+    );
+
     const isPassword = type === "password";
     const inputType = isPassword && showPassword ? "text" : type;
 
-    const hasValue =
-      (props.value !== undefined && props.value !== "") ||
-      (props.defaultValue !== undefined && props.defaultValue !== "");
+    const controlled = props.value !== undefined;
+    const hasValue = controlled ? props.value !== "" : hasContent;
     const floated = focused || hasValue;
 
     return (
@@ -67,15 +71,16 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
               <motion.label
                 htmlFor={id}
                 initial={false}
-                animate={
-                  floated
-                    ? { top: "4px", fontSize: "10px" }
-                    : { top: "50%", fontSize: "14px" }
-                }
-                transition={{ duration: 0.15, ease: "easeOut" }}
+                animate={floated ? "floated" : "resting"}
+                variants={{
+                  floated: { y: -9, scale: 0.72 },
+                  resting: { y: 0, scale: 1 },
+                }}
+                transition={{ type: "spring", stiffness: 500, damping: 32 }}
                 className={cn(
-                  "absolute pointer-events-none font-medium origin-left -translate-y-1/2",
+                  "absolute pointer-events-none font-medium origin-left top-1/2 -translate-y-1/2 select-none",
                   LeftIcon ? "left-2.5" : "left-3.5",
+                  "transition-colors duration-150",
                   error
                     ? "text-danger"
                     : focused
@@ -100,6 +105,10 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
                 onBlur={(e) => {
                   setFocused(false);
                   onBlur?.(e);
+                }}
+                onChange={(e) => {
+                  setHasContent(e.target.value !== "");
+                  onChange?.(e);
                 }}
                 className={cn(
                   "w-full h-full bg-transparent outline-none text-[14px] disabled:cursor-not-allowed",
