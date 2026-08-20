@@ -35,7 +35,7 @@ export function NewJobModal({
           <NewJobFormFields register={register} errors={errors} />
 
           <div className="mt-5 flex justify-end gap-2">
-            <GhostButton onClick={onClose}>
+            <GhostButton type="button" onClick={onClose}>
               Отмена
             </GhostButton>
             <MainButton title="Создать" type="submit" />

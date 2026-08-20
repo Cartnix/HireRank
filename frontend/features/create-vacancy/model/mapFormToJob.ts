@@ -5,11 +5,15 @@ export function mapFormToJob(values: JobFormValues): Job {
   return {
     id: `j${Date.now()}`,
     title: values.title.trim(),
+    
+    staffCategory: values.staffCategory,
+    academicDegree: values.academicDegree,
+
     department: values.department?.trim() || "—",
     status: "Открыта",
     createdAt: new Date().toISOString().slice(0, 10),
     location: values.location?.trim() || "—",
-    employmentType: values.employmentType.trim() || "Полная занятость",
+    employmentType: values.employmentType.trim() || "Полная ставка (1.0)",
     description: values.description?.trim() || "Описание пока не добавлено.",
     stages: DEFAULT_STAGES,
     salaryMin: values.salaryMin ?? null,
