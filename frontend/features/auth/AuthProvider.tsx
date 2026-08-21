@@ -15,7 +15,7 @@ import { ApiError } from "@/shared/api/client";
 type AuthContextValue = {
   user: UserPublic | null;
   isLoading: boolean;
-  refreshSession: () => Promise<void>;
+  refreshSession: () => Promise<UserPublic | null>;
   clearSession: () => void;
 };
 
@@ -36,11 +36,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserPublic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const refreshSession = useCallback(async () => {
+  const refreshSession = useCallback(async (): Promise<UserPublic | null> => {
     setIsLoading(true);
     const current = await loadSession();
     setUser(current);
     setIsLoading(false);
+    return current;
   }, []);
 
   const clearSession = useCallback(() => {

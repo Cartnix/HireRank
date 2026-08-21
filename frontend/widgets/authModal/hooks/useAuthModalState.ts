@@ -59,8 +59,15 @@ export function useAuthModalState() {
     view,
     setError,
     onSuccess: async () => {
-      await refreshSession();
-      router.push(isRegister ? "/onboarding" : "/dashboard");
+      const currentUser = await refreshSession();
+
+      if (isRegister) {
+        router.push("/onboarding");
+      } else if (currentUser?.role === "candidate") {
+        router.push("/careers");
+      } else {
+        router.push("/dashboard");
+      }
     },
   });
 

@@ -37,7 +37,13 @@ export async function apiFetch<T = unknown>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<T> {
-  const { json, skipCsrf, auth = true, headers: initHeaders, ...rest } = options;
+  const {
+    json,
+    skipCsrf,
+    auth = true,
+    headers: initHeaders,
+    ...rest
+  } = options;
   const headers = new Headers(initHeaders);
 
   if (json !== undefined) {

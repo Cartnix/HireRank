@@ -8,10 +8,9 @@ import { apiFetch } from "@/shared/api/client";
 import { me } from "@/shared/api/auth";
 
 export async function AddNewVacancy(jobData: Job) {
-  const data = await apiFetch<Job>("/vacancies", {
+  const data = await apiFetch<Job>("/vacancies/", {
     method: "POST",
     json: jobData,
-    skipCsrf: true,
   });
 
   await me();

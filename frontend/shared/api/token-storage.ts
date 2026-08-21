@@ -27,7 +27,7 @@ function writeStorageValue(key: string, value: string | null): void {
 
     window.localStorage.setItem(key, value);
   } catch {
-    // Ignore storage issues in browsers with disabled storage.
+   
   }
 }
 
