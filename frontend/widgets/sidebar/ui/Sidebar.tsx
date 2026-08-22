@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar } from "@/shared/ui/Avatar";
-import { navItems } from "@/shared/utils/navigation";
+import { navItems, secondaryNavItems } from "@/shared/utils/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
@@ -30,14 +30,18 @@ export function Sidebar() {
 
   return (
     <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border bg-background-elevated px-3 py-5">
-      <div className="mb-6 flex items-center gap-2 px-2">
+      <div className="mb-12 flex items-center gap-2 px-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-brand-primary text-[14px] font-bold text-brand-primary-foreground">
           H
         </div>
         <div className="text-[15px] font-semibold">HireAI</div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1.5">
+      <nav className="flex flex-1 flex-col gap-2">
+        <div className="px-2.5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+          Основное
+        </div>
+
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -49,13 +53,53 @@ export function Sidebar() {
             <Link
               key={item.id}
               href={item.href}
-              className={`flex items-center gap-2 rounded-lg px-2 py-2 text-[13.5px] transition-colors ${
+              className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[14px] transition-all duration-200 ${
                 isActive
                   ? "bg-brand-primary/10 font-semibold text-brand-primary"
-                  : "text-muted-foreground hover:bg-background-hover"
+                  : "text-muted-foreground hover:translate-x-0.5 hover:bg-background-hover hover:text-foreground"
               }`}
             >
-              <Icon size={17} />
+              <Icon
+                size={18}
+                className={`transition-colors duration-200 ${
+                  isActive
+                    ? "text-brand-primary"
+                    : "group-hover:text-foreground"
+                }`}
+              />
+              {item.label}
+            </Link>
+          );
+        })}
+
+        <div className="my-3 h-px bg-border" />
+
+        <div className="px-2.5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+          Прочее
+        </div>
+
+        {secondaryNavItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname.startsWith(item.href);
+
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[14px] transition-all duration-200 ${
+                isActive
+                  ? "bg-brand-primary/10 font-semibold text-brand-primary"
+                  : "text-muted-foreground hover:translate-x-0.5 hover:bg-background-hover hover:text-foreground"
+              }`}
+            >
+              <Icon
+                size={18}
+                className={`transition-colors duration-200 ${
+                  isActive
+                    ? "text-brand-primary"
+                    : "group-hover:text-foreground"
+                }`}
+              />
               {item.label}
             </Link>
           );
@@ -83,7 +127,7 @@ export function Sidebar() {
             onClick={handleSignOut}
             className="text-red-600 focus:text-red-600 cursor-pointer"
           >
-            <LogOut size={16} className="mr-2" onClick={handleSignOut} />
+            <LogOut size={16} className="mr-2" />
             Выйти
           </DropdownMenuItem>
         </DropdownMenuContent>
