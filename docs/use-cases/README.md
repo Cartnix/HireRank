@@ -30,7 +30,7 @@ Behavior for that loop: **[UC-08](UC-08-automation-hitl-loop.md)**. Implementati
 |----|---------|
 | [UC-01](UC-01-candidate-registration.md) | Candidate self-registration + questionnaire → `resume.uploaded` |
 | [UC-02](UC-02-hr-candidate-intake.md) | HR creates candidate → `resume.uploaded` |
-| [UC-03](UC-03-vacancy-management.md) | Administrator vacancy CRUD |
+| [UC-03](UC-03-vacancy-management.md) | Administrator and HR vacancy CRUD |
 | [UC-04](UC-04-candidate-assignment.md) | Manual admin assignment (MCP path via UC-08 also valid) |
 | [UC-05](UC-05-manager-vacancies-and-assignments.md) | Manager read-only web; HITL decisions in Telegram (UC-08) |
 | [UC-06](UC-06-admin-panel-access.md) | Admin panel access |

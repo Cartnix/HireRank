@@ -125,3 +125,20 @@ RefreshRequest:
       type: string
       description: Optional when refresh HttpOnly cookie is present
       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+UpdateAuthMeRequest:
+  type: object
+  description: PATCH /auth/me body — both names required (two-stage registration).
+  required: [first_name, last_name]
+  additionalProperties: false
+  properties:
+    first_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+      example: Иван
+    last_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+      example: Петров

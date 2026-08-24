@@ -72,6 +72,7 @@ from app.models import (
     UserPublic,
     UserRegister,
     UserRole,
+    UserUpdateNames,
     role_str,
 )
 
@@ -333,6 +334,18 @@ async def logout(
 
 @router.get("/me", response_model=UserPublic)
 async def me(session: SessionDep, current_user: CurrentUser) -> Any:
+    return await build_user_public(session, current_user)
+
+
+@router.patch("/me", response_model=UserPublic)
+async def update_me(
+    session: SessionDep, current_user: CurrentUser, body: UserUpdateNames
+) -> Any:
+    current_user.first_name = body.first_name
+    current_user.last_name = body.last_name
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(current_user)
     return await build_user_public(session, current_user)
 
 

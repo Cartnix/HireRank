@@ -18,12 +18,32 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 DEFAULT_TENANT_ID = uuid.UUID("00000000-0000-4000-8000-000000000001")
 
 
+# Loopback hosts used by `next dev` / WSL / Firefox (port may differ from 3000).
+LOCAL_CORS_ORIGIN_REGEX = r"https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?"
+
+
+def _strip_cors_token(value: str) -> str:
+    return value.strip().strip("\"'")
+
+
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
-        return [i.strip() for i in v.split(",") if i.strip()]
+        cleaned = _strip_cors_token(v)
+        return [_strip_cors_token(i) for i in cleaned.split(",") if i.strip()]
     elif isinstance(v, list | str):
         return v
     raise ValueError(v)
+
+
+def loopback_origin_mirrors(origin: str) -> list[str]:
+    """localhost and 127.0.0.1 are different CORS origins."""
+    normalized = str(origin).rstrip("/")
+    mirrors = [normalized]
+    if "://localhost" in normalized:
+        mirrors.append(normalized.replace("://localhost", "://127.0.0.1", 1))
+    elif "://127.0.0.1" in normalized:
+        mirrors.append(normalized.replace("://127.0.0.1", "://localhost", 1))
+    return mirrors
 
 
 class Settings(BaseSettings):
@@ -47,9 +67,26 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def all_cors_origins(self) -> list[str]:
-        return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS] + [
-            self.FRONTEND_HOST
-        ]
+        raw = [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS]
+        frontend = str(self.FRONTEND_HOST).rstrip("/")
+        if frontend not in raw:
+            raw.append(frontend)
+        seen: set[str] = set()
+        origins: list[str] = []
+        for origin in raw:
+            for candidate in loopback_origin_mirrors(origin):
+                if candidate not in seen:
+                    seen.add(candidate)
+                    origins.append(candidate)
+        return origins
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def cors_origin_regex(self) -> str | None:
+        """Allow any loopback port in local dev (Next.js falls back to 3001+)."""
+        if self.ENVIRONMENT == "local":
+            return LOCAL_CORS_ORIGIN_REGEX
+        return None
 
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None

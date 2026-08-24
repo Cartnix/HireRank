@@ -165,7 +165,7 @@ Unassigned
 
 ## Description
 
-Administrator manages tenant vacancies.
+Administrator and HR manage tenant vacancies.
 
 ### Capabilities
 
@@ -177,7 +177,7 @@ Administrator manages tenant vacancies.
 
 ### DoD
 
-* CRUD available only to administrator;
+* CRUD available to administrator and HR;
 * changes limited to the current `tenant_id`;
 * notification may be created after vacancy creation.
 

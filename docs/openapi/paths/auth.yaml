@@ -124,6 +124,42 @@ paths:
                 $ref: '../schemas/user.yaml#/User'
         '401':
           $ref: '../components/responses.yaml#/Unauthorized'
+    patch:
+      tags: [Auth]
+      operationId: updateCurrentUser
+      summary: Update current user names (stage-2 registration)
+      description: |
+        Required `first_name` and `last_name` after the cookie/Bearer session exists.
+        Cookie mutations require `X-CSRF-Token`. Does not change email, role, or tenant.
+      parameters:
+        - name: X-CSRF-Token
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/auth.yaml#/UpdateAuthMeRequest'
+      responses:
+        '200':
+          description: Updated current user
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/user.yaml#/User'
+        '401':
+          $ref: '../components/responses.yaml#/Unauthorized'
+        '403':
+          description: CSRF Token missing or invalid
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/ValidationError'
 
   /auth/check-email:
     post:
