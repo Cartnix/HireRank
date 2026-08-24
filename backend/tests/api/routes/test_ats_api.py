@@ -11,6 +11,7 @@ from app.core.config import settings
 from tests.conftest import bypass_rls_session
 from tests.db.ats_fixtures import FOREIGN_TENANT_ID, seed_ats_graph
 from tests.utils.auth_types import register_bearer_pair
+from tests.utils.consent import register_json
 from tests.utils.utils import random_email
 
 API = settings.API_V1_STR
@@ -44,14 +45,45 @@ async def test_admin_creates_vacancy_with_default_stages(
     ]
 
 
-async def test_hr_cannot_create_vacancy(client: AsyncClient) -> None:
+async def test_hr_can_create_vacancy(client: AsyncClient) -> None:
     headers = await _headers_for_role(client, "hr")
     r = await client.post(
         f"{VACANCIES}/",
         headers=headers,
-        json={"title": "Should Fail", "status": "draft"},
+        json={"title": "HR Sourced Role", "status": "draft"},
     )
-    assert r.status_code == 403
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["title"] == "HR Sourced Role"
+    assert body["status"] == "draft"
+
+
+async def test_hr_bearer_creates_vacancy_despite_session_cookies(
+    client: AsyncClient,
+) -> None:
+    """Swagger on the API origin sends access cookie + Bearer and no CSRF header."""
+    email = random_email()
+    password = "SwaggerVacancy228!"
+    reg = await client.post(
+        f"{API}/auth/register",
+        json=register_json(email=email, password=password, role="hr"),
+    )
+    assert reg.status_code == 201, reg.text
+    access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+    assert access
+    r = await client.post(
+        f"{VACANCIES}/",
+        headers={"Authorization": f"Bearer {access}"},
+        json={
+            "title": "Vanacy1",
+            "status": "draft",
+            "department": "TOU",
+            "description": "description",
+            "requirements": ["req example"],
+        },
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["title"] == "Vanacy1"
 
 
 async def test_vacancy_idor_returns_404_for_missing_id(
@@ -241,27 +273,26 @@ async def test_delete_vacancy_with_active_application_conflicts(
     assert r.status_code == 409
 
 
-async def test_hr_cannot_patch_or_delete_vacancy(
+async def test_hr_can_patch_and_delete_vacancy(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
     vac = (
         await client.post(
             f"{VACANCIES}/",
             headers=superuser_token_headers,
-            json={"title": "HR Locked", "status": "open"},
+            json={"title": "HR Editable", "status": "open"},
         )
     ).json()
     hr = await _headers_for_role(client, "hr")
-    assert (
-        await client.patch(
-            f"{VACANCIES}/{vac['id']}",
-            headers=hr,
-            json={"title": "Nope"},
-        )
-    ).status_code == 403
-    assert (
-        await client.delete(f"{VACANCIES}/{vac['id']}", headers=hr)
-    ).status_code == 403
+    patched = await client.patch(
+        f"{VACANCIES}/{vac['id']}",
+        headers=hr,
+        json={"title": "HR Updated"},
+    )
+    assert patched.status_code == 200, patched.text
+    assert patched.json()["title"] == "HR Updated"
+    deleted = await client.delete(f"{VACANCIES}/{vac['id']}", headers=hr)
+    assert deleted.status_code == 204, deleted.text
 
 
 async def test_forged_tenant_id_on_vacancy_rejected(

@@ -193,6 +193,50 @@ async def test_refresh_rotates_cookies(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("secure_cookies")
+async def test_bearer_skips_csrf_when_access_cookie_present(
+    client: AsyncClient,
+) -> None:
+    """Swagger same-origin sends cookies + Authorize Bearer without X-CSRF-Token."""
+    email = random_email()
+    password = random_lower_string()
+    r = await client.post(
+        f"{AUTH}/register",
+        json=register_json(email=email, password=password),
+    )
+    assert r.status_code == 201
+    form = await client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": email, "password": password},
+    )
+    assert form.status_code == 200
+    token = form.json()["access_token"]
+    assert client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+    logout = await client.post(
+        f"{AUTH}/logout",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert logout.status_code == 204, logout.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("secure_cookies")
+async def test_forged_bearer_does_not_use_access_cookie(
+    client: AsyncClient,
+) -> None:
+    """Dummy Authorization must not skip into cookie auth (CSRF bypass)."""
+    await _register(client)
+    forged = await client.post(
+        f"{AUTH}/logout",
+        headers={"Authorization": "Bearer not-a-real-token"},
+    )
+    assert forged.status_code == 401
+    assert forged.json()["detail"] != "CSRF Token missing or invalid"
+    me = await client.get(f"{AUTH}/me")
+    assert me.status_code == 200
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("secure_cookies")
 async def test_bearer_still_works_without_cookie(client: AsyncClient) -> None:
     """Dual mode: Authorization Bearer without cookies still authenticates."""
     email = random_email()

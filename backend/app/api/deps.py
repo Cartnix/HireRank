@@ -22,7 +22,8 @@ from app.core.token_store import get_token_store
 from app.models import TokenPayload, User, UserRole, role_str
 
 # OpenAPI: OAuth2 password flow (Swagger Authorize) + documented access cookie.
-# Runtime: cookie-first, then Bearer from Authorization (dual mode).
+# Runtime: Authorization Bearer wins when present (Swagger same-origin + cookies);
+# otherwise cookie session. Dummy Bearer must not fall back to the cookie.
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token",
     auto_error=False,
@@ -139,25 +140,38 @@ AccessCookieDep = Annotated[str | None, Depends(access_cookie_scheme)]
 _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 
 
+def _bearer_from_authorization(request: Request) -> str | None:
+    auth = request.headers.get("Authorization") or ""
+    scheme, _, token = auth.partition(" ")
+    if scheme.lower() != "bearer":
+        return None
+    token = token.strip()
+    return token or None
+
+
 def extract_access_token(
     request: Request,
     bearer_token: str | None,
     *,
     cookie_token: str | None = None,
 ) -> str | None:
-    """Cookie-first, then Authorization Bearer (dual mode)."""
-    access = cookie_token or request.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
-    if access:
-        return access
-    return bearer_token or None
+    """Prefer Authorization Bearer so Swagger/scripts are not bound to CSRF cookies."""
+    explicit = bearer_token or _bearer_from_authorization(request)
+    if explicit:
+        return explicit
+    return cookie_token or request.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
 
 
 async def verify_csrf(request: Request) -> None:
     """
-    Double-submit CSRF when an access cookie is present.
-    Bearer-only API clients (no access cookie) skip CSRF.
+    Double-submit CSRF for cookie-authenticated mutations.
+
+    Skip when Authorization Bearer is present (Swagger / curl). A forged Bearer
+    cannot ride the access cookie — extract_access_token uses Bearer only.
     """
     if request.method in _SAFE_METHODS:
+        return
+    if _bearer_from_authorization(request):
         return
     if not request.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME):
         return

@@ -7,7 +7,7 @@ Behavioral SoT: [use-cases/](use-cases/). Auth roles/permissions: [RBAC.md](RBAC
 | Channel | Mechanism |
 |---------|-----------|
 | Browser SPA/SSR | HttpOnly `access_token` + `refresh_token` cookies; readable `csrf_token`; `credentials: include` |
-| CSRF | Double-submit: `X-CSRF-Token` must match `csrf_token` when access cookie is present (mutating methods) |
+| CSRF | Double-submit: `X-CSRF-Token` must match `csrf_token` for cookie-authenticated mutations. `Authorization: Bearer` skips CSRF and is used instead of the access cookie (Swagger same-origin) |
 | Scripts / Swagger | `POST /login/access-token` → JSON `TokenPair` + optional Bearer dual-read |
 | Social | `GET /auth/oauth/{google\|linkedin}/start` → IdP → `/auth/callback/{provider}` → same cookies |
 

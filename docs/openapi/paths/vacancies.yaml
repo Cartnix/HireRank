@@ -45,7 +45,7 @@ paths:
       tags: [Vacancies]
       operationId: createVacancy
       summary: Create vacancy
-      description: Available only to **administrator**.
+      description: Available to **administrator** and **hr**.
       requestBody:
         required: true
         content:
@@ -62,7 +62,7 @@ paths:
         '400':
           description: Validation error
         '403':
-          description: Only administrator
+          description: Insufficient permissions
 
   /vacancies/{id}:
     parameters:
@@ -94,7 +94,7 @@ paths:
       tags: [Vacancies]
       operationId: updateVacancy
       summary: Update vacancy
-      description: Available only to **administrator**.
+      description: Available to **administrator** and **hr**.
       requestBody:
         required: true
         content:
@@ -109,7 +109,7 @@ paths:
               schema:
                 $ref: '../schemas/vacancy.yaml#/Vacancy'
         '403':
-          description: Only administrator
+          description: Insufficient permissions
         '404':
           description: Vacancy not found
 
@@ -117,12 +117,12 @@ paths:
       tags: [Vacancies]
       operationId: deleteVacancy
       summary: Delete vacancy
-      description: Available only to **administrator**.
+      description: Available to **administrator** and **hr**.
       responses:
         '204':
           description: Vacancy deleted
         '403':
-          description: Only administrator
+          description: Insufficient permissions
         '404':
           description: Vacancy not found
         '409':
