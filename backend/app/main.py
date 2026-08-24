@@ -39,11 +39,12 @@ app = FastAPI(
 # Innermost first for user code: RequestContext wraps the app; CORS outermost.
 app.add_middleware(RequestContextMiddleware)
 
-# Set all CORS enabled origins
-if settings.all_cors_origins:
+# CORS outermost so error/preflight responses still carry ACAO.
+if settings.all_cors_origins or settings.cors_origin_regex:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.all_cors_origins,
+        allow_origin_regex=settings.cors_origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
