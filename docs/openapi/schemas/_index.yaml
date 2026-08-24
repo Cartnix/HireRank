@@ -22,6 +22,8 @@ ConsentPublic:
   $ref: './auth.yaml#/ConsentPublic'
 OAuthStartRequest:
   $ref: './auth.yaml#/OAuthStartRequest'
+UpdateAuthMeRequest:
+  $ref: './auth.yaml#/UpdateAuthMeRequest'
 UserRole:
   $ref: './user.yaml#/UserRole'
 User:

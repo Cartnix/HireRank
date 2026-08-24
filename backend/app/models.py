@@ -234,6 +234,22 @@ class UserUpdateMe(SQLModel):
     email: EmailStr | None = Field(default=None, max_length=255)
 
 
+class UserUpdateNames(SQLModel):
+    """PATCH /auth/me — stage-2 registration names (both required)."""
+
+    model_config = ConfigDict(extra="forbid")  # type: ignore[assignment]
+
+    first_name: str = Field(min_length=1, max_length=255)
+    last_name: str = Field(min_length=1, max_length=255)
+
+    @field_validator("first_name", "last_name", mode="before")
+    @classmethod
+    def _strip_non_empty(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+
 class UpdatePassword(SQLModel):
     current_password: str = Field(min_length=8, max_length=128)
     new_password: str = Field(min_length=8, max_length=128)
