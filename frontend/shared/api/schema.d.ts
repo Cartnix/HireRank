@@ -87,7 +87,12 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update current user names (stage-2 registration)
+         * @description Required `first_name` and `last_name` after the cookie/Bearer session exists.
+         *     Cookie mutations require `X-CSRF-Token`. Does not change email, role, or tenant.
+         */
+        patch: operations["updateCurrentUser"];
         trace?: never;
     };
     "/auth/check-email": {
@@ -479,7 +484,7 @@ export interface paths {
         put?: never;
         /**
          * Create vacancy
-         * @description Available only to **administrator**.
+         * @description Available to **administrator** and **hr**.
          */
         post: operations["createVacancy"];
         delete?: never;
@@ -507,14 +512,14 @@ export interface paths {
         post?: never;
         /**
          * Delete vacancy
-         * @description Available only to **administrator**.
+         * @description Available to **administrator** and **hr**.
          */
         delete: operations["deleteVacancy"];
         options?: never;
         head?: never;
         /**
          * Update vacancy
-         * @description Available only to **administrator**.
+         * @description Available to **administrator** and **hr**.
          */
         patch: operations["updateVacancy"];
         trace?: never;
@@ -696,6 +701,13 @@ export interface components {
             consent_refresh_required?: boolean;
             /** @example 2026-08-06 */
             current_legal_policy_version?: string;
+        };
+        /** @description PATCH /auth/me body — both names required (two-stage registration). */
+        UpdateAuthMeRequest: {
+            /** @example Иван */
+            first_name: string;
+            /** @example Петров */
+            last_name: string;
         };
         ConsentPublic: components["schemas"]["ConsentGrant"];
         OAuthStartRequest: {
@@ -1279,6 +1291,49 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+        };
+    };
+    updateCurrentUser: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAuthMeRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated current user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description CSRF Token missing or invalid */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationError"];
+                };
+            };
         };
     };
     checkEmailRegistered: {
@@ -2289,7 +2344,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Only administrator */
+            /** @description Insufficient permissions */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2345,7 +2400,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Only administrator */
+            /** @description Insufficient permissions */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2400,7 +2455,7 @@ export interface operations {
                     "application/json": components["schemas"]["Vacancy"];
                 };
             };
-            /** @description Only administrator */
+            /** @description Insufficient permissions */
             403: {
                 headers: {
                     [name: string]: unknown;

@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { Candidate } from "@/entities/candidate";
-import type { Job } from "@/entities/job";
+import { DEFAULT_STAGES, type Job } from "@/entities/job";
 import { JobsView } from "@/views/jobs";
-import { NewJobModal } from "@/features/create-vacancy";
+import VacancyModal, {
+  type VacancyFormData,
+} from "@/widgets/vacancy-create/ui/VacancyCreateCard";
 
 type Props = {
   initialCandidates: Candidate[];
@@ -53,10 +55,31 @@ export function JobsPageClient({
     router.push(`/dashboard/candidates/${id}`);
   };
 
-  const handleCreateJob = (job: Job) => {
-    setJobs((prev) => [job, ...prev]);
-    setSelectedJobId(job.id);
-    router.push(`${pathname}/${job.id}`);
+  const handleCreateJob = (data: VacancyFormData) => {
+    const newJob: Job = {
+      id: `job-${Date.now()}`,
+      title: data.title,
+      department: data.faculty || data.company || "Новый отдел",
+      status: "draft",
+      createdAt: new Date().toISOString(),
+      location: data.workFormat === "remote"
+        ? "Удалённо"
+        : data.workFormat === "office"
+          ? "Офис"
+          : "Гибрид",
+      employmentType: data.employmentType,
+      description: data.description || `Вакансия ${data.title}`,
+      stages: DEFAULT_STAGES,
+      salaryMin: data.salaryFrom ? Number(data.salaryFrom) : null,
+      salaryMax: data.salaryTo ? Number(data.salaryTo) : null,
+      recruiter: "Вы",
+      requirements: []
+    };
+
+    setJobs((prev) => [newJob, ...prev]);
+    setSelectedJobId(newJob.id);
+    router.push(`${pathname}/${newJob.id}`);
+
     setIsCreateModalOpen(false);
   };
 
@@ -76,13 +99,11 @@ export function JobsPageClient({
         }
         onOpenCandidate={handleOpenCandidate}
       />
-
-      {isCreateModalOpen && (
-        <NewJobModal
+      <VacancyModal
+        open={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-          onCreate={handleCreateJob}
-        />
-      )}
+        onSubmit={handleCreateJob}
+      />
     </>
   );
 }

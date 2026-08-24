@@ -1,5 +1,11 @@
 export type JobStatus = "draft";
-export type Stage = "Отклик" | "Скрининг" | "Интервью" | "Оффер" | "Нанят" | "Отказ";
+export type Stage =
+  | "Отклик"
+  | "Скрининг"
+  | "Интервью"
+  | "Оффер"
+  | "Нанят"
+  | "Отказ";
 
 export interface Job {
   id: string;
@@ -7,7 +13,23 @@ export interface Job {
   department: string;
   status: JobStatus;
   description: string;
+  createdAt: string;
+  stages: Stage[];
+  location: "Удалённо" | "Офис" | "Гибрид";
+  employmentType: "full-time" | "part-time" | "internship";
+  salaryMin: number | null;
+  salaryMax: number | null;
   requirements: string[];
+  recruiter: string;
 }
 
-export const allStages: Stage[] = ["Отклик", "Скрининг", "Интервью", "Оффер", "Нанят", "Отказ"];
+export const DEFAULT_STAGES: Stage[] = [
+  "Отклик",
+  "Скрининг",
+  "Интервью",
+  "Оффер",
+  "Нанят",
+  "Отказ",
+];
+
+export const allStages = DEFAULT_STAGES;
