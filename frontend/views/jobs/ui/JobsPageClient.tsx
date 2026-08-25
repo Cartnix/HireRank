@@ -56,29 +56,21 @@ export function JobsPageClient({
   };
 
   const handleCreateJob = (data: VacancyFormData) => {
+    const payload = {
+      title: data.title,
+      status: "draft" as const,
+      department: data.department,
+      description: data.description,
+      requirements: data.requirements,
+    };
+
     const newJob: Job = {
       id: `job-${Date.now()}`,
-      title: data.title,
-      department: data.faculty || data.company || "Новый отдел",
-      status: "draft",
-      createdAt: new Date().toISOString(),
-      location: data.workFormat === "remote"
-        ? "Удалённо"
-        : data.workFormat === "office"
-          ? "Офис"
-          : "Гибрид",
-      employmentType: data.employmentType,
-      description: data.description || `Вакансия ${data.title}`,
-      stages: DEFAULT_STAGES,
-      salaryMin: data.salaryFrom ? Number(data.salaryFrom) : null,
-      salaryMax: data.salaryTo ? Number(data.salaryTo) : null,
-      recruiter: "Вы",
-      requirements: []
+      ...payload,
     };
 
     setJobs((prev) => [newJob, ...prev]);
     setSelectedJobId(newJob.id);
-    router.push(`${pathname}/${newJob.id}`);
 
     setIsCreateModalOpen(false);
   };

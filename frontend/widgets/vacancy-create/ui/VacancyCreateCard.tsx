@@ -11,51 +11,19 @@ import {
 
 export type VacancyFormData = {
   title: string;
-  company: string;
-  faculty: string;
-  employmentType: "internship" | "part-time" | "full-time";
-  workFormat: "office" | "remote" | "hybrid";
-  level: "student" | "junior" | "junior-plus";
-  salaryFrom: string;
-  salaryTo: string;
-  stack: string[];
+  status: "draft";
+  department: string;
   description: string;
   requirements: string[];
-  deadline: string;
 };
 
 const EMPTY_FORM: VacancyFormData = {
   title: "",
-  company: "",
-  faculty: "",
-  employmentType: "internship",
-  workFormat: "hybrid",
-  level: "student",
-  salaryFrom: "",
-  salaryTo: "",
-  stack: [],
+  status: "draft",
+  department: "",
   description: "",
   requirements: [],
-  deadline: "",
 };
-
-const EMPLOYMENT_OPTIONS: { value: VacancyFormData["employmentType"]; label: string }[] = [
-  { value: "internship", label: "Стажировка" },
-  { value: "part-time", label: "Частичная занятость" },
-  { value: "full-time", label: "Полная занятость" },
-];
-
-const FORMAT_OPTIONS: { value: VacancyFormData["workFormat"]; label: string }[] = [
-  { value: "office", label: "Офис" },
-  { value: "remote", label: "Удалённо" },
-  { value: "hybrid", label: "Гибрид" },
-];
-
-const LEVEL_OPTIONS: { value: VacancyFormData["level"]; label: string }[] = [
-  { value: "student", label: "Студент" },
-  { value: "junior", label: "Junior" },
-  { value: "junior-plus", label: "Junior+" },
-];
 
 function IconX({ className = "size-4" }: { className?: string }) {
   return (
@@ -84,8 +52,6 @@ function Label({ children }: { children: ReactNode }) {
 const inputClass =
   "w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-p text-foreground placeholder:text-foreground-tertiary outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20";
 
-const selectClass = inputClass + " appearance-none";
-
 export default function VacancyModal({
   open,
   onClose,
@@ -96,7 +62,6 @@ export default function VacancyModal({
   onSubmit: (data: VacancyFormData) => void;
 }) {
   const [form, setForm] = useState<VacancyFormData>(EMPTY_FORM);
-  const [stackDraft, setStackDraft] = useState("");
   const [requirementDraft, setRequirementDraft] = useState("");
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -113,28 +78,6 @@ export default function VacancyModal({
 
   const update = <K extends keyof VacancyFormData>(key: K, value: VacancyFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
-
-  const addStackTag = () => {
-    const value = stackDraft.trim();
-    if (!value || form.stack.includes(value)) {
-      setStackDraft("");
-      return;
-    }
-    update("stack", [...form.stack, value]);
-    setStackDraft("");
-  };
-
-  const removeStackTag = (tag: string) =>
-    update("stack", form.stack.filter((t) => t !== tag));
-
-  const handleStackKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addStackTag();
-    } else if (e.key === "Backspace" && !stackDraft && form.stack.length) {
-      removeStackTag(form.stack[form.stack.length - 1]);
-    }
-  };
 
   const addRequirement = () => {
     const value = requirementDraft.trim();
@@ -156,7 +99,7 @@ export default function VacancyModal({
       form.requirements.filter((_, i) => i !== index)
     );
 
-  const isValid = form.title.trim().length > 0 && form.stack.length > 0;
+  const isValid = form.title.trim().length > 0 && form.requirements.length > 0;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -214,126 +157,14 @@ export default function VacancyModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Компания</Label>
-              <input
-                className={inputClass}
-                placeholder="Название компании"
-                value={form.company}
-                onChange={(e) => update("company", e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Факультет / направление</Label>
-              <input
-                className={inputClass}
-                placeholder="ФПМИ, ИТ, Экономика..."
-                value={form.faculty}
-                onChange={(e) => update("faculty", e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label>Занятость</Label>
-              <select
-                className={selectClass}
-                value={form.employmentType}
-                onChange={(e) => update("employmentType", e.target.value as VacancyFormData["employmentType"])}
-              >
-                {EMPLOYMENT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Формат</Label>
-              <select
-                className={selectClass}
-                value={form.workFormat}
-                onChange={(e) => update("workFormat", e.target.value as VacancyFormData["workFormat"])}
-              >
-                {FORMAT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Уровень</Label>
-              <select
-                className={selectClass}
-                value={form.level}
-                onChange={(e) => update("level", e.target.value as VacancyFormData["level"])}
-              >
-                {LEVEL_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Зарплата от, ₸</Label>
-              <input
-                type="number"
-                inputMode="numeric"
-                className={inputClass}
-                placeholder="150 000"
-                value={form.salaryFrom}
-                onChange={(e) => update("salaryFrom", e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Зарплата до, ₸</Label>
-              <input
-                type="number"
-                inputMode="numeric"
-                className={inputClass}
-                placeholder="250 000"
-                value={form.salaryTo}
-                onChange={(e) => update("salaryTo", e.target.value)}
-              />
-            </div>
-          </div>
-
           <div className="space-y-1.5">
-            <Label>Стек технологий *</Label>
-            <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-background p-2.5">
-              {form.stack.map((tag) => (
-                <span
-                  key={tag}
-                  className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-span font-medium text-foreground"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => removeStackTag(tag)}
-                    aria-label={`Удалить ${tag}`}
-                    className="text-foreground-tertiary transition hover:text-danger"
-                  >
-                    <IconX className="size-3" />
-                  </button>
-                </span>
-              ))}
-              <input
-                className="min-w-32 flex-1 bg-transparent text-p text-foreground placeholder:text-foreground-tertiary outline-none"
-                placeholder={form.stack.length ? "Добавить ещё..." : "React, TypeScript, Node.js..."}
-                value={stackDraft}
-                onChange={(e) => setStackDraft(e.target.value)}
-                onKeyDown={handleStackKeyDown}
-                onBlur={addStackTag}
-              />
-            </div>
-            <span className="text-span text-foreground-tertiary">Enter или запятая — добавить технологию</span>
+            <Label>Отдел</Label>
+            <input
+              className={inputClass}
+              placeholder="Название отдела"
+              value={form.department}
+              onChange={(e) => update("department", e.target.value)}
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -383,15 +214,6 @@ export default function VacancyModal({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Дедлайн подачи заявок</Label>
-            <input
-              type="date"
-              className={inputClass}
-              value={form.deadline}
-              onChange={(e) => update("deadline", e.target.value)}
-            />
-          </div>
         </form>
 
         {/* Footer */}

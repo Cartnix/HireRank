@@ -1,5 +1,5 @@
 import { ChevronLeft, MoreHorizontal } from "lucide-react";
-import { Job, JobStatusBadge, Stage } from "@/entities/job";
+import { DEFAULT_STAGES, Job, JobStatusBadge, Stage } from "@/entities/job";
 import { Candidate, StageBadge } from "@/entities/candidate";
 import { StagesEditor } from "@/features/manage-job-stages";
 import { Card } from "@/shared/ui/card";
@@ -38,31 +38,23 @@ export function JobOverview({
         <GhostButton icon={<MoreHorizontal size={15} />}>Действия</GhostButton>
       </div>
 
-      {/* мета-бейджи без карточки — легче для глаз, прямо под шапкой */}
       <div className="mb-6 flex flex-wrap items-center gap-2">
-        {job.salaryMin && job.salaryMax ? (
+        {job.salaryMin != null && job.salaryMax != null ? (
           <span className="rounded-full border border-brand-primary/20 bg-brand-primary/10 px-3 py-1 text-[12px] font-medium text-brand-primary">
-            {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()} {job.currency ?? "KZT"}
+            {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()}
           </span>
         ) : null}
-        {job.workMode ? (
-          <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">{job.workMode}</span>
-        ) : null}
-        {job.experienceLevel ? (
-          <span className="rounded-full border border-border px-3 py-1 text-[12px] text-foreground-secondary">{job.experienceLevel}</span>
-        ) : null}
-        {job.requiredSkills?.map((skill) => (
+        {job.requirements.map((skill) => (
           <span key={skill} className="rounded-full bg-muted px-3 py-1 text-[12px] text-foreground-secondary">
             {skill}
           </span>
         ))}
         {job.recruiter ? <span className="ml-1 text-[12px] text-foreground-secondary">Рекрутер: {job.recruiter}</span> : null}
-        {job.closingDate ? <span className="text-[12px] text-foreground-secondary">· Закрытие: {job.closingDate}</span> : null}
       </div>
 
       <div className="grid grid-cols-3 gap-5">
         <div className="col-span-2">
-          {/* описание + кандидаты в одной карточке с разделителем */}
+
           <Card className="p-6">
             <div className="mb-3 text-[15px] font-semibold">Описание вакансии</div>
             <p className="mb-0 max-w-none text-[13.5px] leading-relaxed text-foreground-secondary">{job.description}</p>
@@ -96,7 +88,7 @@ export function JobOverview({
           </Card>
         </div>
 
-        <StagesEditor stages={job.stages} onChange={onUpdateStages} />
+        <StagesEditor stages={job.stages ?? DEFAULT_STAGES} onChange={onUpdateStages} />
       </div>
     </div>
   );

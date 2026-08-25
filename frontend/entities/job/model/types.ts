@@ -13,14 +13,16 @@ export interface Job {
   department: string;
   status: JobStatus;
   description: string;
-  createdAt: string;
-  stages: Stage[];
-  location: "Удалённо" | "Офис" | "Гибрид";
-  employmentType: "full-time" | "part-time" | "internship";
-  salaryMin: number | null;
-  salaryMax: number | null;
   requirements: string[];
-  recruiter: string;
+
+  // Необязательные поля — бэк их пока не принимает/не возвращает
+  createdAt?: string;
+  stages?: Stage[];
+  location?: "Удалённо" | "Офис" | "Гибрид";
+  employmentType?: "full-time" | "part-time" | "internship";
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  recruiter?: string;
 }
 
 export const DEFAULT_STAGES: Stage[] = [
