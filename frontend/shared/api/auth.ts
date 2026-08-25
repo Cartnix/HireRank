@@ -4,6 +4,7 @@ import type { components } from "@/shared/api/schema";
 import { getApiV1Url } from "@/shared/config/env";
 import type { ConsentPayload } from "@/features/auth/model/FormSchema";
 import { useAuthStore } from "./auth-store";
+import { User } from "@/entities/user/model/types";
 
 export type UserPublic = components["schemas"]["User"];
 export type AuthSession = components["schemas"]["AuthSession"];
@@ -15,6 +16,11 @@ type TokenPayloadLike = Partial<AuthSession> & {
   token_type?: string;
   expires_in?: number;
 };
+
+export interface UpdateMePayload {
+  first_name?: string;
+  last_name?: string;
+}
 
 function persistSession(session: TokenPayloadLike | null | undefined): void {
   if (!session) return;
@@ -85,6 +91,13 @@ export async function refresh(): Promise<AuthSession> {
 export async function forgetMe(): Promise<void> {
   await apiFetch<void>("/auth/forget-me", { method: "POST" });
   useAuthStore.getState().clear();
+}
+
+export async function updateMe(payload: UpdateMePayload) {
+  await apiFetch<User>("/auth/me", {
+    method: "PATCH",
+    json: payload,
+  });
 }
 
 export async function checkEmail(

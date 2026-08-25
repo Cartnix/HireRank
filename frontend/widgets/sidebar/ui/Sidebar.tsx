@@ -116,7 +116,7 @@ export function Sidebar() {
                   .join(" ")}
                 size={36}
               />
-              <div className="text-[12.5px] font-medium leading-tight">
+              <div className="text-[1.1em] font-bold leading-tight">
                 {[user?.first_name, user?.last_name].filter(Boolean).join(" ")}
               </div>
             </div>
