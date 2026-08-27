@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { Candidate } from "@/entities/candidate";
-import { DEFAULT_STAGES, type Job } from "@/entities/job";
+import { type Job } from "@/entities/job";
 import { JobsView } from "@/views/jobs";
 import VacancyModal, {
   type VacancyFormData,
@@ -23,7 +23,9 @@ export function JobsPageClient({
   const router = useRouter();
   const pathname = usePathname();
   const [candidates] = useState(initialCandidates);
-  const [jobs, setJobs] = useState<Job[]>(initialJobs);
+  const [jobs, setJobs] = useState<Job[]>(
+    Array.isArray(initialJobs) ? initialJobs : [],
+  );
   const [selectedJobId, setSelectedJobId] = useState<string | null>(
     initialSelectedJobId,
   );

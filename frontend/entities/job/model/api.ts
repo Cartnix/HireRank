@@ -1,6 +1,5 @@
 import { apiFetch } from "@/shared/api/client";
 import { Job } from "./types";
-import { me } from "@/shared/api/auth";
 import { serverApiFetch } from "@/shared/api/server-client";
 
 export interface CreateVacancyPayload {
@@ -9,6 +8,16 @@ export interface CreateVacancyPayload {
   description: string;
   requirements: string[];
 }
+
+type PaginatedResponse<T> = {
+  items: T[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+  };
+};
 
 export async function createVacancy(
   payload: CreateVacancyPayload,
@@ -20,15 +29,17 @@ export async function createVacancy(
 }
 
 export async function getVacancies(): Promise<Job[]> {
-  return apiFetch<Job[]>("/vacancies/", {
+  const res = await serverApiFetch<{ items: Job[] }>("/vacancies/", {
     method: "GET",
   });
+  return res.items;
 }
 
 export async function getServerVacancies(): Promise<Job[]> {
-  return serverApiFetch<Job[]>("/vacancies", {
+  const res = await serverApiFetch<PaginatedResponse<Job>>("/vacancies/", {
     method: "GET",
   });
+  return res.items;
 }
 
 export async function getVacancy(id: string): Promise<Job> {
