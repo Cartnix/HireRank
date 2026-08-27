@@ -35,6 +35,6 @@ export const initialJobs: Job[] = [
   },
 ];
 
-export async function getJobs(): Promise<Job[]> {
+export async function getInitJobs(): Promise<Job[]> {
   return initialJobs;
 }

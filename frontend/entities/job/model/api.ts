@@ -1,6 +1,7 @@
 import { apiFetch } from "@/shared/api/client";
 import { Job } from "./types";
 import { me } from "@/shared/api/auth";
+import { serverApiFetch } from "@/shared/api/server-client";
 
 export interface CreateVacancyPayload {
   title: string;
@@ -20,6 +21,12 @@ export async function createVacancy(
 
 export async function getVacancies(): Promise<Job[]> {
   return apiFetch<Job[]>("/vacancies/", {
+    method: "GET",
+  });
+}
+
+export async function getServerVacancies(): Promise<Job[]> {
+  return serverApiFetch<Job[]>("/vacancies", {
     method: "GET",
   });
 }
