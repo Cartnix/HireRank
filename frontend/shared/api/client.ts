@@ -31,7 +31,54 @@ type ApiFetchOptions = Omit<RequestInit, "credentials"> & {
   json?: unknown;
   skipCsrf?: boolean;
   auth?: boolean;
+  _retried?: boolean;
 };
+
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const refreshToken = tokenStorage.getRefresh();
+        if (!refreshToken) return false;
+
+        const res = await fetch(`${getApiV1Url()}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!res.ok) {
+          tokenStorage.clear();
+          return false;
+        }
+
+        const data = await res.json();
+        if (!data?.access_token || !data?.refresh_token) {
+          tokenStorage.clear();
+          return false;
+        }
+
+        tokenStorage.setTokens({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          token_type: data.token_type ?? "bearer",
+          expires_id: Number(data.expires_in ?? 0),
+        });
+
+        return true;
+      } catch {
+        tokenStorage.clear();
+        return false;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+  }
+
+  return refreshPromise;
+}
 
 export async function apiFetch<T = unknown>(
   path: string,
@@ -42,6 +89,7 @@ export async function apiFetch<T = unknown>(
     skipCsrf,
     auth = true,
     headers: initHeaders,
+    _retried,
     ...rest
   } = options;
   const headers = new Headers(initHeaders);
@@ -72,6 +120,20 @@ export async function apiFetch<T = unknown>(
       credentials: "include",
       body: json !== undefined ? JSON.stringify(json) : rest.body,
     });
+
+
+    if (
+      res.status === 401 &&
+      auth &&
+      !_retried &&
+      path !== "/auth/refresh" &&
+      path !== "/auth/login"
+    ) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        return apiFetch<T>(path, { ...options, _retried: true });
+      }
+    }
 
     if (res.status === 204) {
       return undefined as T;

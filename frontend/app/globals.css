@@ -5,50 +5,66 @@
 
 :root {
   /* Твоя оригинальная светлая палитра (не тронута) */
-  --background: #f2f2f7;        
-  --background-elevated: #ffffff; 
-  --foreground: #1c1c1e;        
+  --background: #f2f2f7;
+  --background-elevated: #ffffff;
+  --foreground: #1c1c1e;
   --foreground-secondary: #3c3c43b3;
-  --foreground-tertiary: #3c3c4399;   
-  --card: #fff;
+  --foreground-tertiary: #3c3c4399;
+  /* --card: #fff;
+  --active-item: bg-cyan 400 / 10; */
 
-  --border: #e5e5ea;            
+  --border: #e5e5ea;
   --border-subtle: #d1d1d6;
 
-  --brand-primary: #007aff;    
+  --brand-primary: #007aff;
   --brand-primary-hover: #0066d6;
   --brand-primary-foreground: #ffffff;
 
-  --success: #34c759;           
-  --warning: #ff9500;           
-  --danger: #ff3b30;            
+  --success: #34c759;
+  --warning: #ff9500;
+  --danger: #ff3b30;
 
   --muted: #e9e9eb;
-  --muted-foreground: #8e8e93;  
+  --muted-foreground: #8e8e93;
 }
 
 .dark {
   /* Новая темная дизайн-система от ИИ */
-  --background: #090B10; /* Заменено с: #121318 */       
-  --background-elevated: #11151D; /* Заменено с: #181920 (фон карточек) */
-  --foreground: #F1F5F9; /* Заменено с: #ffffff (основной текст) */
-  --foreground-secondary: #94A3B8; /* Заменено с: #888c9b (вторичный текст) */
-  --foreground-tertiary: #64748B; /* Заменено с: #737785 (приглушённый текст) */   
+  --background: #090b10;
+  /* Заменено с: #121318 */
+  --background-elevated: #11151d;
+  /* Заменено с: #181920 (фон карточек) */
+  --foreground: #f1f5f9;
+  /* Заменено с: #ffffff (основной текст) */
+  --foreground-secondary: #94a3b8;
+  /* Заменено с: #888c9b (вторичный текст) */
+  --foreground-tertiary: #64748b;
+  /* Заменено с: #737785 (приглушённый текст) */
   --card: #0d1424;
+  --active-item: bg-cyan 400 / 10;
 
-  --border: #27303D; /* Заменено с: #2c2d38 (граница) */
-  --border-subtle: #1B202B; /* Заменено с: #20212a (вторичный фон / субл. границы) */
+  --border: #27303d;
+  /* Заменено с: #2c2d38 (граница) */
+  --border-subtle: #1b202b;
+  /* Заменено с: #20212a (вторичный фон / субл. границы) */
 
-  --brand-primary: #2563EB; /* Заменено с: #2555ff (синий accent) */   
-  --brand-primary-hover: #22D3EE; /* Заменено с: #2f5aff (Cyan accent) */
+  --brand-primary: #2563eb;
+  /* Заменено с: #2555ff (синий accent) */
+  --brand-primary-hover: #22d3ee;
+  /* Заменено с: #2f5aff (Cyan accent) */
   --brand-primary-foreground: #ffffff;
 
-  --success: #6EE7B7; /* Заменено с: #258f48 (успешный статус) */
-  --warning: #FBBF24; /* Заменено с: #ff9f0a (жёлтый статус) */
-  --danger: #F87171; /* Заменено с: #ff453a (красный / destructive) */
+  --success: #6ee7b7;
+  /* Заменено с: #258f48 (успешный статус) */
+  --warning: #fbbf24;
+  /* Заменено с: #ff9f0a (жёлтый статус) */
+  --danger: #f87171;
+  /* Заменено с: #ff453a (красный / destructive) */
 
-  --muted: #1B202B; /* Заменено с: #20212a (вторичный фон) */
-  --muted-foreground: #64748B; /* Заменено с: #888c9b (приглушённый текст) */
+  --muted: #1b202b;
+  /* Заменено с: #20212a (вторичный фон) */
+  --muted-foreground: #64748b;
+  /* Заменено с: #888c9b (приглушённый текст) */
 }
 
 @theme inline {
@@ -72,14 +88,15 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
 
-  --text-h1: clamp(2.25rem, 1.8rem + 2vw, 4rem); 
-  --text-h2: clamp(1.875rem, 1.5rem + 1.5vw, 3rem); 
-  --text-h3: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); 
+  --text-h1: clamp(2.25rem, 1.8rem + 2vw, 4rem);
+  --text-h2: clamp(1.875rem, 1.5rem + 1.5vw, 3rem);
+  --text-h3: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
   --text-p: clamp(1rem, 0.9rem + 0.2vw, 1.125rem);
   --text-span: clamp(0.875rem, 0.8rem + 0.1vw, 0.9375rem);
 
   --color-avatar-bg: var(--brand-primary);
-  --color-card-bg: var(--card)
+  --color-card-bg: var(--color-card-bg);
+  --color-active-items: var(--color-active-items);
 }
 
 @layer base {
@@ -107,7 +124,8 @@
     margin-bottom: 1.25rem;
   }
 
-  button, a {
+  button,
+  a {
     @apply cursor-pointer;
   }
 }

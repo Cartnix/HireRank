@@ -29,18 +29,20 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border bg-background-elevated px-3 py-5">
+    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border bg-background-elevated py-5">
       <nav className="flex flex-1 flex-col gap-2">
-        <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[14px]">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand-primary text-[15px] font-bold text-brand-primary-foreground">
+        <div className="flex items-center gap-2.5 rounded-lg px-5 py-2.5 text-[14px]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-cyan-300 text-[15px] font-bold text-background">
             H
           </div>
-          <div className="text-[16px] font-bold tracking-tight">HireAI</div>
+          <div className="text-[16px] font-bold tracking-tight">
+            Hire<span className="test-[16px] font-bold text-cyan-300">AI</span>
+          </div>
         </div>
 
         <div className="my-3 h-px bg-border" />
 
-        <div className="px-2.5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground/">
           Основное
         </div>
 
@@ -55,9 +57,9 @@ export function Sidebar() {
             <Link
               key={item.id}
               href={item.href}
-              className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[14px] transition-all duration-200 ${
+              className={`group flex items-center gap-2.5 rounded-lg px-5 py-2.5 text-[14px] transition-all duration-200 ${
                 isActive
-                  ? "bg-brand-primary/10 font-semibold text-brand-primary"
+                  ? "bg-active-items font-semibold text-brand-primary"
                   : "text-muted-foreground hover:translate-x-0.5 hover:bg-background-hover hover:text-foreground"
               }`}
             >
@@ -76,7 +78,7 @@ export function Sidebar() {
 
         <div className="my-3 h-px bg-border" />
 
-        <div className="px-2.5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground/70">
           Прочее
         </div>
 
@@ -88,7 +90,7 @@ export function Sidebar() {
             <Link
               key={item.id}
               href={item.href}
-              className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[14px] transition-all duration-200 ${
+              className={`group flex items-center gap-2.5 rounded-lg px-5 py-2.5 text-[14px] transition-all duration-200 ${
                 isActive
                   ? "bg-brand-primary/10 font-semibold text-brand-primary"
                   : "text-muted-foreground hover:translate-x-0.5 hover:bg-background-hover hover:text-foreground"
