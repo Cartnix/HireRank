@@ -4,16 +4,18 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Твоя оригинальная светлая палитра (не тронута) */
   --background: #f2f2f7;        
   --background-elevated: #ffffff; 
   --foreground: #1c1c1e;        
   --foreground-secondary: #3c3c43b3;
   --foreground-tertiary: #3c3c4399;   
+  --card: #fff;
 
   --border: #e5e5ea;            
   --border-subtle: #d1d1d6;
 
-  --brand-primary: #007aff;     
+  --brand-primary: #007aff;    
   --brand-primary-hover: #0066d6;
   --brand-primary-foreground: #ffffff;
 
@@ -26,25 +28,27 @@
 }
 
 .dark {
-  --background: #121318;        
-  --background-elevated: #181920; 
-  --foreground: #ffffff;
-  --foreground-secondary: #888c9b; 
-  --foreground-tertiary: #737785;   
+  /* Новая темная дизайн-система от ИИ */
+  --background: #090B10; /* Заменено с: #121318 */       
+  --background-elevated: #11151D; /* Заменено с: #181920 (фон карточек) */
+  --foreground: #F1F5F9; /* Заменено с: #ffffff (основной текст) */
+  --foreground-secondary: #94A3B8; /* Заменено с: #888c9b (вторичный текст) */
+  --foreground-tertiary: #64748B; /* Заменено с: #737785 (приглушённый текст) */   
+  --card: #0d1424;
 
-  --border: #2c2d38;
-  --border-subtle: #20212a;
+  --border: #27303D; /* Заменено с: #2c2d38 (граница) */
+  --border-subtle: #1B202B; /* Заменено с: #20212a (вторичный фон / субл. границы) */
 
-  --brand-primary: #2555ff;    
-  --brand-primary-hover: #2f5aff;
+  --brand-primary: #2563EB; /* Заменено с: #2555ff (синий accent) */   
+  --brand-primary-hover: #22D3EE; /* Заменено с: #2f5aff (Cyan accent) */
   --brand-primary-foreground: #ffffff;
 
-  --success: #258f48;
-  --warning: #ff9f0a;
-  --danger: #ff453a;
+  --success: #6EE7B7; /* Заменено с: #258f48 (успешный статус) */
+  --warning: #FBBF24; /* Заменено с: #ff9f0a (жёлтый статус) */
+  --danger: #F87171; /* Заменено с: #ff453a (красный / destructive) */
 
-  --muted: #20212a;
-  --muted-foreground: #888c9b;
+  --muted: #1B202B; /* Заменено с: #20212a (вторичный фон) */
+  --muted-foreground: #64748B; /* Заменено с: #888c9b (приглушённый текст) */
 }
 
 @theme inline {
@@ -75,6 +79,7 @@
   --text-span: clamp(0.875rem, 0.8rem + 0.1vw, 0.9375rem);
 
   --color-avatar-bg: var(--brand-primary);
+  --color-card-bg: var(--card)
 }
 
 @layer base {

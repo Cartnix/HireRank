@@ -5,9 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { Candidate } from "@/entities/candidate";
 import { type Job } from "@/entities/job";
 import { JobsView } from "@/views/jobs";
-import VacancyModal, {
-  type VacancyFormData,
-} from "@/widgets/vacancy-create/ui/VacancyCreateCard";
+import { NewJobModal } from "@/features/create-vacancy";
 
 type Props = {
   initialCandidates: Candidate[];
@@ -33,11 +31,9 @@ export function JobsPageClient({
 
   const jobById = useMemo(() => {
     const map: Record<string, Job> = {};
-
     jobs.forEach((job) => {
       map[job.id] = job;
     });
-
     return map;
   }, [jobs]);
 
@@ -57,23 +53,9 @@ export function JobsPageClient({
     router.push(`/dashboard/candidates/${id}`);
   };
 
-  const handleCreateJob = (data: VacancyFormData) => {
-    const payload = {
-      title: data.title,
-      status: "draft" as const,
-      department: data.department,
-      description: data.description,
-      requirements: data.requirements,
-    };
-
-    const newJob: Job = {
-      id: `job-${Date.now()}`,
-      ...payload,
-    };
-
-    setJobs((prev) => [newJob, ...prev]);
-    setSelectedJobId(newJob.id);
-
+  const handleJobCreated = (job: Job) => {
+    setJobs((prev) => [job, ...prev]);
+    setSelectedJobId(job.id);
     setIsCreateModalOpen(false);
   };
 
@@ -93,11 +75,12 @@ export function JobsPageClient({
         }
         onOpenCandidate={handleOpenCandidate}
       />
-      <VacancyModal
-        open={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateJob}
-      />
+      {isCreateModalOpen && (
+        <NewJobModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onCreate={handleJobCreated}
+        />
+      )}
     </>
   );
 }

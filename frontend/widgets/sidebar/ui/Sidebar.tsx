@@ -30,14 +30,16 @@ export function Sidebar() {
 
   return (
     <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border bg-background-elevated px-3 py-5">
-      <div className="mb-12 flex items-center gap-2 px-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-brand-primary text-[14px] font-bold text-brand-primary-foreground">
-          H
-        </div>
-        <div className="text-[15px] font-semibold">HireAI</div>
-      </div>
-
       <nav className="flex flex-1 flex-col gap-2">
+        <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[14px]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand-primary text-[15px] font-bold text-brand-primary-foreground">
+            H
+          </div>
+          <div className="text-[16px] font-bold tracking-tight">HireAI</div>
+        </div>
+
+        <div className="my-3 h-px bg-border" />
+
         <div className="px-2.5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground/70">
           Основное
         </div>
