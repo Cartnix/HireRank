@@ -26,6 +26,7 @@ export const AuthModal = () => {
     crossBorder,
     getValues,
     consentReady,
+    control,
   } = useAuthModalState();
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -59,7 +60,7 @@ export const AuthModal = () => {
 
       {isRegister && (
         <ConsentFieldset
-          control={undefined as any}
+          control={control}
           register={register}
           errors={errors}
           crossBorder={crossBorder}

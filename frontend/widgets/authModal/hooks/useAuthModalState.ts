@@ -174,5 +174,6 @@ export function useAuthModalState() {
     crossBorder,
     getValues,
     consentReady,
+    control,
   };
 }

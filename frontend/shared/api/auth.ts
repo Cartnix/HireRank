@@ -1,5 +1,4 @@
 import { apiFetch } from "@/shared/api/client";
-import { tokenStorage } from "@/shared/api/token-storage";
 import type { components } from "@/shared/api/schema";
 import { getApiV1Url } from "@/shared/config/env";
 import type { ConsentPayload } from "@/features/auth/model/FormSchema";
@@ -10,34 +9,9 @@ export type UserPublic = components["schemas"]["User"];
 export type AuthSession = components["schemas"]["AuthSession"];
 export type RegisterPayload = components["schemas"]["RegisterRequest"];
 
-type TokenPayloadLike = Partial<AuthSession> & {
-  access_token?: string;
-  refresh_token?: string;
-  token_type?: string;
-  expires_in?: number;
-};
-
 export interface UpdateMePayload {
   first_name?: string;
   last_name?: string;
-}
-
-function persistSession(session: TokenPayloadLike | null | undefined): void {
-  if (!session) return;
-
-  const accessToken = session.access_token;
-  const refreshToken = session.refresh_token;
-
-  if (!accessToken || !refreshToken) {
-    return;
-  }
-
-  tokenStorage.setTokens({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    token_type: session.token_type ?? "bearer",
-    expires_id: Number(session.expires_in ?? 0),
-  });
 }
 
 export async function login(
@@ -52,7 +26,6 @@ export async function login(
     skipCsrf: true,
   });
 
-  persistSession(data);
   await me();
   return data;
 }
@@ -66,7 +39,6 @@ export async function register(payload: RegisterPayload): Promise<AuthSession> {
     skipCsrf: true,
   });
 
-  persistSession(data);
   await me();
   return data;
 }
@@ -83,9 +55,7 @@ export async function me(): Promise<UserPublic> {
 }
 
 export async function refresh(): Promise<AuthSession> {
-  const data = await apiFetch<AuthSession>("/auth/refresh", { method: "POST" });
-  persistSession(data);
-  return data;
+  return apiFetch<AuthSession>("/auth/refresh", { method: "POST" });
 }
 
 export async function forgetMe(): Promise<void> {

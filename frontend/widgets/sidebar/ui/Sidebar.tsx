@@ -29,7 +29,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border bg-background-elevated py-5">
+    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r bg-sidebar border-sidebar-border py-5 text-sidebar-foreground">
       <nav className="flex flex-1 flex-col gap-2">
         <div className="flex h-14 items-center gap-2.5 rounded-lg px-5 text-[14px]">
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-cyan-300 text-[15px] font-bold text-background">
@@ -40,9 +40,9 @@ export function Sidebar() {
           </div>
         </div>
 
-        <div className="my-3 h-px bg-border" />
+        <div className="my-3 h-px bg-sidebar-border" />
 
-        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground/">
+        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide/">
           Основное
         </div>
 
@@ -74,7 +74,7 @@ export function Sidebar() {
           );
         })}
 
-        <div className="my-3 h-px bg-border" />
+        <div className="my-3 h-px bg-sidebar-border" />
 
         <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground/70">
           Прочее

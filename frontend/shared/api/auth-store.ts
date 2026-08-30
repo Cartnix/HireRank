@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { UserPublic } from "./auth";
-import { tokenStorage } from "./token-storage";
 
 type AuthStatus = "idle" | "loading" | "authenticated" | "unauthenticated";
 
@@ -24,7 +23,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   setLoading: () => set({ status: "loading" }),
 
   clear: () => {
-    tokenStorage.clear();
     set({ user: null, status: "unauthenticated" });
   },
 }));

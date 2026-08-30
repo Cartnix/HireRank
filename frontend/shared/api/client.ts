@@ -1,5 +1,4 @@
 import { getApiV1Url } from "@/shared/config/env";
-import { tokenStorage } from "@/shared/api/token-storage";
 
 export class ApiError extends Error {
   status: number;
@@ -30,7 +29,6 @@ export function getCsrfToken(): string | null {
 type ApiFetchOptions = Omit<RequestInit, "credentials"> & {
   json?: unknown;
   skipCsrf?: boolean;
-  auth?: boolean;
   _retried?: boolean;
 };
 
@@ -40,36 +38,13 @@ async function refreshAccessToken(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
-        const refreshToken = tokenStorage.getRefresh();
-        if (!refreshToken) return false;
-
         const res = await fetch(`${getApiV1Url()}/auth/refresh`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
         });
-
-        if (!res.ok) {
-          tokenStorage.clear();
-          return false;
-        }
-
-        const data = await res.json();
-        if (!data?.access_token || !data?.refresh_token) {
-          tokenStorage.clear();
-          return false;
-        }
-
-        tokenStorage.setTokens({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-          token_type: data.token_type ?? "bearer",
-          expires_id: Number(data.expires_in ?? 0),
-        });
-
-        return true;
+        return res.ok;
       } catch {
-        tokenStorage.clear();
         return false;
       } finally {
         refreshPromise = null;
@@ -87,7 +62,6 @@ export async function apiFetch<T = unknown>(
   const {
     json,
     skipCsrf,
-    auth = true,
     headers: initHeaders,
     _retried,
     ...rest
@@ -96,13 +70,6 @@ export async function apiFetch<T = unknown>(
 
   if (json !== undefined) {
     headers.set("Content-Type", "application/json");
-  }
-
-  if (auth && !headers.has("Authorization")) {
-    const accessToken = tokenStorage.getAccess();
-    if (accessToken) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
-    }
   }
 
   const method = (rest.method ?? "GET").toUpperCase();
@@ -121,15 +88,12 @@ export async function apiFetch<T = unknown>(
       body: json !== undefined ? JSON.stringify(json) : rest.body,
     });
 
-
     if (
       res.status === 401 &&
-      auth &&
       !_retried &&
       path !== "/auth/refresh" &&
       path !== "/auth/login"
     ) {
-      console.log("401 братан токену гг")
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         return apiFetch<T>(path, { ...options, _retried: true });
@@ -137,7 +101,6 @@ export async function apiFetch<T = unknown>(
     }
 
     if (res.status === 204) {
-      console.log("204 друг")
       return undefined as T;
     }
 
@@ -147,7 +110,6 @@ export async function apiFetch<T = unknown>(
       : await res.text();
 
     if (!res.ok) {
-      console.log("Запросу пизда")
       const detail =
         typeof data === "object" && data && "detail" in data
           ? String((data as { detail: unknown }).detail)
