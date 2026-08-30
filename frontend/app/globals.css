@@ -10,8 +10,8 @@
   --foreground: #1c1c1e;
   --foreground-secondary: #3c3c43b3;
   --foreground-tertiary: #3c3c4399;
-  /* --card: #fff;
-  --active-item: bg-cyan 400 / 10; */
+  --card: #fff;
+  --cyan-main: #22d3ee;
 
   --border: #e5e5ea;
   --border-subtle: #d1d1d6;
@@ -29,42 +29,27 @@
 }
 
 .dark {
-  /* Новая темная дизайн-система от ИИ */
   --background: #090b10;
-  /* Заменено с: #121318 */
   --background-elevated: #11151d;
-  /* Заменено с: #181920 (фон карточек) */
   --foreground: #f1f5f9;
-  /* Заменено с: #ffffff (основной текст) */
   --foreground-secondary: #94a3b8;
-  /* Заменено с: #888c9b (вторичный текст) */
   --foreground-tertiary: #64748b;
-  /* Заменено с: #737785 (приглушённый текст) */
   --card: #0d1424;
-  --active-item: bg-cyan 400 / 10;
+  --cyan-main: #22d3ee;
 
   --border: #27303d;
-  /* Заменено с: #2c2d38 (граница) */
   --border-subtle: #1b202b;
-  /* Заменено с: #20212a (вторичный фон / субл. границы) */
 
   --brand-primary: #2563eb;
-  /* Заменено с: #2555ff (синий accent) */
-  --brand-primary-hover: #22d3ee;
-  /* Заменено с: #2f5aff (Cyan accent) */
+  --brand-primary-hover: #1d4ed8;
   --brand-primary-foreground: #ffffff;
 
   --success: #6ee7b7;
-  /* Заменено с: #258f48 (успешный статус) */
   --warning: #fbbf24;
-  /* Заменено с: #ff9f0a (жёлтый статус) */
   --danger: #f87171;
-  /* Заменено с: #ff453a (красный / destructive) */
 
   --muted: #1b202b;
-  /* Заменено с: #20212a (вторичный фон) */
   --muted-foreground: #64748b;
-  /* Заменено с: #888c9b (приглушённый текст) */
 }
 
 @theme inline {
@@ -95,8 +80,16 @@
   --text-span: clamp(0.875rem, 0.8rem + 0.1vw, 0.9375rem);
 
   --color-avatar-bg: var(--brand-primary);
-  --color-card-bg: var(--color-card-bg);
-  --color-active-items: var(--color-active-items);
+  --color-card: var(--card);
+  --color-active-item: var(--cyan-main);
+}
+
+@layer utilities {
+  .active-glow-item {
+    background-color: color-mix(in srgb, var(--cyan-main) 10%, transparent);
+    color: var(--cyan-main);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--cyan-main) 20%, transparent);
+  }
 }
 
 @layer base {

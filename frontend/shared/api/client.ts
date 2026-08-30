@@ -129,6 +129,7 @@ export async function apiFetch<T = unknown>(
       path !== "/auth/refresh" &&
       path !== "/auth/login"
     ) {
+      console.log("401 братан токену гг")
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         return apiFetch<T>(path, { ...options, _retried: true });
@@ -136,6 +137,7 @@ export async function apiFetch<T = unknown>(
     }
 
     if (res.status === 204) {
+      console.log("204 друг")
       return undefined as T;
     }
 
@@ -145,6 +147,7 @@ export async function apiFetch<T = unknown>(
       : await res.text();
 
     if (!res.ok) {
+      console.log("Запросу пизда")
       const detail =
         typeof data === "object" && data && "detail" in data
           ? String((data as { detail: unknown }).detail)

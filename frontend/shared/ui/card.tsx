@@ -26,7 +26,7 @@ export const Card = ({
     viewport={{ once: true, margin: "-60px" }}
     transition={{ duration: 0.5, delay: index * 0.08 }}
     className={cn(
-      "group relative rounded-3xl p-7 bg-card-bg border border-border-subtle shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all duration-300 flex items-center flex-col",
+      "group relative rounded-3xl p-7 bg-card border border-border-subtle shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all duration-300 flex items-center flex-col",
       className
     )}
     {...props}

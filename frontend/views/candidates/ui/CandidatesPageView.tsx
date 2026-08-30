@@ -1,6 +1,6 @@
-import { CandidatesPageClient } from "@/widgets/candidate-page/ui/CandidateUI";
 import type { Candidate } from "@/entities/candidate";
 import type { Job } from "@/entities/job";
+import { CandidatesPageClient } from "./CandidatePageClient";
 
 export type CandidatesPageViewProps = {
   candidates: Candidate[];

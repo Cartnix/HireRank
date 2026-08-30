@@ -1,3 +1,4 @@
+import { DashboardHeader } from "@/widgets/dashboard-header";
 import { Sidebar } from "@/widgets/sidebar/ui/Sidebar";
 
 export default function DashboardLayout({
@@ -7,8 +8,11 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar/>
-      <main className="min-w-0 flex-1 px-10 py-8">{children}</main>
+      <Sidebar />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <DashboardHeader />
+        <main className="min-w-0 flex-1 px-10 py-8">{children}</main>
+      </div>
     </div>
   );
 }

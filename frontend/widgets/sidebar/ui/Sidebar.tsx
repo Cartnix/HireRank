@@ -31,12 +31,12 @@ export function Sidebar() {
   return (
     <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border bg-background-elevated py-5">
       <nav className="flex flex-1 flex-col gap-2">
-        <div className="flex items-center gap-2.5 rounded-lg px-5 py-2.5 text-[14px]">
+        <div className="flex h-14 items-center gap-2.5 rounded-lg px-5 text-[14px]">
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-cyan-300 text-[15px] font-bold text-background">
             H
           </div>
           <div className="text-[16px] font-bold tracking-tight">
-            Hire<span className="test-[16px] font-bold text-cyan-300">AI</span>
+            Hire<span className="text-[16px] font-bold text-cyan-300">AI</span>
           </div>
         </div>
 
@@ -57,18 +57,16 @@ export function Sidebar() {
             <Link
               key={item.id}
               href={item.href}
-              className={`group flex items-center gap-2.5 rounded-lg px-5 py-2.5 text-[14px] transition-all duration-200 ${
+              className={`group flex items-center gap-2.5 rounded-lg px-3 py-2.5 mx-3 text-[14px] transition-all duration-200 ${
                 isActive
-                  ? "bg-active-items font-semibold text-brand-primary"
+                  ? "active-glow-item font-semibold text-cyan-300"
                   : "text-muted-foreground hover:translate-x-0.5 hover:bg-background-hover hover:text-foreground"
               }`}
             >
               <Icon
                 size={18}
                 className={`transition-colors duration-200 ${
-                  isActive
-                    ? "text-brand-primary"
-                    : "group-hover:text-foreground"
+                  isActive ? "text-active-item" : "group-hover:text-foreground"
                 }`}
               />
               {item.label}
@@ -90,18 +88,16 @@ export function Sidebar() {
             <Link
               key={item.id}
               href={item.href}
-              className={`group flex items-center gap-2.5 rounded-lg px-5 py-2.5 text-[14px] transition-all duration-200 ${
+              className={`group flex items-center gap-2.5 rounded-lg px-3 py-2.5 mx-3 text-[14px] transition-all duration-200 ${
                 isActive
-                  ? "bg-brand-primary/10 font-semibold text-brand-primary"
+                  ? "active-glow-item font-semibold text-cyan-300"
                   : "text-muted-foreground hover:translate-x-0.5 hover:bg-background-hover hover:text-foreground"
               }`}
             >
               <Icon
                 size={18}
                 className={`transition-colors duration-200 ${
-                  isActive
-                    ? "text-brand-primary"
-                    : "group-hover:text-foreground"
+                  isActive ? "text-active-item" : "group-hover:text-foreground"
                 }`}
               />
               {item.label}
