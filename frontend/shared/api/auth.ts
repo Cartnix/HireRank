@@ -1,6 +1,5 @@
 import { apiFetch } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
-import { getApiV1Url } from "@/shared/config/env";
 import type { ConsentPayload } from "@/features/auth/model/FormSchema";
 import { useAuthStore } from "./auth-store";
 import { User } from "@/entities/user/model/types";
@@ -89,33 +88,4 @@ export async function acceptLegal(
   });
   useAuthStore.getState().setUser(user);
   return user;
-}
-
-export async function startOAuth(
-  provider: "google" | "linkedin",
-  consent: ConsentPayload,
-): Promise<void> {
-  const res = await fetch(`${getApiV1Url()}/auth/oauth/${provider}/start`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ consent }),
-    redirect: "manual",
-  });
-  if (res.status >= 300 && res.status < 400) {
-    const loc = res.headers.get("Location");
-    if (loc) {
-      window.location.assign(loc);
-      return;
-    }
-  }
-
-  let detail = "OAuth start failed";
-  try {
-    const data = (await res.json()) as { detail?: string };
-    if (data.detail) detail = data.detail;
-  } catch {
-    /* ignore */
-  }
-  throw new Error(detail);
 }

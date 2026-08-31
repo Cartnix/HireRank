@@ -6,27 +6,31 @@ import { HiringFunnel } from "@/widgets/hiring-panel";
 import { UpcomingPanel } from "@/widgets/upcoming-panel/ui/UpcomingPanel";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 import CandidateGrowChart from "@/widgets/candidates-grow/ui/CandidatesGrowChart";
+import { CurrentDateInfo } from "@/app/dashboard/page";
 
 export type DashboardPageViewProps = {
+  currentDate: CurrentDateInfo;
   activeJobsCount: number;
   inProgressCandidates: number;
   todaysInterviewsCount: number;
   pipelineCounts: { stage: Stage; count: number }[];
   maxPipeline: number;
   todaysInterviews: Interview[];
+  avgTimeToHire: number;
   candidateById: Record<string, Candidate>;
   jobById: Record<string, Job>;
 };
 
 export function DashboardPageView(props: DashboardPageViewProps) {
   return (
-    <div>
+    <div className="px-15">
       <SectionTitle title="Главная" subtitle="Обзор рекрутинга на сегодня" />
 
       <StatsWidgets
-        activeJobsCount={props.activeJobsCount}
-        inProgressCandidates={props.inProgressCandidates}
-        todaysInterviewsCount={props.todaysInterviewsCount}
+        active_vacancies={props.activeJobsCount}
+        candidates_total={props.inProgressCandidates}
+        interviews_scheduled={props.todaysInterviewsCount}
+        avg_time_to_hire={props.avgTimeToHire}
       />
 
       <CandidateGrowChart />

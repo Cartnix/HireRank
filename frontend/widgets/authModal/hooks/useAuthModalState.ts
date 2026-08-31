@@ -15,7 +15,7 @@ import {
 } from "@/features/auth/model/FormSchema";
 import { useAuthForm } from "@/features/auth/useAuthForm";
 import { useAuthSession } from "@/features/auth/AuthProvider";
-import { checkEmail, startOAuth } from "@/shared/api/auth";
+import { checkEmail } from "@/shared/api/auth";
 import { CONSENT_DEFAULTS } from "../model/constants";
 
 export function useAuthModalState() {
@@ -102,37 +102,7 @@ export function useAuthModalState() {
     }
   };
 
-  const onOAuth = async (provider: "google" | "linkedin") => {
-    setOauthError(null);
 
-    if (isRegister) {
-      const values = getValues();
-      const flags = {
-        consent_account_processing: Boolean(values.consent_account_processing),
-        consent_talent_pool: Boolean(values.consent_talent_pool),
-        consent_cross_border: Boolean(values.consent_cross_border),
-        consent_cross_border_countries: values.consent_cross_border_countries,
-      };
-      if (!hasRequiredConsent(flags)) {
-        setError("consent_account_processing", {
-          message: REQUIRED_CONSENT_MSG,
-        });
-        return;
-      }
-      try {
-        await startOAuth(provider, toConsentPayload(flags));
-      } catch (err) {
-        setOauthError(err instanceof Error ? err.message : "OAuth failed");
-      }
-      return;
-    }
-
-    try {
-      await startOAuth(provider, implicitLoginConsentPayload());
-    } catch (err) {
-      setOauthError(err instanceof Error ? err.message : "OAuth failed");
-    }
-  };
 
   const guardedSubmit = handleSubmit((data) => {
     if (isRegister) {
@@ -168,7 +138,6 @@ export function useAuthModalState() {
     emailHint,
     setEmailHint,
     onEmailBlur,
-    onOAuth,
     switchTo,
     consentAccount,
     crossBorder,

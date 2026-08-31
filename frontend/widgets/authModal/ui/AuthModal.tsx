@@ -3,7 +3,6 @@
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { REQUIRED_CONSENT_MSG } from "@/features/auth/model/FormSchema";
 import { ConsentFieldset } from "./ConsentFieldset";
-import { OAuthButtons } from "./OAuthButtons";
 import { EmailPasswordForm } from "./EmailPasswordForm";
 import { LegalLinks } from "./LegalLinks";
 import { useAuthModalState } from "../hooks/useAuthModalState";
@@ -17,10 +16,8 @@ export const AuthModal = () => {
     errors,
     blockSubmit,
     isPending,
-    oauthError,
     emailHint,
     onEmailBlur,
-    onOAuth,
     switchTo,
     consentAccount,
     crossBorder,
@@ -66,13 +63,6 @@ export const AuthModal = () => {
           crossBorder={crossBorder}
         />
       )}
-
-      <OAuthButtons
-        isRegister={isRegister}
-        isDisabled={blockSubmit}
-        oauthError={oauthError}
-        onOAuth={onOAuth}
-      />
 
       <EmailPasswordForm
         isRegister={isRegister}

@@ -38,12 +38,8 @@ async function refreshAccessToken(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
-        const res = await fetch(`${getApiV1Url()}/auth/refresh`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        return res.ok;
+        await apiFetch("/auth/refresh", { method: "POST" });
+        return true;
       } catch {
         return false;
       } finally {
@@ -59,13 +55,7 @@ export async function apiFetch<T = unknown>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<T> {
-  const {
-    json,
-    skipCsrf,
-    headers: initHeaders,
-    _retried,
-    ...rest
-  } = options;
+  const { json, skipCsrf, headers: initHeaders, _retried, ...rest } = options;
   const headers = new Headers(initHeaders);
 
   if (json !== undefined) {

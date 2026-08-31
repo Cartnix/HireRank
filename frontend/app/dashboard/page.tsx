@@ -1,18 +1,37 @@
-import { DashboardPageView } from "@/views/dashboard";
-import type { DashboardPageViewProps } from "@/views/dashboard/ui/DashboardView";
+import { DashboardPageView, DashboardPageViewProps } from "@/views/dashboard";
+import type { Stage } from "@/entities/job";
+
+export type CurrentDateInfo = {
+  greeting: string;
+  weekDay: string;
+  day: string;
+  month: string;
+  year: number;
+  hours: string;
+  minutes: string;
+};
 
 export default async function DashboardPage() {
   const data = {
+    currentDate: {
+      greeting: "Добрый день",
+      weekDay: "Понедельник",
+      day: "10",
+      month: "Января",
+      year: 2025,
+      hours: "14",
+      minutes: "32",
+    } satisfies CurrentDateInfo,
     activeJobsCount: 12,
     inProgressCandidates: 48,
     todaysInterviewsCount: 7,
-    pipelineCounts: [
-      { stage: "Скрининг", count: 18 },
-      { stage: "Интервью", count: 12 },
-      { stage: "Оффер", count: 9 },
-      { stage: "Нанят", count: 5 },
-    ],
+    avgTimeToHire: 15,
     maxPipeline: 20,
+    pipelineCounts: [
+      { stage: "Новый", count: 15 },
+      { stage: "Интервью", count: 12 },
+      { stage: "Оффер", count: 5 },
+    ] as { stage: Stage; count: number }[],
     todaysInterviews: [
       {
         id: "1",
