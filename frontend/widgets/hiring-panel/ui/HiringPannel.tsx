@@ -1,7 +1,6 @@
-import { Stage } from "@/entities/job";
 import { Card } from "@/shared/ui/card";
 
-export function HiringFunnel({ pipelineCounts, maxPipeline }: { pipelineCounts: { stage: Stage; count: number }[]; maxPipeline: number }) {
+export function HiringFunnel({ pipelineCounts, maxPipeline }: { pipelineCounts: { stage: string; count: number }[]; maxPipeline: number }) {
   return (
     <Card className="col-span-2 p-6">
       <div className="mb-5 text-[15px] font-semibold">Воронка найма</div>

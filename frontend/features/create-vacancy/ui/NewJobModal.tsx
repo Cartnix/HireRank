@@ -7,6 +7,7 @@ import { GhostButton } from "@/shared/ui/buttons/GhostButton";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { useNewJobForm } from "../model/useNewJobForm";
 import { NewJobFormFields } from "./NewJobFormFields";
+import { apiFetch } from "@/shared/api/client";
 
 export function NewJobModal({
   onClose,
@@ -17,6 +18,8 @@ export function NewJobModal({
 }) {
   const {
     register,
+    control,
+    setValue,
     formState: { errors },
     onSubmit,
   } = useNewJobForm(onCreate);
@@ -32,7 +35,12 @@ export function NewJobModal({
         </div>
 
         <form onSubmit={onSubmit}>
-          <NewJobFormFields register={register} errors={errors} />
+          <NewJobFormFields
+            register={register}
+            errors={errors}
+            control={control}
+            setValue={setValue} 
+          />
 
           <div className="mt-5 flex justify-end gap-2">
             <GhostButton type="button" onClick={onClose}>

@@ -19,6 +19,7 @@ export function useNewJobForm(onCreate?: (job: Job) => void) {
       onCreate?.(createdJob);
       form.reset();
     } catch (error) {
+      console.error(error, "ОШибка")
       form.setError("root", {
         message:
           error instanceof Error ? error.message : "Не удалось создать вакансию",

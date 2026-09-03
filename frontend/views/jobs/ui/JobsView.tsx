@@ -38,7 +38,7 @@ export const JobsView = ({
   }
 
   return (
-    <div>
+    <div className="px-15">
       <div className="mb-6 flex items-center justify-between">
         <SectionTitle
           title="Вакансии"

@@ -88,6 +88,10 @@ export async function apiFetch<T = unknown>(
       if (refreshed) {
         return apiFetch<T>(path, { ...options, _retried: true });
       }
+
+      if (typeof window !== "undefined") {
+        window.location.href = "/auth";
+      }
     }
 
     if (res.status === 204) {

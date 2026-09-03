@@ -1,5 +1,5 @@
 import type { Candidate } from "@/entities/candidate";
-import type { Job, Stage } from "@/entities/job";
+import type { Job } from "@/entities/job";
 import type { Interview } from "@/entities/interview";
 import { StatsWidgets } from "@/widgets/dashboard-stats";
 import { HiringFunnel } from "@/widgets/hiring-panel";
@@ -13,7 +13,7 @@ export type DashboardPageViewProps = {
   activeJobsCount: number;
   inProgressCandidates: number;
   todaysInterviewsCount: number;
-  pipelineCounts: { stage: Stage; count: number }[];
+  pipelineCounts: { stage: string; count: number }[];
   maxPipeline: number;
   todaysInterviews: Interview[];
   avgTimeToHire: number;

@@ -1,5 +1,4 @@
 import { DashboardPageView, DashboardPageViewProps } from "@/views/dashboard";
-import type { Stage } from "@/entities/job";
 
 export type CurrentDateInfo = {
   greeting: string;
@@ -31,7 +30,7 @@ export default async function DashboardPage() {
       { stage: "Новый", count: 15 },
       { stage: "Интервью", count: 12 },
       { stage: "Оффер", count: 5 },
-    ] as { stage: Stage; count: number }[],
+    ] as { stage: string; count: number }[],
     todaysInterviews: [
       {
         id: "1",

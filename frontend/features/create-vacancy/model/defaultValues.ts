@@ -5,5 +5,5 @@ export const jobFormDefaults: JobFormValues = {
   status: "draft",
   department: "",
   description: "",
-  requirements: "",
+  requirements: [],
 };

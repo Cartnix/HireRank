@@ -11,10 +11,12 @@ export interface CreateVacancyPayload {
 export async function createVacancy(
   payload: CreateVacancyPayload,
 ): Promise<Job> {
-  return apiFetch<Job>("/vacancies/", {
+  const res = await apiFetch<Job>("/vacancies", {
     method: "POST",
     json: payload,
   });
+
+  return res;
 }
 
 export async function getVacancies(): Promise<Job[]> {

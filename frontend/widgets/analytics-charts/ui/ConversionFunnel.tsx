@@ -1,7 +1,6 @@
-import { Stage } from "@/entities/job";
 import { Card } from "@/shared/ui/card";
 
-export const funnelStages: { stage: Stage; count: number }[] = [
+export const funnelStages: { stage: string; count: number }[] = [
   { stage: "Отклик", count: 46 },
   { stage: "Скрининг", count: 28 },
   { stage: "Интервью", count: 15 },

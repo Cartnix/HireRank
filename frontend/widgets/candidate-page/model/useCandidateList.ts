@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react";
 import { Candidate } from "@/entities/candidate";
-import { Stage } from "@/entities/job";
 
 export function useCandidatesList(candidates: Candidate[]) {
   const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState<Stage | "Все">("Все");
+  const [stageFilter, setStageFilter] = useState<string | "Все">("Все");
 
   const filteredCandidates = useMemo(() => {
     return candidates.filter(

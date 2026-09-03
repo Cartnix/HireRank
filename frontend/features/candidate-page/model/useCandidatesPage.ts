@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Candidate } from "@/entities/candidate";
-import { Job, Stage } from "@/entities/job";
+import { Job } from "@/entities/job";
 import { Note } from "@/entities/note";
 
 export function useCandidatesPage(
@@ -13,7 +13,7 @@ export function useCandidatesPage(
   const router = useRouter();
   const pathname = usePathname();
   const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState<Stage | "Все">("Все");
+  const [stageFilter, setStageFilter] = useState<string | "Все">("Все");
 
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedCandidateId);
   const [noteDraft, setNoteDraft] = useState("");

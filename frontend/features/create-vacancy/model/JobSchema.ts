@@ -5,7 +5,7 @@ export const jobFormSchema = z.object({
   status: z.literal("draft").default("draft"),
   department: z.string().trim().min(1, "Укажите отдел"),
   description: z.string().trim(),
-  requirements: z.string().trim(),
+  requirements: z.array(z.string().min(1, "Укажите хотябы одно требование"))
 });
 
 export type JobFormValues = z.infer<typeof jobFormSchema>;

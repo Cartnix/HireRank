@@ -19,8 +19,7 @@ export const authApi = {
     register: async (body: RegisterPayload) => {
         const pair = await apiClient<TokenPair>("/auth/register", {
             method: "POST",
-            body: JSON.stringify(body),
-            auth: false,
+            json: body,
         });
         return pair;
     },
@@ -28,8 +27,7 @@ export const authApi = {
     login: async (body: LoginPayload) => {
         const pair = await apiClient<TokenPair>("/auth/login", {
             method: "POST",
-            body: JSON.stringify(body),
-            auth: false,
+            json: body,
         });
         return pair;
     },

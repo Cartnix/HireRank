@@ -21,13 +21,13 @@ export function StagesEditor({
       <div className="mb-4 text-[12.5px] text-foreground-secondary">Настройте порядок этапов воронки для этой вакансии.</div>
       <div className="space-y-2">
         {stages.map((s, idx) => (
-          <div key={s} className="flex items-center gap-2.5 rounded-[10px] border border-border px-3 py-2">
+          <div key={s.id} className="flex items-center gap-2.5 rounded-[10px] border border-border px-3 py-2">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
               {idx + 1}
             </span>
-            <span className="text-[13px] font-medium">{s}</span>
+            <span className="text-[13px] font-medium">{s.stage_name}</span>
             <button
-              onClick={() => onChange(stages.filter((st) => st !== s))}
+              onClick={() => onChange(stages.filter((st) => st.id !== s.id))}
               className="ml-auto text-muted-foreground hover:text-danger"
             >
               <X size={14} />
@@ -45,7 +45,12 @@ export function StagesEditor({
         <GhostButton
           onClick={() => {
             if (newStage.trim() === "") return;
-            onChange([...stages, newStage.trim() as Stage]);
+            const nextStage: Stage = {
+              id: crypto.randomUUID(), // или временный id, если бэкенд сам генерит
+              stage_name: newStage.trim(),
+              sort_order: stages.length,
+            };
+            onChange([...stages, nextStage]);
             setNewStage("");
           }}
         >

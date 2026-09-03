@@ -1,11 +1,10 @@
 export type JobStatus = "draft";
-export type Stage =
-  | "Отклик"
-  | "Скрининг"
-  | "Интервью"
-  | "Оффер"
-  | "Нанят"
-  | "Отказ";
+
+export interface Stage {
+  id: string;
+  stage_name: string;
+  sort_order: number;
+}
 
 export interface Job {
   id: string;
@@ -15,7 +14,6 @@ export interface Job {
   description: string;
   requirements: string[];
 
-  // Необязательные поля — бэк их пока не принимает/не возвращает
   createdAt?: string;
   stages?: Stage[];
   location?: "Удалённо" | "Офис" | "Гибрид";
@@ -25,13 +23,19 @@ export interface Job {
   recruiter?: string;
 }
 
-export const DEFAULT_STAGES: Stage[] = [
+export const DEFAULT_STAGE_NAMES = [
   "Отклик",
   "Скрининг",
   "Интервью",
   "Оффер",
   "Нанят",
   "Отказ",
-];
+] as const;
+
+export const DEFAULT_STAGES: Stage[] = DEFAULT_STAGE_NAMES.map((name, i) => ({
+  id: name,
+  stage_name: name,
+  sort_order: i,
+}));
 
 export const allStages = DEFAULT_STAGES;

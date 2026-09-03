@@ -1,5 +1,3 @@
-import { Stage } from "@/entities/job/model/types";
-
 export type CandidateStatus = "unassigned" | "assigned";
 
 export interface HistoryEvent {
@@ -53,7 +51,7 @@ export interface Candidate {
   // Compatibility fields for existing UI and mock data
   name: string;
   jobId: string;
-  stage: Stage;
+  stage: string;
   source: string;
   appliedDate: string;
   email: string;

@@ -1,10 +1,9 @@
 import { Candidate } from "@/entities/candidate";
-import { Stage } from "@/entities/job";
 import { useState } from "react";
 
 export const useCandidateFilters = (candidates: Candidate[]) => {
   const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState<Stage | "Все">("Все");
+  const [stageFilter, setStageFilter] = useState<string | "Все">("Все");
 
   const filtered = candidates.filter((c) => {
     const matchesSearch =
