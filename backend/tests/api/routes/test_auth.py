@@ -1,11 +1,15 @@
+import uuid
+
 import jwt
 from httpx import AsyncClient
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app import crud
 from app.auth.permissions import has_permission
 from app.core import security
 from app.core.config import settings
+from app.models import Candidate
 from tests.utils.auth_types import register_bearer_pair
 from tests.utils.consent import register_json
 from tests.utils.utils import random_email, random_lower_string
@@ -111,6 +115,33 @@ async def test_auth_register_rejects_administrator(client: AsyncClient) -> None:
     assert r.status_code == 400
 
 
+async def test_candidate_registration_creates_owned_candidate_profile(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    email = random_email()
+    response = await client.post(
+        f"{settings.API_V1_STR}/auth/register",
+        json=register_json(
+            email=email,
+            password=random_lower_string(),
+            role="candidate",
+        ),
+    )
+    assert response.status_code == 201, response.text
+    access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
+    assert access
+    payload = jwt.decode(
+        access, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+    )
+    candidate = (
+        await db.exec(
+            select(Candidate).where(Candidate.user_id == uuid.UUID(payload["sub"]))
+        )
+    ).first()
+    assert candidate is not None
+    assert str(candidate.tenant_id) == str(settings.TENANT_ID)
+
+
 async def test_auth_register_rejects_client_tenant(client: AsyncClient) -> None:
     email = random_email()
     r = await client.post(
@@ -159,6 +190,8 @@ async def test_rbac_permissions_matrix_from_db(db: AsyncSession) -> None:
     assert "application.assign" in admin
     assert "application.assign" not in hr
     assert "application.assign" not in manager
+    assert "application.apply" in candidate
+    assert "application.assign" not in candidate
     assert "vacancy.create" not in recruiter
     assert "vacancy.create" not in manager
     assert "vacancy.create" not in candidate
