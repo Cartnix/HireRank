@@ -47,7 +47,7 @@ See [RBAC.md](docs/RBAC.md) for access and session behavior.
 | **[GDPR.md](docs/laws/GDPR.md)** | **EU / West privacy — strict** |
 | [ROADMAP.md](docs/ROADMAP.md) | Delivery phases and current focus |
 | [RBAC.md](docs/RBAC.md) | Roles, JWT, token store |
-| [openapi/](docs/openapi/) | REST API contract |
+| [contracts/](contracts/) | Generated backend OpenAPI and frontend schemas |
 
 ## Stack
 

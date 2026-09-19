@@ -1,0 +1,119 @@
+{
+  "ConsentSchema": {
+    "$ref": "#/definitions/ConsentSchema",
+    "definitions": {
+      "ConsentSchema": {
+        "type": "object",
+        "properties": {
+          "account_processing": {
+            "type": "boolean",
+            "const": true
+          },
+          "talent_pool": {
+            "type": "boolean"
+          },
+          "cross_border": {
+            "type": "boolean"
+          },
+          "cross_border_countries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "account_processing",
+          "talent_pool",
+          "cross_border"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "LoginFormValues": {
+    "$ref": "#/definitions/LoginFormValues",
+    "definitions": {
+      "LoginFormValues": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "RegisterFormValues": {
+    "$ref": "#/definitions/RegisterFormValues",
+    "definitions": {
+      "RegisterFormValues": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "repeatPassword": {
+            "$ref": "#/definitions/RegisterFormValues/properties/password"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "candidate",
+              "hr",
+              "manager",
+              "recruiter"
+            ]
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "consent_account_processing": {
+            "type": "boolean"
+          },
+          "consent_talent_pool": {
+            "type": "boolean"
+          },
+          "consent_cross_border": {
+            "type": "boolean"
+          },
+          "consent_cross_border_countries": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "repeatPassword",
+          "role",
+          "consent_account_processing",
+          "consent_talent_pool",
+          "consent_cross_border"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+}
