@@ -70,6 +70,79 @@
     "type": "object",
     "title": "AdminDashboard"
   },
+  "ApplicationPublic": {
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Id"
+      },
+      "tenant_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Tenant Id"
+      },
+      "vacancy_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Vacancy Id"
+      },
+      "candidate_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Candidate Id"
+      },
+      "current_stage_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Current Stage Id"
+      },
+      "status": {
+        "type": "string",
+        "title": "Status"
+      },
+      "created_at": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Created At"
+      },
+      "updated_at": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Updated At"
+      }
+    },
+    "type": "object",
+    "required": [
+      "id",
+      "tenant_id",
+      "vacancy_id",
+      "candidate_id",
+      "current_stage_id",
+      "status"
+    ],
+    "title": "ApplicationPublic"
+  },
+  "ApplyToVacancyRequest": {
+    "properties": {},
+    "additionalProperties": false,
+    "type": "object",
+    "title": "ApplyToVacancyRequest"
+  },
   "AssignCandidateRequest": {
     "properties": {
       "vacancy_id": {

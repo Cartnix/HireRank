@@ -1453,6 +1453,67 @@
         }
       }
     },
+    "/api/v1/vacancies/{vacancy_id}/applications": {
+      "post": {
+        "tags": [
+          "Vacancies"
+        ],
+        "summary": "Apply To Vacancy",
+        "operationId": "Vacancies-apply_to_vacancy",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vacancy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Vacancy Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyToVacancyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/vacancies/": {
       "get": {
         "tags": [
@@ -2441,6 +2502,79 @@
         },
         "type": "object",
         "title": "AdminDashboard"
+      },
+      "ApplicationPublic": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "vacancy_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Vacancy Id"
+          },
+          "candidate_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Candidate Id"
+          },
+          "current_stage_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Current Stage Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "vacancy_id",
+          "candidate_id",
+          "current_stage_id",
+          "status"
+        ],
+        "title": "ApplicationPublic"
+      },
+      "ApplyToVacancyRequest": {
+        "properties": {},
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ApplyToVacancyRequest"
       },
       "AssignCandidateRequest": {
         "properties": {

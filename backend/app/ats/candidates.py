@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import col, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -287,6 +288,7 @@ async def assign_candidate(
     existing = (
         await session.exec(
             select(Application).where(
+                Application.tenant_id == candidate.tenant_id,
                 Application.vacancy_id == vacancy.id,
                 Application.candidate_id == candidate.id,
             )
@@ -320,3 +322,84 @@ async def assign_candidate(
     await session.commit()
     await session.refresh(candidate)
     return candidate
+
+
+async def apply_to_vacancy(
+    *,
+    session: AsyncSession,
+    user: User,
+    vacancy_id: uuid.UUID,
+) -> Application:
+    candidate = (
+        await session.exec(
+            select(Candidate).where(
+                Candidate.user_id == user.id,
+                Candidate.tenant_id == user.tenant_id,
+            )
+        )
+    ).first()
+    if candidate is None:
+        raise HTTPException(status_code=404, detail="Candidate profile not found")
+
+    vacancy = await vacancy_svc.get_vacancy(session=session, vacancy_id=vacancy_id)
+    if vacancy is None:
+        raise HTTPException(status_code=404, detail="Vacancy not found")
+    if vacancy.status != "open":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Applications are accepted only for open vacancies",
+        )
+
+    stage = await vacancy_svc.first_stage(session=session, vacancy_id=vacancy.id)
+    if stage is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vacancy has no pipeline stages",
+        )
+
+    existing = (
+        await session.exec(
+            select(Application).where(
+                Application.tenant_id == user.tenant_id,
+                Application.vacancy_id == vacancy.id,
+                Application.candidate_id == candidate.id,
+            )
+        )
+    ).first()
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Candidate already applied to this vacancy",
+        )
+
+    application = Application(
+        tenant_id=user.tenant_id,
+        vacancy_id=vacancy.id,
+        candidate_id=candidate.id,
+        current_stage_id=stage.id,
+        status=ApplicationStatus.ACTIVE,
+        created_at=_now(),
+        updated_at=_now(),
+    )
+    session.add(application)
+    await ats_events.deliver_application_notification(
+        session=session,
+        application=application,
+        recipient_user_id=vacancy.created_by,
+    )
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Candidate already applied to this vacancy",
+        )
+    await session.refresh(application)
+    ats_events.publish_application_created(
+        application_id=application.id,
+        vacancy_id=application.vacancy_id,
+        candidate_id=application.candidate_id,
+        tenant_id=application.tenant_id,
+    )
+    return application

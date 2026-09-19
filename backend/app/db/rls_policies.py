@@ -56,6 +56,7 @@ tenant_isolation_on_candidate = _tenant_isolation("public.candidate")
 tenant_isolation_on_application = _tenant_isolation("public.application")
 tenant_isolation_on_interview = _tenant_isolation("public.interview")
 tenant_isolation_on_scorecard = _tenant_isolation("public.scorecard")
+tenant_isolation_on_notification = _tenant_isolation("public.notification")
 
 RLS_POLICIES: list[PGPolicy] = [
     tenant_isolation_on_user,
@@ -67,4 +68,5 @@ RLS_POLICIES: list[PGPolicy] = [
     tenant_isolation_on_application,
     tenant_isolation_on_interview,
     tenant_isolation_on_scorecard,
+    tenant_isolation_on_notification,
 ]

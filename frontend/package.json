@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
+    "test:csrf": "tsx --test shared/api/client.test.ts",
     "generate:api-types": "openapi-typescript ../contracts/generated/backend/openapi.json -o ../contracts/generated/frontend/api.d.ts && cp ../contracts/generated/frontend/api.d.ts shared/api/schema.d.ts",
     "openapi:check": "openapi-typescript ../contracts/generated/backend/openapi.json -o /tmp/hirerank-schema-check.d.ts",
     "contracts:export:backend": "docker compose run --rm --no-deps -v \"$PWD/../contracts:/app/contracts\" backend python -m scripts.export_contracts",
