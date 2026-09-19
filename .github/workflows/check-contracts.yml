@@ -1,0 +1,58 @@
+name: Check generated contracts
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: local
+      PROJECT_NAME: HireRank
+      POSTGRES_SERVER: localhost
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ci-password
+      POSTGRES_DB: hirerank
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: uv sync --project backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Export backend OpenAPI and schemas
+        run: uv run python -m scripts.export_contracts
+        working-directory: backend
+
+      - name: Export frontend schemas and API types
+        run: npm run contracts:export:frontend && npm run generate:api-types
+        working-directory: frontend
+
+      - name: Fail on generated contract drift
+        run: git diff --exit-code -- contracts/generated frontend/shared/api/schema.d.ts

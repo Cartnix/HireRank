@@ -11,6 +11,12 @@ From `frontend/` run:
 npm run contracts:export
 ```
 
+For CI or a local drift check:
+
+```bash
+npm run contracts:check
+```
+
 The command performs three steps:
 
 1. imports the FastAPI application and writes `backend/openapi.json`;
@@ -19,6 +25,11 @@ The command performs three steps:
 4. generates TypeScript API types in `frontend/api.d.ts` and copies the same
    generated file to `frontend/shared/api/schema.d.ts` for application imports.
 
-FastAPI is the source for HTTP OpenAPI. TypeScript/Zod is the source for
-frontend-only form validation schemas. Comparing these exports is a separate
-step and must not be replaced with a hand-maintained OpenAPI file.
+FastAPI is the only source for HTTP OpenAPI. TypeScript/Zod is the source for
+frontend-only form validation schemas. `openapi-typescript` generates the
+frontend API types from the backend export; it does not create a second API
+contract. CI fails when committed generated artifacts drift from source.
+
+Orval or Hey API are intentionally not used yet: the frontend currently has a
+small custom `fetch` client and no TanStack Query hook layer. Add a generated
+client only when that client abstraction is actually adopted.
