@@ -1,4 +1,8 @@
-# HireRank Memory
+# HireRank Memory - Deferred concept
+
+This document describes a deferred post-MVP concept. It is not required by the
+MVP and must not introduce a separate Memory product before candidate and
+vacancy workflows are complete. Evaluation history will be defined later.
 
 **Behavioral SoT for when Memory is written/read in the Automation loop:** [use-cases/UC-08-automation-hitl-loop.md](use-cases/UC-08-automation-hitl-loop.md).
 **Compliance (strict):** [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](GDPR.md) (EU / West).

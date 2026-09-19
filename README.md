@@ -1,20 +1,25 @@
 # HireRank
 
-**HireRank** is an on-premise ATS with **HireRank Automation**: AI Automation **events** with **HITL** via **MCP tools**, with **[Memory](docs/MEMORY.md)** storing option-choice history — for hiring **bureaucracy**.
-**North star:** [docs/use-cases/](docs/use-cases/) (MVP) + strict [ATS_COMPLIANCE_RK.md](docs/ATS_COMPLIANCE_RK.md) (RK) + [GDPR.md](docs/GDPR.md) (EU / West).
+**HireRank** is an ATS for HR teams. The MVP provides vacancy CRUD, HTML
+resume intake, candidate-to-vacancy attachment, and a manual candidate
+pipeline. LLM recommendations are post-MVP.
+**North star:** [docs/use-cases/](docs/use-cases/) + strict privacy and
+personal-data requirements in [docs/laws/](docs/laws/).
 
 ```text
-Domain event → Automation (MCP options) → Telegram HITL → FastMCP (`tenant_id`) → Memory (MEMORY.md)
+Vacancy → HTML resume form → candidate attached to vacancy → HR status update
 ```
 
-> Automation only **suggests** bureaucracy next steps. A human picks in Telegram; MCP executes; Outcome goes to Memory. AI never auto-hires or auto-rejects. MVP event: `resume.uploaded`; more events later ([UC-08](docs/use-cases/UC-08-automation-hitl-loop.md)).
+> The MVP does not require an LLM, MCP, n8n, Telegram, or WhatsApp. Post-MVP,
+> an HR-defined prompt may produce explainable recommendations that HR confirms
+> before the candidate status changes ([UC-08](docs/use-cases/UC-08-automation-hitl-loop.md)).
 
 | Plane | Role |
 |-------|------|
 | **HireRank** | Domain ATS + storage + Admin |
-| **Automation** | Events + HITL: MCP-backed options ([AUTOMATION.md](docs/AUTOMATION.md); SoT [UC-08](docs/use-cases/UC-08-automation-hitl-loop.md)) |
-| **FastMCP** | Selected action only, under `tenant_id` |
-| **n8n** | Telegram / email delivery (not the automation brain) |
+| **ATS MVP** | Vacancies, resumes, candidates, statuses, and access control |
+| **Future LLM** | Prompt-based analysis and HR-confirmed recommendations |
+| **Future delivery** | Web first; Telegram or WhatsApp only after the core workflow |
 
 ## Core, Enterprise & SaaS
 
@@ -75,4 +80,5 @@ Core auth defaults to `TOKEN_STORE=memory`. Set `TOKEN_STORE=redis` when you sca
 
 ## MVP
 
-Phase 1: human ATS loop. Phase 2: bureaucracy Automation events + HITL + MCP + [Memory](docs/MEMORY.md) ([UC-08](docs/use-cases/UC-08-automation-hitl-loop.md)). See [ROADMAP.md](docs/ROADMAP.md).
+Phase 1: working ATS without LLM. Phase 2: LLM recommendations for HR.
+See [ROADMAP.md](docs/ROADMAP.md).

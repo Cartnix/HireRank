@@ -1,17 +1,23 @@
 # HIRERANK — Product Vision & Goals
 
-Behavioral Source of Truth: [use-cases/](use-cases/) (Automation HITL: [UC-08](use-cases/UC-08-automation-hitl-loop.md)).
-**Compliance (strict):** [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](GDPR.md) (EU / West). See north star in [use-cases/README.md](use-cases/README.md).
+Behavioral Source of Truth: [use-cases/](use-cases/) (MVP: UC-01 through UC-07).
+**Compliance (strict):** [ATS_COMPLIANCE_RK.md](laws/ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](laws/GDPR.md) (EU / West). See north star in [use-cases/README.md](use-cases/README.md).
 
 ## The ATS for High-Volume Applicant Flow
 
-**HIRERANK** — On-Premise ATS with **HireRank Automation**: AI Automation **events** with **HITL**, executed via **MCP tools**, with **[Memory](MEMORY.md)** storing the history of option choices — for hiring **bureaucracy** (interview, assign, paperwork, …), not a resume calculator.
+**HIRERANK** — an ATS for HR teams. The MVP manages vacancies, receives HTML
+resume forms, attaches candidates to vacancies, and tracks the hiring pipeline.
+Prompt-based LLM recommendations are post-MVP.
 
-MVP event: `resume.uploaded`. The same loop extends to further domain events later ([UC-08](use-cases/UC-08-automation-hitl-loop.md)).
+The MVP has no required event broker or LLM. After the ATS flow is stable,
+[UC-08](use-cases/UC-08-automation-hitl-loop.md) adds resume analysis against
+an HR prompt and human-confirmed recommendations.
 
-> **Pith (pitch):** HIRERANK turns management instructions into automatic *suggestions* for bureaucratic next steps: event → MCP-backed options → Telegram HITL → MCP under `tenant_id` → choice into Memory. The agency stops depending on key-HR turnover — the process asset stays with the tenant.
+> **Pith (pitch):** HIRERANK gives HR one place to create vacancies, collect
+> resumes, attach candidates, and make traceable hiring decisions.
 
-> Architecturally, **HIRERANK ≠ casual ATS AI** (scoring + chatbot). See [How Automation Differs](#how-automation-differs-from-ats-today).
+> Future AI supports HR with evidence-based recommendations; it does not
+> replace the HR decision or the ATS workflow.
 
 ---
 
@@ -37,21 +43,20 @@ Major tech, manufacturing, and government organizations face three parallel cris
 
 | Hole | Essence | HIRERANK response |
 |------|------|----------------|
-| Invisibility through rank | Soft-reject without audit | No silent rank-graves; queue + HITL buttons for bureaucracy steps |
-| Keyword feeds AI-slop | Stuffing beats matcher | Evidence + tenant [Memory](MEMORY.md), not denser score |
+| Resume lost in mail or spreadsheets | Candidate disappears from the process | Vacancy attachment and visible pipeline |
+| LLM recommendation without context | HR cannot verify the result | Prompt, evidence, rationale, and human confirmation |
 | Parser breaks format | Candidate "missing" | Fail-soft parse + flag to human |
 | Auto-disposition (HiredScore / *Mobley v. Workday*) | Filter to human eye | Automation **only suggests**; human clicks button |
-| Black-box fit | No "why" | Telegram: Memory + 2–3 MCP options with rationale |
-| AI in the recruiter's office | The manager doesn't see it | Telegram/email is the primary HITL surface |
-| No orchestration | Resume base ≠ process | Automation events + HITL + MCP + Memory |
+| Black-box fit | No "why" | Future LLM output must include evidence and rationale |
+| AI in the recruiter's office | The manager does not see it | Web is the first review surface |
+| No workflow | Resume base is disconnected from vacancies | Candidate-to-vacancy pipeline |
 
 ---
 
-## Will There Be a Moat?
+## Product direction after MVP
 
-**Yes.** Moat is not “another LLM wrapper” or ATS UI.
-
-**Moat statement:** AI Automation **events** with **HITL**, executed via **MCP tools**, with **[MEMORY.md](MEMORY.md)** storing the history of Automation option choices — for **bureaucracy**. The same event → HITL → MCP → Memory loop extends beyond MVP `resume.uploaded`.
+The next product layer may add prompt-based LLM analysis. It is not required for
+the ATS MVP and must remain subordinate to the vacancy and candidate workflow.
 
 | Layer | What compounds | Why hard to copy quickly |
 |------|----------------|--------------------------|
@@ -67,9 +72,10 @@ Behavioral detail: [UC-08](use-cases/UC-08-automation-hitl-loop.md).
 
 ---
 
-## How Automation Differs from ATS Today
+## Post-MVP LLM direction
 
-HIRERANK Automation — **event-driven bureaucracy automation with HITL**, not a standing decision engine. Behavior SoT: [UC-08](use-cases/UC-08-automation-hitl-loop.md).
+HireRank may analyze an attached resume against HR criteria and return up to
+three explainable recommendations. See [UC-08](use-cases/UC-08-automation-hitl-loop.md).
 
 ### What is in ATS AI (not a HIRERANK hero)
 
@@ -126,13 +132,13 @@ flowchart TB
 
 | Doc | Purpose |
 |-----|---------|
-| **[use-cases/](use-cases/)** | **Behavioral Source of Truth** (UC-01…UC-08) — MVP north star |
-| **[ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md)** | **RK law / ATS compliance — strict** |
-| **[GDPR.md](GDPR.md)** | **EU / West privacy & Art. 22 HITL — strict** |
+| **[use-cases/](use-cases/)** | **Behavioral Source of Truth** (MVP: UC-01…UC-07) |
+| **[ATS_COMPLIANCE_RK.md](laws/ATS_COMPLIANCE_RK.md)** | **RK law / ATS compliance — strict** |
+| **[GDPR.md](laws/GDPR.md)** | **EU / West privacy and human oversight — strict** |
 | [PRODUCT.md](PRODUCT.md) | Problem, UVP, JTBD, anti-patterns |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | HireRank / Automation / FastMCP / n8n planes |
-| [AUTOMATION.md](AUTOMATION.md) | Implements UC-08 (detail, not SoT) |
-| [MEMORY.md](MEMORY.md) | Option-choice history + other run memory |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | MVP ATS planes and post-MVP boundary |
+| [AUTOMATION.md](AUTOMATION.md) | Archived post-MVP design reference |
+| [MEMORY.md](MEMORY.md) | Deferred evaluation-history concept |
 | [ROADMAP.md](ROADMAP.md) | Delivery phases |
 | [FEAUTERS.md](FEAUTERS.md) | Feature catalog (must match use-cases) |
 | [openapi/](openapi/) | REST API contract |

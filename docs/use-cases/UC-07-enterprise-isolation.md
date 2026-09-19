@@ -12,11 +12,11 @@ Flow:
 2. System resolves the tenant from JWT.
 3. System filters all data by the same tenant.
 4. Access to foreign tenant data is rejected.
-5. MCP tools likewise refuse cross-tenant mutations.
+5. Future LLM evaluation and notification data follow the same tenant boundary.
 
 DoD:
 - All tenant-scoped entities are filtered by `tenant_id`.
 - A user cannot read or modify another tenant's data.
 - Candidate cannot access vacancies from another tenant.
-- [Memory](../MEMORY.md) (Outcomes / option-choice history for bureaucracy Automation, plus other run memory) is tenant-scoped. Automation HITL behavior: [UC-08](UC-08-automation-hitl-loop.md).
+- Candidate resumes, vacancies, applications, and future evaluation records are tenant-scoped.
 - Cross-tenant requests fail with `403` or `404` depending on the endpoint.

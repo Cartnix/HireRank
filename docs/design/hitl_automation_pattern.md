@@ -1,4 +1,7 @@
-# HireRank HITL Automation Pattern
+# HireRank HITL Automation Pattern - Archived design reference
+
+This is a non-MVP design reference. Do not use it to define current scope;
+follow [ROADMAP.md](../ROADMAP.md) and [use-cases/](../use-cases/) instead.
 
 > **Design reference (non-canon).** Deep dive into event-driven Automation + HITL. **Behavioral Source of Truth:** [use-cases/](../use-cases/) ([UC-08](../use-cases/UC-08-automation-hitl-loop.md)). **Compliance (strict):** [ATS_COMPLIANCE_RK.md](../ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](../GDPR.md). Detail: [AUTOMATION.md](../AUTOMATION.md), [MEMORY.md](../MEMORY.md).
 

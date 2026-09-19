@@ -1,4 +1,8 @@
-# HireRank Automation — Event-Driven AI-native Automation + HITL
+# HireRank Automation - Archived post-MVP design
+
+This document is not part of the MVP and is not an implementation plan for the
+current phase. The active plan is [ROADMAP.md](ROADMAP.md); the post-MVP LLM
+behavior is defined in [UC-08](use-cases/UC-08-automation-hitl-loop.md).
 
 **Implements** behavioral SoT: [use-cases/UC-08-automation-hitl-loop.md](use-cases/UC-08-automation-hitl-loop.md).
 **Compliance (strict):** [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](GDPR.md) (EU / West).

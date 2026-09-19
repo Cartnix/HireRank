@@ -9,16 +9,16 @@ Preconditions:
 - Tenant is resolved from JWT `tenant_id` (Core: singleton TENANT_ID)
 
 Flow:
-1. HR opens the candidate intake screen.
-2. HR submits a JSON questionnaire.
+1. HR/operator opens the candidate intake screen.
+2. HR/operator uploads or completes an HTML resume form.
 3. System validates the payload and tenant scope.
-4. Candidate profile is created.
-5. Candidate is added to the tenant pool.
-6. Event `resume.uploaded` is published for Automation (behavioral SoT: [UC-08](UC-08-automation-hitl-loop.md)).
-7. Notification is created.
+4. Candidate profile and resume reference are created.
+5. HR/operator selects a vacancy and attaches the candidate to it.
+6. Candidate is added to the vacancy pipeline.
 
 DoD:
 - Only authenticated HR can perform the flow.
-- Payload is processed as JSON.
+- HTML form data and the resume reference are stored.
 - Candidate belongs to the same tenant.
-- `resume.uploaded` is published; Automation may propose HITL bureaucracy options (UC-08) — no auto-disposition; choices land in [Memory](../MEMORY.md).
+- Candidate can be viewed and processed from the selected vacancy.
+- No LLM integration is required for the MVP.

@@ -2,15 +2,17 @@
 
 ## Overview
 
-This document describes the functional capabilities of the **HireRank** (HIRERANK) platform with **HireRank Automation** (bureaucracy Automation events + HITL).
+This document describes the functional capabilities of HireRank. MVP features
+are the ATS workflow; LLM analysis and messaging channels are post-MVP.
 
-**Behavioral Source of Truth:** [use-cases/](use-cases/) ([UC-08](use-cases/UC-08-automation-hitl-loop.md)).
-**Compliance (strict):** [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](GDPR.md) (EU / West).
-Vision: [PASSPORT.md](PASSPORT.md). Detail: [AUTOMATION.md](AUTOMATION.md). Delivery: [ROADMAP.md](ROADMAP.md). Features must not invent behavior beyond use-cases or weaken compliance.
+**Behavioral Source of Truth:** [use-cases/](use-cases/) (MVP: UC-01 through UC-07).
+**Compliance (strict):** [ATS_COMPLIANCE_RK.md](laws/ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](laws/GDPR.md) (EU / West).
+Vision: [PASSPORT.md](PASSPORT.md). Post-MVP detail: [UC-08](use-cases/UC-08-automation-hitl-loop.md). Delivery: [ROADMAP.md](ROADMAP.md). Features must not invent behavior beyond use-cases or weaken compliance.
 
 It does not include technical implementation details and is used as a requirements source for development.
 
-Data isolation: `tenant_id` (JWT).
+Data isolation: `tenant_id` (JWT). The MVP does not require an LLM, MCP, n8n,
+Telegram, WhatsApp, or Memory.
 
 ---
 
@@ -104,23 +106,24 @@ After registration, an account is created.
 
 ## Description
 
-After registration, the candidate fills a personnel questionnaire and submits it as JSON.
+After registration, the candidate fills and submits an HTML resume form.
 
 The questionnaire follows the personnel record form structure (personal sheet / HR intake form).
 
 ### Capabilities
 
-* save questionnaire;
-* edit questionnaire before submit;
+* save resume data;
+* upload or reference a resume file;
+* edit the form before processing;
 * view entered data;
-* publish `resume.uploaded` for Automation after save.
+* select or request attachment to an open vacancy.
 
 ### DoD
 
-* questionnaire accepted as a JSON payload;
+* HTML resume form accepted and stored;
 * candidate profile created or updated after save;
 * candidate status set to `Unassigned`;
-* candidate placed in the tenant pool and Automation cycle initiated (see F-020).
+* candidate placed in the tenant pool.
 
 ---
 
@@ -134,10 +137,9 @@ Used when the candidate is present in person and HR transfers data from a paper 
 
 ### DoD
 
-* system accepts questionnaire JSON;
+* system accepts the HTML resume form and resume reference;
 * candidate record enters the tenant pool;
-* `resume.uploaded` published for Automation;
-* notification created.
+* HR can attach the candidate to an open vacancy.
 
 ---
 
@@ -336,30 +338,29 @@ Each user has a personal profile.
 
 ---
 
-# F-020 Automation HITL Cycle
+# F-020 Post-MVP LLM Evaluation
 
 ## Description
 
-**HireRank Automation** automates hiring **bureaucracy** via domain **events** + **HITL** + **MCP** + **[Memory](MEMORY.md)** — not a black box, not a standing decision engine, not a score dashboard. Behavioral SoT: [UC-08](use-cases/UC-08-automation-hitl-loop.md).
+This is a post-MVP feature. It analyzes an attached resume against an HR-defined
+vacancy prompt and returns explainable recommendations. Behavioral SoT:
+[UC-08](use-cases/UC-08-automation-hitl-loop.md).
 
 On a matching event (MVP `resume.uploaded`; further events later), a short-lived agent run loads the automation definition, builds context (domain payload, vacancies, Memory option-choice history, MCP schemas), generates **2–3 MCP-backed bureaucracy options**, notifies managers by email and delivers options in Telegram as a HITL captcha, and only after a human selection executes the chosen tool via MCP under `tenant_id`, writing the **Outcome** into Memory.
 
 ### Capabilities
 
-* trigger on `resume.uploaded` (candidate or HR intake); extensible to other domain events (UC-08 Notes);
-* load automation definition (prompt + tools + model + tenant scope);
-* read domain payload, vacancies, [Memory](MEMORY.md), and MCP schemas;
-* generate 2–3 bureaucracy options with rationale (local LLM / Ollama);
-* SMTP awareness + Telegram delivery via n8n (delivery plane);
-* execute **only** the selected option via FastMCP;
-* write Outcome → [Memory](MEMORY.md) (option-choice history; other run memory TBD);
-* destroy the agent run after completion.
+* load the HR prompt and vacancy criteria;
+* analyze the attached resume;
+* return up to three recommendations with evidence and rationale;
+* require HR confirmation before changing candidate status;
+* show the result in the web app before adding Telegram or WhatsApp.
 
 ### Ban
 
-* AI does not make final hire/reject decisions;
+* AI does not change candidate status without HR confirmation;
 * no silent auto-disposition;
-* score 0–10 / rank-list is **not** a product hero artifact.
+* every recommendation includes rationale and audit data.
 
 ### DoD (strict gate)
 
