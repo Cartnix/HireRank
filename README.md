@@ -16,10 +16,9 @@ Vacancy → HTML resume form → candidate attached to vacancy → HR status upd
 
 | Plane | Role |
 |-------|------|
-| **HireRank** | Domain ATS + storage + Admin |
+| **HireRank** | Domain ATS, storage, and administration |
 | **ATS MVP** | Vacancies, resumes, candidates, statuses, and access control |
-| **Future LLM** | Prompt-based analysis and HR-confirmed recommendations |
-| **Future delivery** | Web first; Telegram or WhatsApp only after the core workflow |
+| **Post-MVP** | Prompt-based LLM recommendations confirmed by HR |
 
 ## Core, Enterprise & SaaS
 
@@ -37,36 +36,24 @@ This repository is **Core** (Open Source self-host). Enterprise and SaaS reuse t
 
 **Auth sessions:** one company + one backend process → memory is fine. Several FastAPI copies behind a balancer → Redis, or refresh/logout desync. SaaS always Redis with keys like `tenant:{tenant_id}:refresh:{jti}` so one company can be locked out without touching others.
 
-See [SELF-HOSTED.md](docs/SELF-HOSTED.md) and [RBAC.md](docs/RBAC.md).
+See [RBAC.md](docs/RBAC.md) for access and session behavior.
 
 ## Docs
 
 | Doc | Purpose |
 |-----|---------|
 | **[use-cases/](docs/use-cases/)** | **Behavioral Source of Truth** (MVP north star) |
-| **[ATS_COMPLIANCE_RK.md](docs/ATS_COMPLIANCE_RK.md)** | **RK compliance — strict** |
-| **[GDPR.md](docs/GDPR.md)** | **EU / West privacy — strict** |
-| [PASSPORT.md](docs/PASSPORT.md) | Product vision & moat |
-| [PRODUCT.md](docs/PRODUCT.md) | UVP, JTBD, anti-patterns |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | HireRank + Automation + MCP + n8n planes |
-| [SELF-HOSTED.md](docs/SELF-HOSTED.md) | Core deploy defaults & token store |
+| **[ATS_COMPLIANCE_RK.md](docs/laws/ATS_COMPLIANCE_RK.md)** | **RK compliance — strict** |
+| **[GDPR.md](docs/laws/GDPR.md)** | **EU / West privacy — strict** |
+| [ROADMAP.md](docs/ROADMAP.md) | Delivery phases and current focus |
 | [RBAC.md](docs/RBAC.md) | Roles, JWT, token store |
-| [AUTOMATION.md](docs/AUTOMATION.md) | Implements UC-08 (detail) |
-| [MEMORY.md](docs/MEMORY.md) | Option-choice history + run memory |
-| [COMPLIANCE_AUDIT_ISSUE_33.md](docs/COMPLIANCE_AUDIT_ISSUE_33.md) | GDPR + RK ATS compliance audit with must-fix and MVP waiver statuses |
-| [SOT_COMPLIANCE_AUDIT_ISSUE_34.md](docs/SOT_COMPLIANCE_AUDIT_ISSUE_34.md) | UC-to-OpenAPI-to-backend traceability audit for issue #34 |
-| [ROADMAP.md](docs/ROADMAP.md) | Delivery phases |
-| [FEAUTERS.md](docs/FEAUTERS.md) | Feature catalog (must match use-cases) |
 | [openapi/](docs/openapi/) | REST API contract |
 
 ## Stack
 
 | Area | Tech |
 |------|------|
-| HireRank | Next.js, FastAPI, PostgreSQL, Redis (optional for Core auth), S3, Celery |
-| Automation | Ollama + event worker / agent run orchestration |
-| Execution | FastMCP |
-| Delivery | n8n (Telegram, email, webhooks) |
+| HireRank | Next.js, FastAPI, PostgreSQL, Redis (optional for Core auth), S3 |
 | Edge / ops | Traefik, Cloudflare, Compose |
 
 ## Quick start
