@@ -19,6 +19,8 @@ jobs:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ci-password
       POSTGRES_DB: hirerank
+      FIRST_SUPERUSER: ci@example.com
+      FIRST_SUPERUSER_PASSWORD: ci-contracts-password
 
     steps:
       - name: Checkout
