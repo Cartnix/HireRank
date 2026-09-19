@@ -8,7 +8,7 @@ Roles and permission matrix for the self-hosted (Core) ATS.
 |------|-------------|
 | `administrator` | Admin panel and user management; full vacancy CRUD; resume upload |
 | `hr` | Candidate intake; vacancy CRUD; resume upload |
-| `manager` | Read vacancies; scoped candidate read (assigned + pending HITL); HITL decisions via Telegram |
+| `manager` | Read vacancies and scoped candidate records |
 | `recruiter` | Resume upload; read all enterprise vacancies |
 | `candidate` | Resume upload; read vacancies; own candidate profile |
 
@@ -33,10 +33,12 @@ Stored in PostgreSQL tables `role`, `permission`, and `role_permission` (M2M). S
 | `candidate.create` | yes | yes | no | no | no |
 | `candidate.update` | yes | yes | no | no | own (ABAC) |
 | `candidate.delete` | yes | no | no | no | no |
-| `application.assign` | yes | no | no | no | no |
+| `application.assign` | yes | yes | no | no | no |
 | `application.read` | yes | yes | yes | no | no |
 
-Manager scope and candidate “own” checks are enforced on domain endpoints (ABAC), not only by the static matrix.
+Manager scope and candidate “own” checks are enforced on domain endpoints
+(ABAC), not only by the static matrix. HR can attach candidates to vacancies in
+the MVP.
 
 ### Hybrid enforcement
 

@@ -1,6 +1,8 @@
 # HireRank ATS database schema
 
-Persistence substrate for MVP ATS domain tables (issue #24). Behavioral Source of Truth remains [use-cases/](use-cases/). This document maps tables onto UC-01…08 — it must not invent behavior.
+Persistence substrate for the ATS MVP. Behavioral Source of Truth remains
+[use-cases/](use-cases/). This document describes storage and relationships; it
+must not invent product behavior.
 
 **Compliance:** [ATS_COMPLIANCE_RK.md](laws/ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](laws/GDPR.md) (EU / West). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md). RBAC/RLS: [RBAC.md](RBAC.md).
 
@@ -11,7 +13,7 @@ Persistence substrate for MVP ATS domain tables (issue #24). Behavioral Source o
 | ---------------- | -------------------------------------------------------------------------------- |
 | `vacancy`        | OpenAPI/UC vacancy                                                               |
 | `pipeline_stage` | Per-vacancy hiring stages (`UNIQUE (vacancy_id, sort_order)`)                    |
-| `candidate`      | Pool profile: `questionnaire` JSONB, `resume_url`, SoT status enum               |
+| `candidate`      | Pool profile: structured resume data, `resume_url`, and status enum              |
 | `application`    | Join vacancy↔candidate (`UNIQUE (vacancy_id, candidate_id)`); `current_stage_id` |
 | `interview`      | Scheduled interview on an application                                            |
 | `scorecard`      | **Human** interview feedback (`rating` 1–5 + notes) — not AI auto-scoring        |
@@ -19,9 +21,11 @@ Persistence substrate for MVP ATS domain tables (issue #24). Behavioral Source o
 
 OpenAPI `assigned_vacancy_id` is an **API projection** of the active `application` row — not a DB column.
 
-### Scorecard ≠ product scoring
+### Evaluation boundary
 
-PRODUCT / UC-08 ban silent rank and auto hire/reject. `scorecard` stores interviewer notes after a human interview. Automation never dispositions a candidate from score alone.
+`scorecard` stores human interview notes after a human interview. Any future
+LLM evaluation is a separate post-MVP record and cannot silently change a
+candidate status.
 
 ## RLS
 
@@ -38,38 +42,36 @@ Runtime: `SET LOCAL ROLE hirerank_app` (NOBYPASSRLS) + transaction-local GUC via
 ## Table → use-case map
 
 
-| UC    | Persistence usage (CRUD/MCP later)                                                                 |
+| UC    | Persistence usage                                                                          |
 | ----- | -------------------------------------------------------------------------------------------------- |
-| UC-01 | `INSERT candidate` (`unassigned`, questionnaire, `resume_url`) → event `resume.uploaded`           |
-| UC-02 | Same insert under HR                                                                               |
-| UC-03 | Vacancy CRUD; seed default `pipeline_stage` rows                                                   |
-| UC-04 | `INSERT application` + `candidate.status=assigned`                                                 |
-| UC-05 | Tenant-scoped SELECT of vacancies/applications/candidates                                          |
-| UC-06 | Admin over users + vacancies/applications                                                          |
-| UC-07 | FORCE RLS on all six tables; empty GUC fails closed                                                |
-| UC-08 | MCP after HITL may advance stage, insert `interview`, archive application — never auto-hire/reject |
+| UC-01 | Create/update candidate and resume record with status `unassigned`                       |
+| UC-02 | Create candidate and resume record under HR/operator access                               |
+| UC-03 | Vacancy CRUD; seed default `pipeline_stage` rows                                          |
+| UC-04 | Insert `application` linking candidate to vacancy; update candidate status                |
+| UC-05 | Tenant-scoped read of vacancies, applications, and candidates                             |
+| UC-06 | Administrator access to users and ATS administration                                     |
+| UC-07 | FORCE RLS on all ATS tables; empty GUC fails closed                                      |
+| UC-08 | Future evaluation draft and confirmed HR action; not required by the MVP                 |
 
 
 
 
-## Example: resume upload → bureaucracy HITL
+## MVP flow: resume intake → vacancy pipeline
 
 ```text
-UC-01/02 submit → INSERT candidate (unassigned, resume_url)
-  → publish resume.uploaded
-  → Automation (UC-08) reads open vacancies + Memory under tenant_id
-  → Telegram HITL: 2–3 MCP options (no auto hire)
-  → human picks e.g. invite_interview
-  → FastMCP: INSERT application (current_stage=Interview),
-             INSERT interview, UPDATE candidate status
-  → Outcome → Memory (later storage)
+UC-01/02 submit HTML resume form → INSERT candidate (unassigned, resume_url)
+  → HR/operator selects vacancy
+  → INSERT application (candidate, vacancy, current_stage)
+  → HR updates candidate status in the pipeline
 ```
 
-Pool / flood intake: candidates with no active `application` and `status=unassigned` until UC-04 or MCP assign.
+Pool intake: candidates with no active `application` and `status=unassigned`
+until an HR/operator attaches them to a vacancy.
 
 ## Non-goals of the schema issue
 
-Schema issue (#24) did not ship HTTP. Vacancy/candidate/assign/dashboard HTTP is covered by issue #30. Still separate: Automation worker, Memory tables, S3 gateway, AI scoring, interview/scorecard HTTP.
+The database schema is separate from HTTP. Resume file storage, candidate
+evaluation records, and interview/scorecard HTTP remain separate follow-up work.
 
 ## TDD security coverage (Defense-in-Depth)
 
@@ -113,7 +115,9 @@ Dual-role pattern: seed Tenant Alpha (Core) + Tenant Omega (attacker); assert au
 | Dashboard flood                                  | 429 (sliding window)   | Covered — `enforce_dashboard_rate_limit`     |
 
 
-Routes: `/api/v1/vacancies`, `/api/v1/candidates` (+ assign, questionnaire, resume-url), `/api/v1/dashboard`. Event stub: `app.ats.events.publish_resume_uploaded`. Interview/scorecard HTTP still deferred (UC-08).
+Routes: `/api/v1/vacancies`, `/api/v1/candidates` (+ assign, questionnaire,
+resume-url), `/api/v1/dashboard`. Resume upload and HTML intake remain part of
+the current MVP roadmap.
 
 ### checklist mapping
 

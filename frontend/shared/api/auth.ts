@@ -4,9 +4,9 @@ import { getApiV1Url } from "@/shared/config/env";
 import type { ConsentPayload } from "@/features/auth/model/FormSchema";
 
 /** Generated OpenAPI schema aliases — import here, not a hand-maintained mega-types file. */
-export type UserPublic = components["schemas"]["User"];
+export type UserPublic = components["schemas"]["UserPublic"];
 export type AuthSession = components["schemas"]["AuthSession"];
-export type RegisterPayload = components["schemas"]["RegisterRequest"];
+export type RegisterPayload = components["schemas"]["UserRegister"];
 
 export async function login(email: string, password: string): Promise<AuthSession> {
   return apiFetch<AuthSession>("/auth/login", {
