@@ -7,6 +7,9 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 import structlog
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.models import Application, Notification
 
 logger = structlog.get_logger()
 
@@ -42,6 +45,24 @@ def published_events() -> list[ResumeUploadedEvent]:
 
 def application_events() -> list[ApplicationCreatedEvent]:
     return list(_APPLICATION_EVENTS)
+
+
+async def deliver_application_notification(
+    *,
+    session: AsyncSession,
+    application: Application,
+    recipient_user_id: uuid.UUID,
+) -> Notification:
+    notification = Notification(
+        tenant_id=application.tenant_id,
+        recipient_user_id=recipient_user_id,
+        kind="application.created",
+        title="New candidate application",
+        body="A candidate applied to your vacancy.",
+        entity_id=application.id,
+    )
+    session.add(notification)
+    return notification
 
 
 def publish_application_created(

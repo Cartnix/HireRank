@@ -382,6 +382,11 @@ async def apply_to_vacancy(
         updated_at=_now(),
     )
     session.add(application)
+    await ats_events.deliver_application_notification(
+        session=session,
+        application=application,
+        recipient_user_id=vacancy.created_by,
+    )
     try:
         await session.commit()
     except IntegrityError:

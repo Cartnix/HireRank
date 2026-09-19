@@ -569,6 +569,28 @@ class Application(SQLModel, table=True):
     interviews: list["Interview"] = Relationship(back_populates="application")
 
 
+class Notification(SQLModel, table=True):
+    __tablename__ = "notification"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id", name="uq_notification_tenant_id"),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", index=True, nullable=False)
+    recipient_user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, index=True
+    )
+    kind: str = Field(max_length=100, nullable=False, index=True)
+    title: str = Field(max_length=255, nullable=False)
+    body: str = Field(nullable=False)
+    entity_id: uuid.UUID | None = Field(default=None, index=True)
+    read_at: datetime | None = Field(default=None)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
 class Interview(SQLModel, table=True):
     __tablename__ = "interview"
     __table_args__ = (
