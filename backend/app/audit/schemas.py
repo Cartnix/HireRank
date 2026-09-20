@@ -51,6 +51,8 @@ class AuditAction(StrEnum):
     CONSENT_UPDATE = "auth.consent.update"
     FORGET_ME = "auth.forget_me"
     LEGAL_ACCEPT = "auth.legal.accept"
+    APPLICATION_CREATED = "application.created"
+    APPLICATION_DUPLICATE = "application.duplicate"
 
 
 def hash_email(email: str) -> str:

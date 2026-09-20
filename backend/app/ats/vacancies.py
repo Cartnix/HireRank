@@ -39,6 +39,7 @@ async def _assigned_candidate_ids(
     rows = (
         await session.exec(
             select(Application.candidate_id).where(
+                Application.tenant_id == settings.TENANT_ID,
                 Application.vacancy_id == vacancy_id,
                 Application.status == ApplicationStatus.ACTIVE,
             )
@@ -47,7 +48,9 @@ async def _assigned_candidate_ids(
     return list(rows)
 
 
-async def to_public(session: AsyncSession, vacancy: Vacancy) -> VacancyPublic:
+async def to_public(
+    session: AsyncSession, vacancy: Vacancy, *, include_assigned: bool = True
+) -> VacancyPublic:
     stages = (
         await session.exec(
             select(PipelineStage)
@@ -55,7 +58,9 @@ async def to_public(session: AsyncSession, vacancy: Vacancy) -> VacancyPublic:
             .order_by(col(PipelineStage.sort_order))
         )
     ).all()
-    assigned = await _assigned_candidate_ids(session, vacancy.id)
+    assigned = (
+        await _assigned_candidate_ids(session, vacancy.id) if include_assigned else []
+    )
     return VacancyPublic(
         id=vacancy.id,
         tenant_id=vacancy.tenant_id,
@@ -108,7 +113,13 @@ async def create_vacancy(
 async def get_vacancy(
     *, session: AsyncSession, vacancy_id: uuid.UUID
 ) -> Vacancy | None:
-    return (await session.exec(select(Vacancy).where(Vacancy.id == vacancy_id))).first()
+    return (
+        await session.exec(
+            select(Vacancy).where(
+                Vacancy.id == vacancy_id, Vacancy.tenant_id == settings.TENANT_ID
+            )
+        )
+    ).first()
 
 
 async def list_vacancies(
@@ -121,8 +132,14 @@ async def list_vacancies(
 ) -> tuple[list[Vacancy], Pagination]:
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
-    count_stmt = select(func.count()).select_from(Vacancy)
-    list_stmt = select(Vacancy).order_by(col(Vacancy.created_at).desc())
+    count_stmt = select(func.count()).select_from(Vacancy).where(
+        Vacancy.tenant_id == settings.TENANT_ID
+    )
+    list_stmt = (
+        select(Vacancy)
+        .where(Vacancy.tenant_id == settings.TENANT_ID)
+        .order_by(col(Vacancy.created_at).desc())
+    )
     if status_filter is not None:
         count_stmt = count_stmt.where(Vacancy.status == status_filter)
         list_stmt = list_stmt.where(Vacancy.status == status_filter)
@@ -201,7 +218,10 @@ async def first_stage(
     return (
         await session.exec(
             select(PipelineStage)
-            .where(PipelineStage.vacancy_id == vacancy_id)
+            .where(
+                PipelineStage.vacancy_id == vacancy_id,
+                PipelineStage.tenant_id == settings.TENANT_ID,
+            )
             .order_by(col(PipelineStage.sort_order))
             .limit(1)
         )
@@ -220,6 +240,7 @@ async def validate_stage_for_vacancy(
             select(PipelineStage).where(
                 PipelineStage.id == stage_id,
                 PipelineStage.vacancy_id == vacancy_id,
+                PipelineStage.tenant_id == settings.TENANT_ID,
             )
         )
     ).first()

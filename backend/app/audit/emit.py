@@ -24,6 +24,7 @@ async def emit_auth_audit(
     tenant_id: UUID | None = None,
     user_id: UUID | None = None,
     entity_id: UUID | None = None,
+    entity_type: str = "user",
     metadata: dict[str, Any] | None = None,
     force_sync: bool = False,
 ) -> None:
@@ -43,7 +44,7 @@ async def emit_auth_audit(
     await get_audit_service().log(
         background_tasks=background_tasks,
         action=str(action),
-        entity_type="user",
+        entity_type=entity_type,
         entity_id=entity_id or user_id,
         payload=metadata or {},
         tenant_id=tenant_id or settings.TENANT_ID,

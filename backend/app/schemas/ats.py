@@ -88,6 +88,23 @@ class AssignCandidateRequest(BaseModel):
     vacancy_id: uuid.UUID
 
 
+class ApplyToVacancyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class ApplicationPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tenant_id: uuid.UUID
+    vacancy_id: uuid.UUID
+    candidate_id: uuid.UUID
+    current_stage_id: uuid.UUID
+    status: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
 class CandidatePublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

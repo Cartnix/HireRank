@@ -98,13 +98,15 @@ async def test_dashboard_role_shapes_admin_hr_candidate(
 
     cand_pair = await register_bearer_pair(client, role="candidate")
     cand_headers = {"Authorization": f"Bearer {cand_pair['access_token']}"}
-    cand_user_id = await _user_id(client, cand_headers)
-    async with bypass_rls_session() as seed:
-        await seed.execute(
-            text("UPDATE candidate SET user_id = :uid WHERE id = :cid"),
-            {"uid": cand_user_id, "cid": uuid.UUID(cand["id"])},
-        )
-        await seed.commit()
+    own_candidates = await client.get(f"{CANDIDATES}/", headers=cand_headers)
+    assert own_candidates.status_code == 200, own_candidates.text
+    own_candidate = own_candidates.json()["items"][0]
+    assigned = await client.post(
+        f"{CANDIDATES}/{own_candidate['id']}/assign",
+        headers=superuser_token_headers,
+        json={"vacancy_id": vac["id"]},
+    )
+    assert assigned.status_code == 200, assigned.text
 
     cand_dash = await client.get(DASHBOARD, headers=cand_headers)
     assert cand_dash.status_code == 200, cand_dash.text
@@ -373,7 +375,9 @@ async def test_candidate_list_filters_and_role_scope(
 
     self_list = await client.get(f"{CANDIDATES}/", headers=cand_headers)
     assert self_list.status_code == 200
-    assert {item["id"] for item in self_list.json()["items"]} == {assigned_cand["id"]}
+    self_ids = {item["id"] for item in self_list.json()["items"]}
+    assert assigned_cand["id"] in self_ids
+    assert len(self_ids) == 2
 
 
 async def test_candidate_crud_edges_assign_reactivate_and_questionnaire(

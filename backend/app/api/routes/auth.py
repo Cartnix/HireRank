@@ -24,6 +24,7 @@ from app.api.deps import (
     bearer_scheme,
     extract_access_token,
 )
+from app.ats import candidates as candidate_svc
 from app.audit.emit import email_hash_metadata, emit_auth_audit
 from app.audit.schemas import AuditAction, hash_email
 from app.auth.consent import (
@@ -75,6 +76,7 @@ from app.models import (
     UserUpdateNames,
     role_str,
 )
+from app.schemas.ats import CreateCandidateRequest
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -190,6 +192,19 @@ async def register(
     await session.commit()
     await session.refresh(user)
     await record_consents(session=session, user=user, consent=body.consent)
+    if body.role == UserRole.CANDIDATE:
+        await candidate_svc.create_candidate(
+            session=session,
+            body=CreateCandidateRequest(
+                email=body.email,
+                questionnaire={
+                    "first_name": body.first_name,
+                    "last_name": body.last_name,
+                },
+            ),
+            user_id=user.id,
+            publish_event=False,
+        )
     pair = await _issue_token_pair(session, user)
     await emit_auth_audit(
         request=request,
