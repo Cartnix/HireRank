@@ -81,16 +81,13 @@ export async function apiFetch<T = unknown>(
     if (
       res.status === 401 &&
       !_retried &&
+      getCsrfToken() &&
       path !== "/auth/refresh" &&
       path !== "/auth/login"
     ) {
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         return apiFetch<T>(path, { ...options, _retried: true });
-      }
-
-      if (typeof window !== "undefined") {
-        window.location.href = "/auth";
       }
     }
 

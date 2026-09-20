@@ -5,6 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onboardingFormSchema, OnboardingFormValues } from "../model/schema";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
+import { useCurrentUser } from "@/shared/api/auth-store";
 import { useRouter } from "next/navigation";
 import { OnBoardingInputs } from "./onBoardingFields";
 import { useOnboarding } from "../useOnboarding";
@@ -12,6 +13,7 @@ import { useOnboarding } from "../useOnboarding";
 export function OnboardingCard() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const router = useRouter();
+  const currentUser = useCurrentUser();
   const { onBoardingSubmit, isLoading } = useOnboarding();
 
   const methods = useForm<OnboardingFormValues>({
@@ -32,7 +34,9 @@ export function OnboardingCard() {
       setSubmitError(result.error.message);
       return;
     }
-    router.push("/dashboard");
+
+    const destination = currentUser?.role === "candidate" ? "/careers" : "/dashboard";
+    router.push(destination);
   };
 
   return (
