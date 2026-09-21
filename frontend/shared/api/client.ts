@@ -15,7 +15,9 @@ export class ApiError extends Error {
 function readCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(
-    new RegExp(`(?:^|; )${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}=([^;]*)`),
+    new RegExp(
+      `(?:^|; )${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}=([^;]*)`,
+    ),
   );
   return match ? decodeURIComponent(match[1]) : null;
 }
@@ -27,13 +29,33 @@ export function getCsrfToken(): string | null {
 type ApiFetchOptions = Omit<RequestInit, "credentials"> & {
   json?: unknown;
   skipCsrf?: boolean;
+  _retried?: boolean;
 };
+
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        await apiFetch("/auth/refresh", { method: "POST" });
+        return true;
+      } catch {
+        return false;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+  }
+
+  return refreshPromise;
+}
 
 export async function apiFetch<T = unknown>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<T> {
-  const { json, skipCsrf, headers: initHeaders, ...rest } = options;
+  const { json, skipCsrf, headers: initHeaders, _retried, ...rest } = options;
   const headers = new Headers(initHeaders);
 
   if (json !== undefined) {
@@ -55,6 +77,19 @@ export async function apiFetch<T = unknown>(
       credentials: "include",
       body: json !== undefined ? JSON.stringify(json) : rest.body,
     });
+
+    if (
+      res.status === 401 &&
+      !_retried &&
+      getCsrfToken() &&
+      path !== "/auth/refresh" &&
+      path !== "/auth/login"
+    ) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        return apiFetch<T>(path, { ...options, _retried: true });
+      }
+    }
 
     if (res.status === 204) {
       return undefined as T;
@@ -83,3 +118,5 @@ export async function apiFetch<T = unknown>(
     throw new ApiError(0, message);
   }
 }
+
+export const apiClient = apiFetch;

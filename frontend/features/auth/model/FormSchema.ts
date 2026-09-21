@@ -9,7 +9,6 @@ const passwordSchema = z
 const REQUIRED_CONSENT_MSG =
   "Согласие на сбор и обработку персональных данных обязательно";
 
-/** RK §1.4 — separated consents, empty by default (no pre-ticks). */
 export const ConsentSchema = z
   .object({
     account_processing: z.literal(true, {
@@ -30,7 +29,6 @@ export const ConsentSchema = z
   });
 
 const registerConsentFields = {
-  // boolean (not z.literal(true)) so RHF defaultValues may start unchecked
   consent_account_processing: z.boolean().refine((v) => v === true, {
     message: REQUIRED_CONSENT_MSG,
   }),
@@ -39,7 +37,6 @@ const registerConsentFields = {
   consent_cross_border_countries: z.string().optional(),
 };
 
-/** Login: no checkboxes — acceptance is implicit via CTA + policy links. */
 export const LoginFormValues = z.object({
   email: emailSchema,
   password: passwordSchema,
@@ -92,15 +89,10 @@ export function parseCountries(raw: string | undefined): string[] {
     .filter(Boolean);
 }
 
-/** Gate for register UI + submit — request must not fire without explicit tick. */
 export function hasRequiredConsent(flags: ConsentFlags): boolean {
   return flags.consent_account_processing === true;
 }
 
-/**
- * Implicit account-processing grant for returning login / OAuth on login view
- * (clicking «Войти» / OAuth = acceptance of linked Terms & PD policy).
- */
 export function implicitLoginConsentPayload(): ConsentPayload {
   return {
     account_processing: true,

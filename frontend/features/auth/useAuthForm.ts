@@ -35,8 +35,6 @@ export const useAuthForm = ({ view, setError, onSuccess }: useAuthFormParams) =>
         email: data.email,
         password: data.password,
         role: data.role,
-        first_name: data.first_name,
-        last_name: data.last_name,
         consent: toConsentPayload(data),
       });
 
@@ -48,7 +46,6 @@ export const useAuthForm = ({ view, setError, onSuccess }: useAuthFormParams) =>
       return;
     }
 
-    // Login: no checkbox gate — Terms/Privacy accepted by clicking «Войти».
     const result = await signIn(data.email, data.password);
     if (result.error) {
       setError("email", { message: result.error.message });

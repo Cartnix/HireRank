@@ -1,35 +1,56 @@
 import { apiFetch } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
-import { getApiV1Url } from "@/shared/config/env";
 import type { ConsentPayload } from "@/features/auth/model/FormSchema";
+import { useAuthStore } from "./auth-store";
 
 /** Generated OpenAPI schema aliases — import here, not a hand-maintained mega-types file. */
 export type UserPublic = components["schemas"]["UserPublic"];
 export type AuthSession = components["schemas"]["AuthSession"];
 export type RegisterPayload = components["schemas"]["UserRegister"];
 
-export async function login(email: string, password: string): Promise<AuthSession> {
-  return apiFetch<AuthSession>("/auth/login", {
+export interface UpdateMePayload {
+  first_name?: string;
+  last_name?: string;
+}
+
+export async function login(
+  email: string,
+  password: string,
+): Promise<AuthSession> {
+  useAuthStore.getState().setLoading();
+
+  const data = await apiFetch<AuthSession>("/auth/login", {
     method: "POST",
     json: { email, password },
     skipCsrf: true,
   });
+
+  await me();
+  return data;
 }
 
 export async function register(payload: RegisterPayload): Promise<AuthSession> {
-  return apiFetch<AuthSession>("/auth/register", {
+  useAuthStore.getState().setLoading();
+
+  const data = await apiFetch<AuthSession>("/auth/register", {
     method: "POST",
     json: payload,
     skipCsrf: true,
   });
+
+  await me();
+  return data;
 }
 
 export async function logout(): Promise<void> {
   await apiFetch<void>("/auth/logout", { method: "POST" });
+  useAuthStore.getState().clear();
 }
 
 export async function me(): Promise<UserPublic> {
-  return apiFetch<UserPublic>("/auth/me");
+  const user = await apiFetch<UserPublic>("/auth/me");
+  useAuthStore.getState().setUser(user);
+  return user;
 }
 
 export async function refresh(): Promise<AuthSession> {
@@ -38,6 +59,16 @@ export async function refresh(): Promise<AuthSession> {
 
 export async function forgetMe(): Promise<void> {
   await apiFetch<void>("/auth/forget-me", { method: "POST" });
+  useAuthStore.getState().clear();
+}
+
+export async function updateMe(payload: UpdateMePayload): Promise<UserPublic> {
+  const user = await apiFetch<UserPublic>("/auth/me", {
+    method: "PATCH",
+    json: payload,
+  });
+  useAuthStore.getState().setUser(user);
+  return user;
 }
 
 export async function checkEmail(
@@ -53,38 +84,10 @@ export async function checkEmail(
 export async function acceptLegal(
   consent?: ConsentPayload,
 ): Promise<UserPublic> {
-  return apiFetch<UserPublic>("/auth/accept-legal", {
+  const user = await apiFetch<UserPublic>("/auth/accept-legal", {
     method: "POST",
     json: consent ? { consent } : {},
   });
-}
-
-/** POST start with consent → follow redirect to IdP (RK §1.4). */
-export async function startOAuth(
-  provider: "google" | "linkedin",
-  consent: ConsentPayload,
-): Promise<void> {
-  const res = await fetch(`${getApiV1Url()}/auth/oauth/${provider}/start`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ consent }),
-    redirect: "manual",
-  });
-  if (res.status >= 300 && res.status < 400) {
-    const loc = res.headers.get("Location");
-    if (loc) {
-      window.location.assign(loc);
-      return;
-    }
-  }
-  // Some browsers hide Location on opaque redirects — fall back to reading JSON error
-  let detail = "OAuth start failed";
-  try {
-    const data = (await res.json()) as { detail?: string };
-    if (data.detail) detail = data.detail;
-  } catch {
-    /* ignore */
-  }
-  throw new Error(detail);
+  useAuthStore.getState().setUser(user);
+  return user;
 }
