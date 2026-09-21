@@ -1,42 +1,107 @@
-# HireRank — Roadmap
+# HireRank - Roadmap
 
-Aligned with [PASSPORT.md](PASSPORT.md). **Behavioral SoT:** [use-cases/](use-cases/). **Compliance (strict):** [ATS_COMPLIANCE_RK.md](ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](GDPR.md). No Decision Maps phase.
+See [PRODUCT.md](PRODUCT.md) for the product definition and [use-cases/](use-cases/)
+for the behavioral source of truth. Compliance requirements in
+[laws/ATS_COMPLIANCE_RK.md](laws/ATS_COMPLIANCE_RK.md) and [laws/GDPR.md](laws/GDPR.md)
+apply to every phase.
 
-## Phase 1 — Tenant ATS base
+## Current focus
 
-Human ATS loop inside the perimeter:
+**Phase 1, Milestone 4: resume intake and vacancy attachment.**
 
-- Auth, RBAC (administrator, hr, manager, recruiter, candidate)
-- Candidate registration + JSON questionnaire → pool `Unassigned`
-- Vacancy CRUD, assignment, statuses, notifications, dashboards
-- Strict `tenant_id` isolation
-- Local compose bring-up (FastAPI, Next.js, PostgreSQL, Redis, S3)
+Recently completed:
 
-Acceptance: flood intake works without Automation HITL; managers see assigned candidates in-app. UC-01…UC-07 as applicable.
+- authentication, cookie sessions, and OAuth foundation;
+- RBAC and tenant isolation with PostgreSQL RLS;
+- vacancy CRUD and candidate CRUD API;
+- candidate assignment and dashboard API;
+- consent, legal acceptance, and auth audit foundation.
 
-## Phase 2 — Automation HITL loop
+Current work:
 
-Full [UC-08](use-cases/UC-08-automation-hitl-loop.md) cycle (bureaucracy Automation moat):
+- replace JSON-only intake language with an HTML resume form;
+- store a resume reference or uploaded file;
+- attach a candidate to a selected vacancy;
+- expose the candidate pipeline and statuses in the web app.
 
-- Event broker on `resume.uploaded` (intake / HR upload); design for extensible events
-- Automation: domain payload + vacancies + [Memory](MEMORY.md) + MCP schemas → 2–3 bureaucracy options
-- n8n SMTP awareness + Telegram HITL
-- FastMCP executes only the selected tool under `tenant_id`
-- Outcome (option-choice history) → Memory
-- API: packages, HITL accept, outcomes (`/automations/*`)
+Not current work: LLM, MCP, n8n, Telegram, WhatsApp, Memory, or a ranking
+engine. Those belong after the working ATS MVP.
 
-Acceptance: UC-08 DoD satisfied end-to-end; no auto hire/reject.
+## Phase 1 - MVP: working ATS without LLM
 
-## Phase 3 — Corpus and ops hardening
+### Milestone 1 - Foundation
 
-- Richer Memory retrieval; more domain event triggers
-- HITL corpus analytics
-- Retention / erasure / export of Memory ([GDPR.md](GDPR.md))
-- Fail-soft parse flags, multi-channel HITL
-- Audit and ops hardening for government / enterprise
+- [x] Local Compose development stack starts.
+- [x] FastAPI, Next.js, PostgreSQL, and migrations are wired.
+- [x] Authentication and browser session work.
+- [x] Consent and legal acceptance are represented.
 
-## Explicitly out of scope (product positioning)
+### Milestone 2 - Access control and isolation
 
-- Decision Maps / UDP as a separate config product
-- Scoring / chatbot as the hero “AI” feature
-- Black-box auto-disposition
+- [x] Roles and permissions are defined.
+- [x] Tenant scope is applied to ATS data.
+- [x] PostgreSQL RLS is enabled and tested.
+- [x] Candidate and HR access rules are documented.
+
+### Milestone 3 - Vacancy and candidate CRUD
+
+- [x] Create, read, update, and delete vacancies.
+- [x] Create and read candidate records.
+- [x] Store candidate status and vacancy relationships.
+- [x] Provide basic dashboard data.
+
+### Milestone 4 - Resume intake and vacancy attachment
+
+- [ ] Build the HTML resume form.
+- [ ] Validate and persist structured resume data.
+- [ ] Upload or reference the resume file.
+- [ ] Attach a resume/candidate to an open vacancy.
+- [ ] Show the candidate in the vacancy pipeline.
+- [ ] Add manual status changes and audit events.
+
+### Milestone 5 - MVP acceptance
+
+- [ ] Operator can create a vacancy.
+- [ ] Candidate or operator can submit a resume through the HTML form.
+- [ ] HR can attach the candidate to a vacancy.
+- [ ] HR can view and update the candidate status.
+- [ ] No LLM or external messaging service is needed for the core flow.
+
+## Phase 2 - Post-MVP LLM recommendations
+
+### Milestone 6 - Evaluation model
+
+- [ ] Define vacancy-specific HR prompt and criteria.
+- [ ] Define tenant-scoped candidate evaluation history.
+- [ ] Define evidence, rationale, and audit fields.
+
+### Milestone 7 - LLM analysis
+
+- [ ] Analyze an attached resume against a vacancy prompt.
+- [ ] Return up to three recommendations, for example `advance`,
+  `interview`, or `reject`.
+- [ ] Keep the final status change behind explicit HR confirmation.
+- [ ] Add privacy, retention, and model-processing controls.
+
+### Milestone 8 - Delivery channels
+
+- [ ] Show recommendations and rationale in the web app.
+- [ ] Add Telegram delivery and confirmation.
+- [ ] Evaluate WhatsApp integration separately.
+
+## Phase 3 - Scale and operations
+
+### Milestone 9 - Production hardening
+
+- [ ] Resume parsing failure states and manual correction.
+- [ ] Retention, erasure, and export workflows.
+- [ ] Candidate-data access audit coverage.
+- [ ] Operational monitoring and deployment documentation.
+
+## Explicit non-goals
+
+- MCP and event-driven bureaucracy automation as the MVP core.
+- n8n as a business-logic or database-mutation layer.
+- Fully automatic hire/reject without HR confirmation.
+- Separate Decision Maps or UDP product.
+

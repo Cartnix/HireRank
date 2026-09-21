@@ -5,7 +5,7 @@ import {
   type UseFormRegister,
   type UseFormSetValue,
 } from "react-hook-form";
-import type { JobFormValues } from "../model/JobSchema";
+import { JOB_STATUS_LABELS, JOB_STATUSES, type JobFormValues } from "../model/JobSchema";
 import { useState } from "react";
 
 type Props = {
@@ -93,19 +93,17 @@ export function NewJobFormFields({
       </div>
 
       <div>
-        <label className={labelClass}>Статус</label>
-        <select
-          className={`${fieldClass} disabled:opacity-60`}
-          disabled
-          value="draft"
-          onChange={() => {}}
-        >
-          <option value="draft">Заглушка</option>
-        </select>
-        <input type="hidden" {...register("status")} value="draft" />
-        {errors.status && (
-          <p className={errorClass}>{errors.status.message as string}</p>
-        )}
+          <label className={labelClass}>Статус</label>
+          <select className={fieldClass} {...register("status")}>
+            {JOB_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {JOB_STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+          {errors.status && (
+            <p className={errorClass}>{errors.status.message as string}</p>
+          )}
       </div>
 
       <div className="md:col-span-2">

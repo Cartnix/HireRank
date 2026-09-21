@@ -1,11 +1,14 @@
 import { apiFetch } from "@/shared/api/client";
 import { Job } from "./types";
 
+export type VacancyStatus = "draft" | "open";
+
 export interface CreateVacancyPayload {
   title: string;
   department: string;
   description: string;
   requirements: string[];
+  status?: VacancyStatus;
 }
 
 export async function createVacancy(

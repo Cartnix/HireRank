@@ -2,13 +2,21 @@
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 
+import pytest
+from fastapi import HTTPException
 from httpx import AsyncClient
+from pydantic import ValidationError
+from sqlmodel import select
 
 from app.ats import events as ats_events
+from app.ats.candidates import apply_to_vacancy
 from app.core.config import settings
-from tests.conftest import bypass_rls_session
+from app.models import Application, Candidate, Notification, User
+from app.schemas.ats import ApplyToVacancyRequest
+from tests.conftest import bypass_rls_session, session_context
 from tests.db.ats_fixtures import FOREIGN_TENANT_ID, seed_ats_graph
 from tests.utils.auth_types import register_bearer_pair
 from tests.utils.consent import register_json
@@ -25,6 +33,7 @@ async def _headers_for_role(client: AsyncClient, role: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {pair['access_token']}"}
 
 
+@pytest.mark.asyncio
 async def test_admin_creates_vacancy_with_default_stages(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -45,6 +54,7 @@ async def test_admin_creates_vacancy_with_default_stages(
     ]
 
 
+@pytest.mark.asyncio
 async def test_hr_can_create_vacancy(client: AsyncClient) -> None:
     headers = await _headers_for_role(client, "hr")
     r = await client.post(
@@ -58,6 +68,7 @@ async def test_hr_can_create_vacancy(client: AsyncClient) -> None:
     assert body["status"] == "draft"
 
 
+@pytest.mark.asyncio
 async def test_hr_bearer_creates_vacancy_despite_session_cookies(
     client: AsyncClient,
 ) -> None:
@@ -86,6 +97,7 @@ async def test_hr_bearer_creates_vacancy_despite_session_cookies(
     assert r.json()["title"] == "Vanacy1"
 
 
+@pytest.mark.asyncio
 async def test_vacancy_idor_returns_404_for_missing_id(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -97,6 +109,7 @@ async def test_vacancy_idor_returns_404_for_missing_id(
     assert r.status_code == 404
 
 
+@pytest.mark.asyncio
 async def test_vacancy_foreign_row_hidden_via_rls_seed(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -109,6 +122,7 @@ async def test_vacancy_foreign_row_hidden_via_rls_seed(
     assert r.status_code == 404
 
 
+@pytest.mark.asyncio
 async def test_hr_candidate_intake_publishes_resume_uploaded(
     client: AsyncClient,
 ) -> None:
@@ -136,6 +150,7 @@ async def test_hr_candidate_intake_publishes_resume_uploaded(
     assert str(events[0].candidate_id) == body["id"]
 
 
+@pytest.mark.asyncio
 async def test_duplicate_candidate_email_within_tenant_conflict(
     client: AsyncClient,
 ) -> None:
@@ -152,6 +167,7 @@ async def test_duplicate_candidate_email_within_tenant_conflict(
     assert r.status_code == 409
 
 
+@pytest.mark.asyncio
 async def test_forged_tenant_id_in_body_rejected(client: AsyncClient) -> None:
     headers = await _headers_for_role(client, "hr")
     r = await client.post(
@@ -165,6 +181,7 @@ async def test_forged_tenant_id_in_body_rejected(client: AsyncClient) -> None:
     assert r.status_code == 422
 
 
+@pytest.mark.asyncio
 async def test_uc_flow_assign_and_manager_list(
     client: AsyncClient,
     superuser_token_headers: dict[str, str],
@@ -219,6 +236,192 @@ async def test_uc_flow_assign_and_manager_list(
     assert dash.json()["assigned_candidates"] >= 1
 
 
+@pytest.mark.asyncio
+async def test_candidate_can_apply_to_open_vacancy_and_duplicate_is_conflict(
+    client: AsyncClient,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    vacancy = (
+        await client.post(
+            f"{VACANCIES}/",
+            headers=superuser_token_headers,
+            json={"title": "Candidate Apply", "status": "open"},
+        )
+    ).json()
+    candidate_pair = await register_bearer_pair(client, role="candidate")
+    candidate_headers = {
+        "Authorization": f"Bearer {candidate_pair['access_token']}"
+    }
+
+    applied = await client.post(
+        f"{VACANCIES}/{vacancy['id']}/applications",
+        headers=candidate_headers,
+        json={},
+    )
+
+    assert applied.status_code == 201, applied.text
+    application = applied.json()
+    assert application["vacancy_id"] == vacancy["id"]
+    assert application["status"] == "active"
+
+    duplicate = await client.post(
+        f"{VACANCIES}/{vacancy['id']}/applications",
+        headers=candidate_headers,
+        json={},
+    )
+    assert duplicate.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_cookie_candidate_application_requires_and_accepts_csrf(
+    client: AsyncClient,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    vacancy = (
+        await client.post(
+            f"{VACANCIES}/",
+            headers=superuser_token_headers,
+            json={"title": "Cookie Apply", "status": "open"},
+        )
+    ).json()
+    candidate = await client.post(
+        f"{API}/auth/register",
+        json=register_json(
+            email=random_email(), password="CookieApply228!", role="candidate"
+        ),
+    )
+    assert candidate.status_code == 201, candidate.text
+
+    missing = await client.post(
+        f"{VACANCIES}/{vacancy['id']}/applications", json={}
+    )
+    assert missing.status_code == 403
+
+    csrf = client.cookies.get(settings.AUTH_COOKIE_CSRF_NAME)
+    assert csrf
+    applied = await client.post(
+        f"{VACANCIES}/{vacancy['id']}/applications",
+        headers={"X-CSRF-Token": csrf},
+        json={},
+    )
+    assert applied.status_code == 201, applied.text
+
+
+@pytest.mark.asyncio
+async def test_concurrent_candidate_applications_create_one_application(
+    client: AsyncClient,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    vacancy = (
+        await client.post(
+            f"{VACANCIES}/",
+            headers=superuser_token_headers,
+            json={"title": "Concurrent Apply", "status": "open"},
+        )
+    ).json()
+    email = random_email()
+    await register_bearer_pair(
+        client, role="candidate", email=email, password="Concurrent228!"
+    )
+    async with session_context(bypass_rls=True) as seed:
+        user = (await seed.exec(select(User).where(User.email == email))).one()
+        candidate = (
+            await seed.exec(select(Candidate).where(Candidate.user_id == user.id))
+        ).one()
+
+    async def submit() -> int:
+        async with session_context(bypass_rls=True) as session:
+            fresh_user = await session.get(User, user.id)
+            assert fresh_user is not None
+            try:
+                await apply_to_vacancy(
+                    session=session,
+                    user=fresh_user,
+                    vacancy_id=uuid.UUID(vacancy["id"]),
+                )
+            except HTTPException as exc:
+                return exc.status_code
+            return 201
+
+    results = await asyncio.gather(submit(), submit())
+    assert sorted(results) == [201, 409]
+    async with session_context(bypass_rls=True) as session:
+        applications = (
+            await session.exec(
+                select(Application).where(
+                    Application.vacancy_id == uuid.UUID(vacancy["id"]),
+                    Application.candidate_id == candidate.id,
+                )
+            )
+        ).all()
+    assert len(applications) == 1
+
+
+@pytest.mark.asyncio
+async def test_application_creates_persisted_notification(
+    client: AsyncClient,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    vacancy_response = await client.post(
+        f"{VACANCIES}/",
+        headers=superuser_token_headers,
+        json={"title": "Notify Apply", "status": "open"},
+    )
+    vacancy = vacancy_response.json()
+    candidate_pair = await register_bearer_pair(client, role="candidate")
+    applied = await client.post(
+        f"{VACANCIES}/{vacancy['id']}/applications",
+        headers={"Authorization": f"Bearer {candidate_pair['access_token']}"},
+        json={},
+    )
+    assert applied.status_code == 201, applied.text
+
+    async with bypass_rls_session() as session:
+        notification = (
+            await session.exec(
+                select(Notification).where(
+                    Notification.entity_id == uuid.UUID(applied.json()["id"])
+                )
+            )
+        ).one()
+    assert notification.recipient_user_id == uuid.UUID(vacancy["created_by"])
+    assert notification.kind == "application.created"
+
+
+def test_application_request_rejects_candidate_id_and_unknown_fields() -> None:
+    with pytest.raises(ValidationError):
+        ApplyToVacancyRequest(candidate_id=uuid.uuid4())
+    with pytest.raises(ValidationError):
+        ApplyToVacancyRequest(extra_field="unexpected")
+
+
+@pytest.mark.asyncio
+async def test_candidate_cannot_apply_to_closed_vacancy(
+    client: AsyncClient,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    vacancy = (
+        await client.post(
+            f"{VACANCIES}/",
+            headers=superuser_token_headers,
+            json={"title": "Closed Role", "status": "closed"},
+        )
+    ).json()
+    candidate_pair = await register_bearer_pair(client, role="candidate")
+    candidate_headers = {
+        "Authorization": f"Bearer {candidate_pair['access_token']}"
+    }
+
+    response = await client.post(
+        f"{VACANCIES}/{vacancy['id']}/applications",
+        headers=candidate_headers,
+        json={},
+    )
+
+    assert response.status_code == 409
+
+
+@pytest.mark.asyncio
 async def test_resume_url_requires_visible_candidate(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -246,6 +449,7 @@ async def test_resume_url_requires_visible_candidate(
     assert missing.status_code == 404
 
 
+@pytest.mark.asyncio
 async def test_delete_vacancy_with_active_application_conflicts(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -273,6 +477,7 @@ async def test_delete_vacancy_with_active_application_conflicts(
     assert r.status_code == 409
 
 
+@pytest.mark.asyncio
 async def test_hr_can_patch_and_delete_vacancy(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -295,6 +500,7 @@ async def test_hr_can_patch_and_delete_vacancy(
     assert deleted.status_code == 204, deleted.text
 
 
+@pytest.mark.asyncio
 async def test_forged_tenant_id_on_vacancy_rejected(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -310,6 +516,7 @@ async def test_forged_tenant_id_on_vacancy_rejected(
     assert r.status_code == 422
 
 
+@pytest.mark.asyncio
 async def test_candidate_foreign_row_hidden_via_rls_seed(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -322,6 +529,7 @@ async def test_candidate_foreign_row_hidden_via_rls_seed(
     assert r.status_code == 404
 
 
+@pytest.mark.asyncio
 async def test_list_page_size_cap(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -341,6 +549,7 @@ async def test_list_page_size_cap(
     ).status_code == 422
 
 
+@pytest.mark.asyncio
 async def test_assign_missing_vacancy_returns_404(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:
@@ -360,6 +569,7 @@ async def test_assign_missing_vacancy_returns_404(
     assert r.status_code == 404
 
 
+@pytest.mark.asyncio
 async def test_questionnaire_email_conflict_on_update(client: AsyncClient) -> None:
     hr = await _headers_for_role(client, "hr")
     email_a = random_email()
@@ -393,6 +603,7 @@ async def test_questionnaire_email_conflict_on_update(client: AsyncClient) -> No
     assert ok.status_code == 200
 
 
+@pytest.mark.asyncio
 async def test_validate_stage_for_vacancy_rejects_foreign_stage(
     client: AsyncClient, superuser_token_headers: dict[str, str]
 ) -> None:

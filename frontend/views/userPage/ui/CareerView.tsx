@@ -10,7 +10,7 @@ import { useCurrentUser } from "@/shared/api/auth-store";
 import type { components } from "@/shared/api/schema";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 
-type Candidate = components["schemas"]["Candidate"];
+type Candidate = components["schemas"]["CandidatePublic"];
 
 export const CareerView = () => {
   const router = useRouter();

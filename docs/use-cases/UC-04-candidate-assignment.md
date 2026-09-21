@@ -1,11 +1,11 @@
 # UC-04 Candidate assignment
 
 Actor:
-Administrator
+Administrator, HR operator
 
 Preconditions:
 - Authenticated
-- Role is `administrator`
+- Role is `administrator` or `hr`
 - Candidate and vacancy belong to the same tenant
 
 Flow:
@@ -17,10 +17,10 @@ Flow:
 6. Notification is created for the tenant.
 
 Notes:
-- The same assignment result may be produced by MCP after a human-selected Automation option ([UC-08](UC-08-automation-hitl-loop.md) — SoT). Manual admin assignment remains valid. Option-choice history is stored in [Memory](../MEMORY.md).
+- LLM recommendations are not required for this MVP flow.
 
 DoD:
-- Assignment is allowed only for Administrator (manual path).
+- Assignment is allowed for Administrator or HR (manual path).
 - Cross-tenant assignment is rejected.
 - Candidate status becomes `Assigned`.
 - Manager receives the updated assignment view.

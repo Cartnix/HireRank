@@ -8,8 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
-    "generate:api-types": "openapi-typescript ../docs/openapi/openapi.yaml -o shared/api/schema.d.ts",
-    "openapi:check": "openapi-typescript ../docs/openapi/openapi.yaml -o /tmp/hirerank-schema-check.d.ts"
+    "test:csrf": "tsx --test shared/api/client.test.ts",
+    "generate:api-types": "openapi-typescript ../contracts/generated/backend/openapi.json -o ../contracts/generated/frontend/api.d.ts && cp ../contracts/generated/frontend/api.d.ts shared/api/schema.d.ts",
+    "openapi:check": "openapi-typescript ../contracts/generated/backend/openapi.json -o /tmp/hirerank-schema-check.d.ts",
+    "contracts:export:backend": "docker compose run --rm --no-deps -v \"$PWD/../contracts:/app/contracts\" backend python -m scripts.export_contracts",
+    "contracts:export:frontend": "tsx scripts/export-contracts.ts",
+    "contracts:export": "npm run contracts:export:backend && npm run contracts:export:frontend && npm run generate:api-types",
+    "contracts:check": "npm run contracts:export && git -C .. diff --exit-code -- contracts/generated frontend/shared/api/schema.d.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -40,6 +45,8 @@
     "eslint-config-next": "16.2.9",
     "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.13",
+    "typescript": "^5",
+    "zod-to-json-schema": "^3.25.2"
   }
 }

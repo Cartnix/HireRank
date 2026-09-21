@@ -7,5 +7,6 @@ export function mapFormToJob(values: JobFormValues): CreateVacancyPayload {
     department: values.department.trim(),
     description: values.description.trim(),
     requirements: values.requirements,
+    status: values.status,
   };
 }

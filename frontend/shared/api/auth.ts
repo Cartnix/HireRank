@@ -2,11 +2,11 @@ import { apiFetch } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import type { ConsentPayload } from "@/features/auth/model/FormSchema";
 import { useAuthStore } from "./auth-store";
-import { User } from "@/entities/user/model/types";
 
-export type UserPublic = components["schemas"]["User"];
+/** Generated OpenAPI schema aliases — import here, not a hand-maintained mega-types file. */
+export type UserPublic = components["schemas"]["UserPublic"];
 export type AuthSession = components["schemas"]["AuthSession"];
-export type RegisterPayload = components["schemas"]["RegisterRequest"];
+export type RegisterPayload = components["schemas"]["UserRegister"];
 
 export interface UpdateMePayload {
   first_name?: string;
@@ -62,11 +62,13 @@ export async function forgetMe(): Promise<void> {
   useAuthStore.getState().clear();
 }
 
-export async function updateMe(payload: UpdateMePayload) {
-  await apiFetch<User>("/auth/me", {
+export async function updateMe(payload: UpdateMePayload): Promise<UserPublic> {
+  const user = await apiFetch<UserPublic>("/auth/me", {
     method: "PATCH",
     json: payload,
   });
+  useAuthStore.getState().setUser(user);
+  return user;
 }
 
 export async function checkEmail(
