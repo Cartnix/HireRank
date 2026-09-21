@@ -25,16 +25,23 @@ export type DashboardPageViewProps = DashboardStats & {
   jobById: Record<string, Job>;
 };
 
+interface StatsWidgetsProps {
+  stats: DashboardStats;
+  previousMonth: DashboardStats;
+  className?: string;
+}
+
 export function DashboardPageView(props: DashboardPageViewProps) {
   return (
     <div className="px-6 md:px-10 lg:px-15 space-y-8 pb-12">
       <SectionTitle title="Главная" subtitle="Обзор рекрутинга на сегодня" />
 
       <StatsWidgets
-        active_vacancies={props.activeJobsCount}
-        candidates_total={props.inProgressCandidates}
-        interviews_scheduled={props.todaysInterviewsCount}
-        avg_time_to_hire={props.avgTimeToHire}
+        activeJobsCount={props.activeJobsCount}
+        inProgressCandidates={props.inProgressCandidates}
+        todaysInterviewsCount={props.todaysInterviewsCount}
+        avgTimeToHire={props.avgTimeToHire}
+        previousMonth={props.previousMonth}
       />
 
       <CandidateGrowChart />

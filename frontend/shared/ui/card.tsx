@@ -1,14 +1,10 @@
-"use client";
-
-import { motion, type HTMLMotionProps } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
-interface CardProps extends Omit<HTMLMotionProps<"section">, "children"> {
+interface CardProps extends React.HTMLAttributes<HTMLElement> {
   icon?: LucideIcon;
   title?: string;
   desc?: string;
-  index?: number;
   badge?: React.ReactNode; 
   className?: string;
   children?: React.ReactNode;
@@ -18,17 +14,12 @@ export const Card = ({
   icon: Icon,
   title,
   desc,
-  index = 0,
   badge,
   className,
   children,
   ...props
 }: CardProps) => (
-  <motion.section
-    initial={{ opacity: 0, y: 16 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-60px" }}
-    transition={{ duration: 0.5, delay: index * 0.08 }}
+  <section
     className={cn(
       "group relative rounded-2xl p-6 bg-card text-card-foreground",
       "border border-border shadow-lg shadow-black/5 backdrop-blur-md",
@@ -70,5 +61,5 @@ export const Card = ({
     {children}
 
     <div className="absolute bottom-0 left-6 right-6 h-px bg-linear-to-r from-transparent via-brand-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-  </motion.section>
+  </section>
 );

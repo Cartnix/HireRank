@@ -1,4 +1,5 @@
 import type { DashboardPageViewProps, DashboardStats } from "@/views/dashboard";
+import { statsMock } from "@/widgets/dashboard-stats/model/dashboard-stats.mock";
 
 type CandidateMock = DashboardPageViewProps["candidateById"][string];
 
@@ -180,18 +181,6 @@ const jobByIdMock: DashboardPageViewProps["jobById"] = {
   j3: createJob("j3", "Backend Developer", "Разработка"),
 };
 
-export const statsMock = {
-  activeJobsCount: 12,
-  inProgressCandidates: 48,
-  todaysInterviewsCount: 7,
-  avgTimeToHire: 15,
-  previousMonth: {
-    activeJobsCount: 10,
-    inProgressCandidates: 52,
-    todaysInterviewsCount: 7,
-    avgTimeToHire: 18,
-  },
-} satisfies DashboardStats & { previousMonth: DashboardStats };
 
 const maxPipelineMock = 20;
 
