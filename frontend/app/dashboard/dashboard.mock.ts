@@ -1,37 +1,36 @@
-import type { DashboardPageViewProps } from "@/views/dashboard";
+import type { DashboardPageViewProps, DashboardStats } from "@/views/dashboard";
 
 type CandidateMock = DashboardPageViewProps["candidateById"][string];
 
-const todaysInterviewsMock: DashboardPageViewProps["todaysInterviews"] =
-  [
-    {
-      id: "1",
-      candidateId: "c1",
-      type: "Очно",
-      startHour: 10,
-      duration: 1,
-      interviewer: "Анна Петрова",
-      day: 0,
-    },
-    {
-      id: "2",
-      candidateId: "c2",
-      type: "Звонок",
-      startHour: 11,
-      duration: 0.5,
-      interviewer: "Игорь Соколов",
-      day: 0,
-    },
-    {
-      id: "3",
-      candidateId: "c3",
-      type: "Видео",
-      startHour: 13,
-      duration: 1,
-      interviewer: "Мария Ким",
-      day: 0,
-    },
-  ];
+const todaysInterviewsMock: DashboardPageViewProps["todaysInterviews"] = [
+  {
+    id: "1",
+    candidateId: "c1",
+    type: "Очно",
+    startHour: 10,
+    duration: 1,
+    interviewer: "Анна Петрова",
+    day: 0,
+  },
+  {
+    id: "2",
+    candidateId: "c2",
+    type: "Звонок",
+    startHour: 11,
+    duration: 0.5,
+    interviewer: "Игорь Соколов",
+    day: 0,
+  },
+  {
+    id: "3",
+    candidateId: "c3",
+    type: "Видео",
+    startHour: 13,
+    duration: 1,
+    interviewer: "Мария Ким",
+    day: 0,
+  },
+];
 
 const ENTERPRISE_ID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -165,12 +164,8 @@ const candidateByIdMock: DashboardPageViewProps["candidateById"] = {
 };
 
 type JobMock = DashboardPageViewProps["jobById"][string];
- 
-const createJob = (
-  id: string,
-  title: string,
-  department: string
-): JobMock => ({
+
+const createJob = (id: string, title: string, department: string): JobMock => ({
   id,
   title,
   department,
@@ -178,28 +173,28 @@ const createJob = (
   description: "",
   requirements: [],
 });
- 
+
 const jobByIdMock: DashboardPageViewProps["jobById"] = {
   j1: createJob("j1", "Frontend Developer", "Разработка"),
   j2: createJob("j2", "Product Designer", "Дизайн"),
   j3: createJob("j3", "Backend Developer", "Разработка"),
 };
 
-const statsMock = {
+export const statsMock = {
   activeJobsCount: 12,
   inProgressCandidates: 48,
   todaysInterviewsCount: 7,
   avgTimeToHire: 15,
-} satisfies Pick<
-  DashboardPageViewProps,
-  | "activeJobsCount"
-  | "inProgressCandidates"
-  | "todaysInterviewsCount"
-  | "avgTimeToHire"
->;
- 
+  previousMonth: {
+    activeJobsCount: 10,
+    inProgressCandidates: 52,
+    todaysInterviewsCount: 7,
+    avgTimeToHire: 18,
+  },
+} satisfies DashboardStats & { previousMonth: DashboardStats };
+
 const maxPipelineMock = 20;
- 
+
 const pipelineCountsMock: DashboardPageViewProps["pipelineCounts"] = [
   { stage: "Новый", count: 15 },
   { stage: "Интервью", count: 12 },

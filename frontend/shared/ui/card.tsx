@@ -9,6 +9,7 @@ interface CardProps extends Omit<HTMLMotionProps<"section">, "children"> {
   title?: string;
   desc?: string;
   index?: number;
+  badge?: React.ReactNode; 
   className?: string;
   children?: React.ReactNode;
 }
@@ -18,6 +19,7 @@ export const Card = ({
   title,
   desc,
   index = 0,
+  badge,
   className,
   children,
   ...props
@@ -28,19 +30,25 @@ export const Card = ({
     viewport={{ once: true, margin: "-60px" }}
     transition={{ duration: 0.5, delay: index * 0.08 }}
     className={cn(
-      // Карточка использует синхронизированные токены фона, текста и границ
       "group relative rounded-2xl p-6 bg-card text-card-foreground",
       "border border-border shadow-lg shadow-black/5 backdrop-blur-md",
-      // Интерактивные состояния при наведении
       "hover:border-brand-primary/40 hover:shadow-xl hover:shadow-brand-primary/5",
       "transition-all duration-300",
       className
     )}
     {...props}
   >
-    {Icon && (
-      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-brand-primary/10 text-brand-primary group-hover:bg-brand-primary/20 group-hover:scale-105 transition-all duration-300">
-        <Icon className="w-6 h-6" strokeWidth={1.8} />
+    {(Icon || badge) && (
+      <div className="flex items-center justify-between gap-4 mb-4">
+        {Icon ? (
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-brand-primary/10 text-brand-primary group-hover:bg-brand-primary/20 group-hover:scale-105 transition-all duration-300">
+            <Icon className="w-6 h-6" strokeWidth={1.8} />
+          </div>
+        ) : (
+          <div />
+        )}
+
+        {badge && <div>{badge}</div>}
       </div>
     )}
 

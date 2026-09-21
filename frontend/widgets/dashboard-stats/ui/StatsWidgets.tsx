@@ -1,5 +1,6 @@
+import { devBadge } from "@/shared/ui/badges/DevBadge";
 import { Card } from "@/shared/ui/card";
-import { Briefcase, Users, CalendarDays } from "lucide-react";
+import { Briefcase, Users, CalendarDays, Clock } from "lucide-react";
 
 export function StatsWidgets({
   active_vacancies,
@@ -12,6 +13,7 @@ export function StatsWidgets({
   interviews_scheduled: number;
   avg_time_to_hire: number;
 }) {
+
   const widgets = [
     {
       label: "Активные вакансии",
@@ -41,8 +43,13 @@ export function StatsWidgets({
 
   return (
     <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {widgets.map((w) => (
-        <Card key={w.label} className="p-5">
+      {widgets.map((w, index) => (
+        <Card 
+          key={w.label} 
+          index={index}
+          className="p-5"
+          badge={devBadge} 
+        >
           <div
             className={`mb-4 flex h-9 w-9 items-center justify-center rounded-[10px] ${w.tint}`}
           >

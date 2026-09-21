@@ -8,15 +8,19 @@ import { SectionTitle } from "@/shared/ui/SectionTitle";
 import CandidateGrowChart from "@/widgets/candidates-grow/ui/CandidatesGrowChart";
 import { CurrentDateInfo } from "@/app/dashboard/page";
 
-export type DashboardPageViewProps = {
-  currentDate: CurrentDateInfo;
+export type DashboardStats = {
   activeJobsCount: number;
   inProgressCandidates: number;
   todaysInterviewsCount: number;
+  avgTimeToHire: number;
+};
+
+export type DashboardPageViewProps = DashboardStats & {
+  currentDate: CurrentDateInfo;
+  previousMonth: DashboardStats;
   pipelineCounts: { stage: string; count: number }[];
   maxPipeline: number;
   todaysInterviews: Interview[];
-  avgTimeToHire: number;
   candidateById: Record<string, Candidate>;
   jobById: Record<string, Job>;
 };
