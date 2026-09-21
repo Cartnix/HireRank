@@ -23,7 +23,7 @@ export type DashboardPageViewProps = {
 
 export function DashboardPageView(props: DashboardPageViewProps) {
   return (
-    <div className="px-15">
+    <div className="px-6 md:px-10 lg:px-15 space-y-8 pb-12">
       <SectionTitle title="Главная" subtitle="Обзор рекрутинга на сегодня" />
 
       <StatsWidgets
@@ -35,16 +35,20 @@ export function DashboardPageView(props: DashboardPageViewProps) {
 
       <CandidateGrowChart />
 
-      <div className="grid grid-cols-3 gap-4">
-        <HiringFunnel
-          pipelineCounts={props.pipelineCounts}
-          maxPipeline={props.maxPipeline}
-        />
-        <UpcomingPanel
-          todaysInterviews={props.todaysInterviews}
-          candidateById={props.candidateById}
-          jobById={props.jobById}
-        />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="w-full">
+          <HiringFunnel
+            pipelineCounts={props.pipelineCounts}
+            maxPipeline={props.maxPipeline}
+          />
+        </div>
+        <div className="w-full">
+          <UpcomingPanel
+            todaysInterviews={props.todaysInterviews}
+            candidateById={props.candidateById}
+            jobById={props.jobById}
+          />
+        </div>
       </div>
     </div>
   );
