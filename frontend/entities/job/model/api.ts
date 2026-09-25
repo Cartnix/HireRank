@@ -9,6 +9,13 @@ export interface CreateVacancyPayload {
   description: string;
   requirements: string[];
   status?: VacancyStatus;
+
+  location?: "Удалённо" | "Офис" | "Гибрид";
+  employmentType?: "full-time" | "part-time" | "internship";
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  recruiter?: string;
+  experience?: string;
 }
 
 export async function createVacancy(
