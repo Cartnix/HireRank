@@ -16,6 +16,7 @@ export type View =
   | "calendar"
   | "analytics"
   | "agent"
+  | "copilot"
   | "settings"
   | "support";
 
@@ -49,6 +50,9 @@ export const navItems: {
     label: "Аналитика",
     icon: BarChart3,
     href: "/dashboard/analytics",
+  },
+  {
+    id: "copilot", label: "HR Copilot", icon: Bot, href: "/dashboard/copilot"
   },
   {
     id: "agent",

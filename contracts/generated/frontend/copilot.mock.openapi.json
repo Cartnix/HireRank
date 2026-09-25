@@ -1,124 +1,328 @@
 {
-  "ConsentSchema": {
-    "$ref": "#/definitions/ConsentSchema",
-    "definitions": {
-      "ConsentSchema": {
-        "type": "object",
-        "properties": {
-          "account_processing": {
-            "type": "boolean",
-            "const": true
-          },
-          "talent_pool": {
-            "type": "boolean"
-          },
-          "cross_border": {
-            "type": "boolean"
-          },
-          "cross_border_countries": {
-            "type": "array",
-            "items": {
+  "openapi": "3.1.0",
+  "info": {
+    "title": "HireRank Copilot frontend mock API",
+    "version": "0.1.0",
+    "description": "Proposed interface only. These routes are not implemented by the backend."
+  },
+  "paths": {
+    "/copilot/candidates": {
+      "get": {
+        "summary": "Tenant candidate pool",
+        "responses": {
+          "200": {
+            "description": "Candidates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CandidateSchema"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Intake triggers AI draft",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mock result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateSchema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/copilot/vacancies": {
+      "get": {
+        "summary": "Tenant vacancies",
+        "responses": {
+          "200": {
+            "description": "Vacancies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VacancySchema"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "HR/admin vacancy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VacancySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mock result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VacancySchema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/copilot/evaluations": {
+      "get": {
+        "summary": "HR drafts",
+        "responses": {
+          "200": {
+            "description": "Drafts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EvaluationSchema"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/copilot/evaluations/{id}/confirm": {
+      "post": {
+        "summary": "HR approval, then MCP action",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
               "type": "string"
-            },
-            "default": []
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "review",
+                      "interview",
+                      "rejected"
+                    ]
+                  }
+                }
+              }
+            }
           }
         },
-        "required": [
-          "account_processing",
-          "talent_pool",
-          "cross_border"
-        ],
-        "additionalProperties": false
+        "responses": {
+          "200": {
+            "description": "Mock result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpRunSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Already confirmed"
+          }
+        }
       }
     },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "LoginFormValues": {
-    "$ref": "#/definitions/LoginFormValues",
-    "definitions": {
-      "LoginFormValues": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 8
+    "/copilot/prompts": {
+      "get": {
+        "summary": "HR rules",
+        "responses": {
+          "200": {
+            "description": "Mock result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptSchema"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Configure HR rules",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptSchema"
+              }
+            }
           }
         },
-        "required": [
-          "email",
-          "password"
-        ],
-        "additionalProperties": false
+        "responses": {
+          "200": {
+            "description": "Mock result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptSchema"
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "RegisterFormValues": {
-    "$ref": "#/definitions/RegisterFormValues",
-    "definitions": {
-      "RegisterFormValues": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 8
-          },
-          "repeatPassword": {
-            "$ref": "#/definitions/RegisterFormValues/properties/password"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "candidate",
-              "hr",
-              "manager",
-              "recruiter"
-            ]
-          },
-          "first_name": {
-            "type": "string"
-          },
-          "last_name": {
-            "type": "string"
-          },
-          "consent_account_processing": {
-            "type": "boolean"
-          },
-          "consent_talent_pool": {
-            "type": "boolean"
-          },
-          "consent_cross_border": {
-            "type": "boolean"
-          },
-          "consent_cross_border_countries": {
-            "type": "string"
+    "/copilot/feedback": {
+      "post": {
+        "summary": "Manager proposal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackSchema"
+              }
+            }
           }
         },
-        "required": [
-          "email",
-          "password",
-          "repeatPassword",
-          "role",
-          "consent_account_processing",
-          "consent_talent_pool",
-          "consent_cross_border"
-        ],
-        "additionalProperties": false
+        "responses": {
+          "201": {
+            "description": "Mock result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackSchema"
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "$schema": "http://json-schema.org/draft-07/schema#"
+    "/copilot/notifications": {
+      "get": {
+        "summary": "Role-scoped notifications",
+        "responses": {
+          "200": {
+            "description": "Notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationSchema"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/copilot/memory": {
+      "get": {
+        "summary": "Opt-in Markdown memory",
+        "responses": {
+          "200": {
+            "description": "Records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemorySchema"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Confirmed HR memory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemorySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mock result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemorySchema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/copilot/audit": {
+      "get": {
+        "summary": "Tenant audit",
+        "responses": {
+          "200": {
+            "description": "Events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditSchema"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   },
-  "AuditSchema": {
-    "$ref": "#/definitions/AuditSchema",
-    "definitions": {
+  "components": {
+    "schemas": {
       "AuditSchema": {
         "type": "object",
         "properties": {
@@ -164,13 +368,7 @@
           "createdAt"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "CandidateSchema": {
-    "$ref": "#/definitions/CandidateSchema",
-    "definitions": {
+      },
       "CandidateSchema": {
         "type": "object",
         "properties": {
@@ -255,13 +453,7 @@
           "createdAt"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "CopilotStateSchema": {
-    "$ref": "#/definitions/CopilotStateSchema",
-    "definitions": {
+      },
       "CopilotStateSchema": {
         "type": "object",
         "properties": {
@@ -507,7 +699,7 @@
                       "additionalProperties": false
                     },
                     "vacancy": {
-                      "$ref": "#/definitions/CopilotStateSchema/properties/vacancies/items"
+                      "$ref": "#/components/schemas/CopilotStateSchema/properties/vacancies/items"
                     },
                     "prompt": {
                       "type": "string"
@@ -558,7 +750,7 @@
                         "type": "object",
                         "properties": {
                           "action": {
-                            "$ref": "#/definitions/CopilotStateSchema/properties/prompts/items/properties/allowedActions/items"
+                            "$ref": "#/components/schemas/CopilotStateSchema/properties/prompts/items/properties/allowedActions/items"
                           },
                           "title": {
                             "type": "string"
@@ -600,7 +792,7 @@
                 "chosenAction": {
                   "anyOf": [
                     {
-                      "$ref": "#/definitions/CopilotStateSchema/properties/prompts/items/properties/allowedActions/items"
+                      "$ref": "#/components/schemas/CopilotStateSchema/properties/prompts/items/properties/allowedActions/items"
                     },
                     {
                       "type": "null"
@@ -750,7 +942,7 @@
                   ]
                 },
                 "actor": {
-                  "$ref": "#/definitions/CopilotStateSchema/properties/notifications/items/properties/role"
+                  "$ref": "#/components/schemas/CopilotStateSchema/properties/notifications/items/properties/role"
                 },
                 "action": {
                   "type": "string"
@@ -830,7 +1022,7 @@
                   "type": "string"
                 },
                 "action": {
-                  "$ref": "#/definitions/CopilotStateSchema/properties/prompts/items/properties/allowedActions/items"
+                  "$ref": "#/components/schemas/CopilotStateSchema/properties/prompts/items/properties/allowedActions/items"
                 },
                 "approvedBy": {
                   "type": "string",
@@ -873,13 +1065,7 @@
           "mcpRuns"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "EvaluationSchema": {
-    "$ref": "#/definitions/EvaluationSchema",
-    "definitions": {
+      },
       "EvaluationSchema": {
         "type": "object",
         "properties": {
@@ -1059,7 +1245,7 @@
           "chosenAction": {
             "anyOf": [
               {
-                "$ref": "#/definitions/EvaluationSchema/properties/output/properties/recommendations/items/properties/action"
+                "$ref": "#/components/schemas/EvaluationSchema/properties/output/properties/recommendations/items/properties/action"
               },
               {
                 "type": "null"
@@ -1090,13 +1276,7 @@
           "confirmedAt"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "FeedbackSchema": {
-    "$ref": "#/definitions/FeedbackSchema",
-    "definitions": {
+      },
       "FeedbackSchema": {
         "type": "object",
         "properties": {
@@ -1143,13 +1323,7 @@
           "createdAt"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "McpRunSchema": {
-    "$ref": "#/definitions/McpRunSchema",
-    "definitions": {
+      },
       "McpRunSchema": {
         "type": "object",
         "properties": {
@@ -1200,13 +1374,7 @@
           "createdAt"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "MemorySchema": {
-    "$ref": "#/definitions/MemorySchema",
-    "definitions": {
+      },
       "MemorySchema": {
         "type": "object",
         "properties": {
@@ -1238,13 +1406,7 @@
           "createdAt"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "NotificationSchema": {
-    "$ref": "#/definitions/NotificationSchema",
-    "definitions": {
+      },
       "NotificationSchema": {
         "type": "object",
         "properties": {
@@ -1290,13 +1452,7 @@
           "createdAt"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "PromptSchema": {
-    "$ref": "#/definitions/PromptSchema",
-    "definitions": {
+      },
       "PromptSchema": {
         "type": "object",
         "properties": {
@@ -1335,13 +1491,7 @@
           "version"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "RecommendationSchema": {
-    "$ref": "#/definitions/RecommendationSchema",
-    "definitions": {
+      },
       "RecommendationSchema": {
         "type": "object",
         "properties": {
@@ -1370,13 +1520,7 @@
           "evidence"
         ],
         "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  },
-  "VacancySchema": {
-    "$ref": "#/definitions/VacancySchema",
-    "definitions": {
+      },
       "VacancySchema": {
         "type": "object",
         "properties": {
@@ -1415,7 +1559,6 @@
         ],
         "additionalProperties": false
       }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
+    }
   }
 }

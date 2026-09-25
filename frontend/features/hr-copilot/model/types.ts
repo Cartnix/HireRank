@@ -1,0 +1,22 @@
+import { z } from "zod";
+
+export const RoleSchema = z.enum(["candidate", "operator", "hr", "manager", "administrator"]);
+export const StatusSchema = z.enum(["new", "assigned", "review", "interview", "rejected"]);
+export const ActionSchema = z.enum(["review", "interview", "rejected"]);
+export const VacancySchema = z.object({ id: z.string(), tenantId: z.string(), title: z.string().min(2), department: z.string(), location: z.string(), description: z.string().min(4), open: z.boolean() });
+export const CandidateSchema = z.object({ id: z.string(), tenantId: z.string(), name: z.string().min(2), email: z.string().email(), phone: z.string(), experience: z.string().min(10), skills: z.string(), resumeRef: z.string(), resumeText: z.string(), status: StatusSchema, vacancyId: z.string().nullable(), requestedVacancyId: z.string().nullable(), source: z.enum(["candidate", "operator", "hr"]), createdAt: z.string() });
+export const PromptSchema = z.object({ tenantId: z.string(), text: z.string().min(12), useMemory: z.boolean(), allowedActions: z.array(ActionSchema).min(1).max(3), version: z.number().int() });
+export const RecommendationSchema = z.object({ action: ActionSchema, title: z.string(), reason: z.string(), evidence: z.string() });
+export const EvaluationSchema = z.object({ id: z.string(), tenantId: z.string(), candidateId: z.string(), vacancyId: z.string(), promptVersion: z.number(), input: z.object({ resume: z.object({ reference: z.string(), text: z.string(), experience: z.string(), skills: z.string() }), vacancy: VacancySchema, prompt: z.string(), memory: z.array(z.string()), managerFeedback: z.array(z.string()) }), output: z.object({ summary: z.string(), greenFlags: z.array(z.string()), redFlags: z.array(z.string()), recommendations: z.array(RecommendationSchema).min(1).max(3) }), state: z.enum(["draft", "confirmed"]), chosenAction: ActionSchema.nullable(), createdAt: z.string(), confirmedAt: z.string().nullable() });
+export const FeedbackSchema = z.object({ id: z.string(), tenantId: z.string(), candidateId: z.string(), intent: z.enum(["contact", "interview", "review"]), note: z.string().min(3), state: z.enum(["pending", "approved", "declined"]), createdAt: z.string() });
+export const NotificationSchema = z.object({ id: z.string(), tenantId: z.string(), role: RoleSchema, candidateId: z.string().nullable(), text: z.string(), read: z.boolean(), createdAt: z.string() });
+export const AuditSchema = z.object({ id: z.string(), tenantId: z.string(), candidateId: z.string().nullable(), actor: RoleSchema, action: z.string(), detail: z.string(), createdAt: z.string() });
+export const MemorySchema = z.object({ id: z.string(), tenantId: z.string(), candidateId: z.string(), evaluationId: z.string(), markdown: z.string(), createdAt: z.string() });
+export const McpRunSchema = z.object({ id: z.string(), tenantId: z.string(), candidateId: z.string(), evaluationId: z.string(), tool: z.string(), action: ActionSchema, approvedBy: z.literal("hr"), status: z.literal("success"), createdAt: z.string() });
+export const CopilotStateSchema = z.object({ version: z.literal(1), tenants: z.array(z.object({ id: z.string(), name: z.string() })), vacancies: z.array(VacancySchema), candidates: z.array(CandidateSchema), prompts: z.array(PromptSchema), evaluations: z.array(EvaluationSchema), feedback: z.array(FeedbackSchema), notifications: z.array(NotificationSchema), audit: z.array(AuditSchema), memory: z.array(MemorySchema), mcpRuns: z.array(McpRunSchema) });
+export type Role = z.infer<typeof RoleSchema>;
+export type Action = z.infer<typeof ActionSchema>;
+export type Vacancy = z.infer<typeof VacancySchema>;
+export type Candidate = z.infer<typeof CandidateSchema>;
+export type Evaluation = z.infer<typeof EvaluationSchema>;
+export type CopilotState = z.infer<typeof CopilotStateSchema>;
