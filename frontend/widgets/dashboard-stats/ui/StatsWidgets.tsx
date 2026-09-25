@@ -1,4 +1,4 @@
-import type { DashboardStats } from "@/views/dashboard"; 
+import type { DashboardStats } from "@/views/dashboard";
 import { getTrendBadge } from "@/shared/ui/badges/PercentageBadge";
 import { Card } from "@/shared/ui/card";
 import { getDeltaPercent } from "@/shared/utils/percent";
@@ -22,7 +22,10 @@ export function StatsWidgets({
     ? getDeltaPercent(inProgressCandidates, previousMonth.inProgressCandidates)
     : null;
   const interviewsDelta = previousMonth
-    ? getDeltaPercent(todaysInterviewsCount, previousMonth.todaysInterviewsCount)
+    ? getDeltaPercent(
+        todaysInterviewsCount,
+        previousMonth.todaysInterviewsCount,
+      )
     : null;
   const timeToHireDelta = previousMonth
     ? getDeltaPercent(avgTimeToHire, previousMonth.avgTimeToHire)
@@ -63,38 +66,46 @@ export function StatsWidgets({
   return (
     <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card icon={Briefcase} badge={activeJobsBadge} className="p-6">
-        <div className="text-[32px] font-bold leading-none tracking-tight">
-          {activeJobsCount}
-        </div>
-        <div className="mt-2 text-sm text-foreground-secondary font-medium">
-          Активные вакансии
+        <div className="pl-2.5 space-y-1.5">
+          <div className="text-[32px] font-bold leading-none tracking-tight">
+            {activeJobsCount}
+          </div>
+          <div className="text-sm text-foreground-secondary font-medium">
+            Активные вакансии
+          </div>
         </div>
       </Card>
 
       <Card icon={Users} badge={candidatesBadge} className="p-6">
-        <div className="text-[32px] font-bold leading-none tracking-tight">
-          {inProgressCandidates}
-        </div>
-        <div className="mt-2 text-sm text-foreground-secondary font-medium">
-          Всего кандидатов
+        <div className="pl-2.5 space-y-1.5">
+          <div className="text-[32px] font-bold leading-none tracking-tight">
+            {inProgressCandidates}
+          </div>
+          <div className="text-sm text-foreground-secondary font-medium">
+            Всего кандидатов
+          </div>
         </div>
       </Card>
 
       <Card icon={CalendarDays} badge={interviewsBadge} className="p-6">
-        <div className="text-[32px] font-bold leading-none tracking-tight">
-          {todaysInterviewsCount}
-        </div>
-        <div className="mt-2 text-sm text-foreground-secondary font-medium">
-          Назначено собеседований
+        <div className="pl-2.5 space-y-1.5">
+          <div className="text-[32px] font-bold leading-none tracking-tight">
+            {todaysInterviewsCount}
+          </div>
+          <div className="text-sm text-foreground-secondary font-medium">
+            Назначено собеседований
+          </div>
         </div>
       </Card>
 
       <Card icon={Clock} badge={timeToHireBadge} className="p-6">
-        <div className="text-[32px] font-bold leading-none tracking-tight">
-          {avgTimeToHire} дн.
-        </div>
-        <div className="mt-2 text-sm text-foreground-secondary font-medium">
-          Среднее время для найма
+        <div className="pl-2.5 space-y-1.5">
+          <div className="text-[32px] font-bold leading-none tracking-tight">
+            {avgTimeToHire} дн.
+          </div>
+          <div className="text-sm text-foreground-secondary font-medium">
+            Среднее время для найма
+          </div>
         </div>
       </Card>
     </div>

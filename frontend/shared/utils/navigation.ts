@@ -6,6 +6,7 @@ import {
   BarChart3,
   Headset,
   Settings as SettingsIcon,
+  Bot
 } from "lucide-react";
 
 export type View =
@@ -14,6 +15,7 @@ export type View =
   | "candidates"
   | "calendar"
   | "analytics"
+  | "agent"
   | "settings"
   | "support";
 
@@ -47,6 +49,12 @@ export const navItems: {
     label: "Аналитика",
     icon: BarChart3,
     href: "/dashboard/analytics",
+  },
+  {
+    id: "agent",
+    label: "Агент",
+    icon: Bot,
+    href: "/dashboard/agent"
   },
 ];
 

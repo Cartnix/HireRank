@@ -1,4 +1,4 @@
 export function getDeltaPercent(current: number, previous: number): number | null {
   if (previous === 0) return null;
-  return Math.round(((current - previous) / previous) * 1000) / 10; 
+  return Math.round(((current - previous) / previous) * 100); 
 }
