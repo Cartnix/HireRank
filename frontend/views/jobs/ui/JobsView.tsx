@@ -29,7 +29,9 @@ export const JobsView = ({
     return (
       <JobOverview
         job={selectedJob}
-        candidates={candidates.filter((c) => c.jobId === selectedJob.id)}
+        candidates={candidates.filter(
+          (c) => c.assigned_vacancy_id === selectedJob.id,
+        )}
         onBack={onBack}
         onUpdateStages={onUpdateStages}
         onOpenCandidate={onOpenCandidate}
@@ -45,7 +47,7 @@ export const JobsView = ({
           subtitle={`${jobs.length} позиций всего`}
         />
         <MainButton onClick={onCreateJob} title="Создать вакансию">
-          icon={<Plus size={15} />}
+          <Plus size={15} />
         </MainButton>
       </div>
 

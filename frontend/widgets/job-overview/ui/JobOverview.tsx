@@ -1,6 +1,9 @@
-import { ChevronLeft, MoreHorizontal } from "lucide-react";
-import { DEFAULT_STAGES, Job, JobStatusBadge, Stage } from "@/entities/job";
-import { Candidate, StageBadge } from "@/entities/candidate";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, MoreHorizontal, Trash2 } from "lucide-react";
+import { DEFAULT_STAGES, deleteVacancy, Job, JobStatusBadge, Stage } from "@/entities/job";
+import { Candidate, getCandidateFullName, StageBadge } from "@/entities/candidate";
 import { StagesEditor } from "@/features/manage-job-stages";
 import { Card } from "@/shared/ui/card";
 import { GhostButton } from "@/shared/ui/buttons/GhostButton";
@@ -12,13 +15,50 @@ export function JobOverview({
   onBack,
   onUpdateStages,
   onOpenCandidate,
+  onDeleteJob,
 }: {
   job: Job;
   candidates: Candidate[];
   onBack: () => void;
   onUpdateStages: (stages: Stage[]) => void;
   onOpenCandidate: (id: string) => void;
+  onDeleteJob?: (id: string) => void;
 }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuOpen]);
+
+  const handleDelete = async () => {
+    if (!confirm(`Удалить вакансию «${job.title}»? Это действие необратимо.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteVacancy(job.id);
+      setIsMenuOpen(false);
+      onDeleteJob?.(job.id);
+      onBack();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Не удалось удалить вакансию");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div>
       <button
@@ -40,38 +80,54 @@ export function JobOverview({
             {job.department} · {job.location} · {job.employmentType}
           </div>
         </div>
-        <GhostButton icon={<MoreHorizontal size={15} />}>Действия</GhostButton>
+
+        <div ref={menuRef} className="relative">
+          <GhostButton
+            icon={<MoreHorizontal size={15} />}
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+          >
+            Действия
+          </GhostButton>
+
+          {isMenuOpen && (
+            <div className="absolute right-0 top-full z-10 mt-1 w-44 rounded-lg border border-border bg-background py-1 shadow-lg">
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-danger hover:bg-muted disabled:opacity-50"
+              >
+                <Trash2 size={14} />
+                {isDeleting ? "Удаление..." : "Удалить вакансию"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Переработанная плашка метаданных */}
       <div className="mb-6 flex flex-wrap items-center gap-2.5">
-        {/* Зарплатная вилка */}
         {job.salaryMin != null && job.salaryMax != null ? (
           <span className="rounded-full border border-brand-primary/20 bg-brand-primary/10 px-3 py-1 text-[12px] font-medium text-brand-primary">
             💰 {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()}
           </span>
         ) : null}
 
-        {/* Опыт работы */}
         {job.experience ? (
           <span className="rounded-full bg-muted px-3 py-1 text-[12px] font-medium text-foreground-secondary">
             📈 Опыт: {job.experience}
           </span>
         ) : null}
 
-        {/* Отдел */}
         {job.department ? (
           <span className="rounded-full bg-muted px-3 py-1 text-[12px] font-medium text-foreground-secondary">
             🏢 {job.department}
           </span>
         ) : null}
 
-        {/* Количество кандидатов */}
         <span className="rounded-full bg-muted px-3 py-1 text-[12px] font-medium text-foreground-secondary">
           👥 Кандидатов: {candidates.length}
         </span>
 
-        {/* Дата создания */}
         {job.createdAt ? (
           <span className="ml-auto text-[12px] text-muted-foreground">
             Создано: {job.createdAt}
@@ -102,24 +158,27 @@ export function JobOverview({
                   Пока нет кандидатов на эту позицию.
                 </div>
               )}
-              {candidates.map((c) => (
-                <div
-                  key={c.id}
-                  onClick={() => onOpenCandidate(c.id)}
-                  className="flex cursor-pointer items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 hover:opacity-80"
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar name={c.name} size={32} />
-                    <div>
-                      <div className="text-[13.5px] font-medium">{c.name}</div>
-                      <div className="text-[12px] text-foreground-secondary">
-                        {c.source} · {c.appliedDate}
+              {candidates.map((c) => {
+                const fullName = getCandidateFullName(c);
+                return (
+                  <div
+                    key={c.id}
+                    onClick={() => onOpenCandidate(c.id)}
+                    className="flex cursor-pointer items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 hover:opacity-80"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar name={fullName} size={32} />
+                      <div>
+                        <div className="text-[13.5px] font-medium">{fullName}</div>
+                        <div className="text-[12px] text-foreground-secondary">
+                          {new Date(c.created_at).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
+                    <StageBadge stage={c.status} />
                   </div>
-                  <StageBadge stage={c.stage} />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         </div>
