@@ -21,6 +21,7 @@ export interface Job {
   salaryMin?: number | null;
   salaryMax?: number | null;
   recruiter?: string;
+  experience?: string;
 }
 
 export const DEFAULT_STAGE_NAMES = [

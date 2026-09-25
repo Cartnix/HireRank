@@ -21,14 +21,19 @@ export function JobOverview({
 }) {
   return (
     <div>
-      <button onClick={onBack} className="mb-5 flex items-center gap-1 text-[13px] font-medium text-foreground-secondary hover:text-foreground">
+      <button
+        onClick={onBack}
+        className="mb-5 flex items-center gap-1 text-[13px] font-medium text-foreground-secondary hover:text-foreground"
+      >
         <ChevronLeft size={15} /> Все вакансии
       </button>
 
       <div className="mb-4 flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="text-[26px] font-bold tracking-tight">{job.title}</div>
+            <div className="text-[26px] font-bold tracking-tight">
+              {job.title}
+            </div>
             <JobStatusBadge status={job.status} />
           </div>
           <div className="mt-1 text-[13.5px] text-foreground-secondary">
@@ -38,35 +43,64 @@ export function JobOverview({
         <GhostButton icon={<MoreHorizontal size={15} />}>Действия</GhostButton>
       </div>
 
-      <div className="mb-6 flex flex-wrap items-center gap-2">
+      {/* Переработанная плашка метаданных */}
+      <div className="mb-6 flex flex-wrap items-center gap-2.5">
+        {/* Зарплатная вилка */}
         {job.salaryMin != null && job.salaryMax != null ? (
           <span className="rounded-full border border-brand-primary/20 bg-brand-primary/10 px-3 py-1 text-[12px] font-medium text-brand-primary">
-            {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()}
+            💰 {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()}
           </span>
         ) : null}
-        {job.requirements.map((skill) => (
-          <span key={skill} className="rounded-full bg-muted px-3 py-1 text-[12px] text-foreground-secondary">
-            {skill}
+
+        {/* Опыт работы */}
+        {job.experience ? (
+          <span className="rounded-full bg-muted px-3 py-1 text-[12px] font-medium text-foreground-secondary">
+            📈 Опыт: {job.experience}
           </span>
-        ))}
-        {job.recruiter ? <span className="ml-1 text-[12px] text-foreground-secondary">Рекрутер: {job.recruiter}</span> : null}
+        ) : null}
+
+        {/* Отдел */}
+        {job.department ? (
+          <span className="rounded-full bg-muted px-3 py-1 text-[12px] font-medium text-foreground-secondary">
+            🏢 {job.department}
+          </span>
+        ) : null}
+
+        {/* Количество кандидатов */}
+        <span className="rounded-full bg-muted px-3 py-1 text-[12px] font-medium text-foreground-secondary">
+          👥 Кандидатов: {candidates.length}
+        </span>
+
+        {/* Дата создания */}
+        {job.createdAt ? (
+          <span className="ml-auto text-[12px] text-muted-foreground">
+            Создано: {job.createdAt}
+          </span>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-3 gap-5">
         <div className="col-span-2">
-
           <Card className="p-6">
-            <div className="mb-3 text-[15px] font-semibold">Описание вакансии</div>
-            <p className="mb-0 max-w-none text-[13.5px] leading-relaxed text-foreground-secondary">{job.description}</p>
+            <div className="mb-3 text-[15px] font-semibold">
+              Описание вакансии
+            </div>
+            <p className="mb-0 max-w-none text-[13.5px] leading-relaxed text-foreground-secondary">
+              {job.description}
+            </p>
 
             <div className="my-5 border-t border-border" />
 
             <div className="mb-4 flex items-center justify-between">
-              <div className="text-[15px] font-semibold">Кандидаты по вакансии ({candidates.length})</div>
+              <div className="text-[15px] font-semibold">
+                Кандидаты по вакансии ({candidates.length})
+              </div>
             </div>
             <div className="divide-y divide-border">
               {candidates.length === 0 && (
-                <div className="py-6 text-center text-[13px] text-muted-foreground">Пока нет кандидатов на эту позицию.</div>
+                <div className="py-6 text-center text-[13px] text-muted-foreground">
+                  Пока нет кандидатов на эту позицию.
+                </div>
               )}
               {candidates.map((c) => (
                 <div
@@ -78,7 +112,9 @@ export function JobOverview({
                     <Avatar name={c.name} size={32} />
                     <div>
                       <div className="text-[13.5px] font-medium">{c.name}</div>
-                      <div className="text-[12px] text-foreground-secondary">{c.source} · {c.appliedDate}</div>
+                      <div className="text-[12px] text-foreground-secondary">
+                        {c.source} · {c.appliedDate}
+                      </div>
                     </div>
                   </div>
                   <StageBadge stage={c.stage} />
@@ -88,7 +124,10 @@ export function JobOverview({
           </Card>
         </div>
 
-        <StagesEditor stages={job.stages ?? DEFAULT_STAGES} onChange={onUpdateStages} />
+        <StagesEditor
+          stages={job.stages ?? DEFAULT_STAGES}
+          onChange={onUpdateStages}
+        />
       </div>
     </div>
   );
