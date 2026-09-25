@@ -1,58 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { CandidateProfile } from "@/widgets/candidate-profile";
 import { SearchInput } from "@/features/search-candidates/ui/SearchInputCandidate";
 import { StageFilter } from "@/features/filter-candidates/ui/StageFilter";
 import { CandidatesTable } from "@/widgets/candidate-table/ui/CandidatesTable";
-import { getCandidates, type Candidate } from "@/entities/candidate";
-import { getVacancies, type Job } from "@/entities/job";
+import type { Candidate } from "@/entities/candidate";
+import type { Job } from "@/entities/job";
 import { useCandidatesPage } from "@/features/candidate-page";
 
 export function CandidatesPageClient({
+  candidates,
+  jobById,
   currentUserName,
   initialSelectedCandidateId = null,
 }: {
+  candidates: Candidate[];
+  jobById: Record<string, Job>;
   currentUserName: string;
   initialSelectedCandidateId?: string | null;
 }) {
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    setLoading(true);
-    setError(null);
-
-    Promise.all([getCandidates(), getVacancies()])
-      .then(([candidatesData, jobsData]) => {
-        if (cancelled) return;
-        setCandidates(
-          Array.isArray(candidatesData) ? (candidatesData as Candidate[]) : [],
-        );
-        setJobs(Array.isArray(jobsData) ? (jobsData as Job[]) : []);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Ошибка загрузки данных");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const jobById = useMemo(
-    () => Object.fromEntries(jobs.map((job) => [job.id, job])) as Record<string, Job>,
-    [jobs],
-  );
-
   const {
     search,
     setSearch,
@@ -73,12 +39,6 @@ export function CandidatesPageClient({
     currentUserName,
     initialSelectedCandidateId,
   );
-
-  if (loading) return <div>Loading...</div>;
-
-  if (error) {
-    return <div>Не удалось загрузить данные: {error}</div>;
-  }
 
   if (selectedCandidate && selectedJob) {
     return (

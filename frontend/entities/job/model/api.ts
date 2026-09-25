@@ -22,9 +22,10 @@ export async function createVacancy(
   return res;
 }
 
-export async function getVacancies(): Promise<Job[]> {
+export async function getVacancies(headers?: HeadersInit): Promise<Job[]> {
   const res = await apiFetch<{ items: Job[] }>("/vacancies/", {
     method: "GET",
+    headers,
   });
   return res.items;
 }

@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Candidate } from "@/entities/candidate";
+import { Candidate, CandidateStatus } from "@/entities/candidate";
 import { Job } from "@/entities/job";
 import { Note } from "@/entities/note";
+
+function getCandidateFullName(candidate: Candidate): string {
+  const { surname, first_name, patronymic } = candidate.questionnaire;
+  return [surname, first_name, patronymic].filter(Boolean).join(" ");
+}
 
 export function useCandidatesPage(
   candidates: Candidate[],
@@ -13,11 +18,21 @@ export function useCandidatesPage(
   const router = useRouter();
   const pathname = usePathname();
   const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState<string | "Все">("Все");
+  const [stageFilter, setStageFilterState] = useState<CandidateStatus | "Все">(
+    "Все",
+  );
 
-  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedCandidateId);
+  const setStageFilter = (v: string) => {
+    setStageFilterState(v as CandidateStatus | "Все");
+  };
+
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialSelectedCandidateId,
+  );
   const [noteDraft, setNoteDraft] = useState("");
-  const [notesByCandidate, setNotesByCandidate] = useState<Record<string, Note[]>>({});
+  const [notesByCandidate, setNotesByCandidate] = useState<
+    Record<string, Note[]>
+  >({});
 
   useEffect(() => {
     setSelectedId(initialSelectedCandidateId);
@@ -26,8 +41,8 @@ export function useCandidatesPage(
   const filteredCandidates = useMemo(() => {
     return candidates.filter(
       (c) =>
-        (stageFilter === "Все" || c.stage === stageFilter) &&
-        c.name.toLowerCase().includes(search.toLowerCase()),
+        (stageFilter === "Все" || c.status === stageFilter) &&
+        getCandidateFullName(c).toLowerCase().includes(search.toLowerCase()),
     );
   }, [candidates, search, stageFilter]);
 
@@ -36,8 +51,8 @@ export function useCandidatesPage(
     [candidates, selectedId],
   );
 
-  const selectedJob = selectedCandidate
-    ? (jobById[selectedCandidate.jobId] ?? null)
+  const selectedJob = selectedCandidate?.assigned_vacancy_id
+    ? (jobById[selectedCandidate.assigned_vacancy_id] ?? null)
     : null;
   const notes = selectedId ? (notesByCandidate[selectedId] ?? []) : [];
 

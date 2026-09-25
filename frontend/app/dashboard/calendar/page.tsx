@@ -8,12 +8,12 @@ export default function CalendarPage({
   candidateById: Record<string, Candidate>;
 }) {
   return (
-    <div>
+    <main className="px-15">
       <SectionTitle
         title="Календарь"
         subtitle="Расписание собеседований и занятость рекрутеров"
       />
       <CalendarGrid candidateById={candidateById ?? {}} />
-    </div>
+    </main>
   );
 }

@@ -1,10 +1,12 @@
-export type CandidateStatus = "unassigned" | "assigned";
+export type CandidateStatus =
+  | "unassigned"
+  | "assigned"
+  | "rejected";
 
 export interface HistoryEvent {
   date: string;
   action: string;
 }
-
 export interface EducationEntry {
   institution: string;
   year_from: string;
@@ -38,27 +40,14 @@ export interface Questionnaire {
 
 export interface Candidate {
   id: string;
-  enterprise_id: string;
+  tenant_id: string;
   user_id?: string | null;
+  email: string;
   status: CandidateStatus;
-  assigned_vacancy_id?: string | null;
   questionnaire: Questionnaire;
-  ai_score?: number | null;
-  ai_rankings?: VacancyMatchScore[];
+  resume_url?: string | null;
+  active_package_id?: string | null;
+  assigned_vacancy_id?: string | null;
   created_at: string;
   updated_at: string;
-
-  // Compatibility fields for existing UI and mock data
-  name: string;
-  jobId: string;
-  stage: string;
-  source: string;
-  appliedDate: string;
-  email: string;
-  phone: string;
-  location: string;
-  skills: string[];
-  rating: number;
-  resumeFileName: string;
-  history: HistoryEvent[];
 }

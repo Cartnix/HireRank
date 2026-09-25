@@ -6,7 +6,7 @@ import { SourcesChart } from "@/widgets/analytics-charts/ui/SourcesChart";
 
 export default function AnalyticsPage() {
   return (
-    <div>
+    <main className="px-15">
       <SectionTitle title="Аналитика" subtitle="Эффективность процесса найма" />
 
       <div className="mb-5 grid grid-cols-3 gap-4">
@@ -36,6 +36,6 @@ export default function AnalyticsPage() {
         <ConversionFunnel />
         <SourcesChart />
       </div>
-    </div>
+    </main>
   );
 }
