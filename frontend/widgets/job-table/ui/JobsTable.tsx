@@ -35,7 +35,9 @@ export function JobsTable({
         </thead>
         <tbody>
           {jobs.map((job) => {
-            const count = candidates.filter((c) => c.jobId === job.id).length;
+            const count = candidates.filter(
+              (c) => c.assigned_vacancy_id === job.id,
+            ).length;
             const hasSalary = job.salaryMin != null && job.salaryMax != null;
 
             return (
@@ -45,25 +47,35 @@ export function JobsTable({
                 className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/60 transition-colors"
               >
                 {/* Название вакансии */}
-                <td className="px-5 py-3.5 font-medium text-foreground">{job.title}</td>
+                <td className="px-5 py-3.5 font-medium text-foreground">
+                  {job.title}
+                </td>
 
                 {/* Отдел */}
-                <td className="px-5 py-3.5 text-foreground-secondary">{job.department}</td>
+                <td className="px-5 py-3.5 text-foreground-secondary">
+                  {job.department}
+                </td>
 
                 {/* Зарплатная вилка */}
                 <td className="px-5 py-3.5 font-medium text-foreground">
-                  {hasSalary
-                    ? `${job.salaryMin!.toLocaleString()}–${job.salaryMax!.toLocaleString()} ₸`
-                    : <span className="text-muted-foreground font-normal">—</span>}
+                  {hasSalary ? (
+                    `${job.salaryMin!.toLocaleString()}–${job.salaryMax!.toLocaleString()} ₸`
+                  ) : (
+                    <span className="text-muted-foreground font-normal">—</span>
+                  )}
                 </td>
 
                 {/* Условия (Локация и Тип занятости) */}
                 <td className="px-5 py-3.5 text-foreground-secondary">
                   <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-foreground">{job.location ?? "—"}</span>
+                    <span className="text-foreground">
+                      {job.location ?? "—"}
+                    </span>
                     <span className="text-muted-foreground">·</span>
                     <span className="text-muted-foreground">
-                      {job.employmentType ? EMPLOYMENT_LABELS[job.employmentType] : "—"}
+                      {job.employmentType
+                        ? EMPLOYMENT_LABELS[job.employmentType]
+                        : "—"}
                     </span>
                   </div>
                 </td>
@@ -81,11 +93,16 @@ export function JobsTable({
                 </td>
 
                 {/* Дата создания */}
-                <td className="px-5 py-3.5 text-xs text-muted-foreground">{job.createdAt ?? "—"}</td>
+                <td className="px-5 py-3.5 text-xs text-muted-foreground">
+                  {job.createdAt ?? "—"}
+                </td>
 
                 {/* Стрелочка перехода */}
                 <td className="px-5 py-3.5 text-right">
-                  <ChevronRight size={16} className="ml-auto text-muted-foreground" />
+                  <ChevronRight
+                    size={16}
+                    className="ml-auto text-muted-foreground"
+                  />
                 </td>
               </tr>
             );

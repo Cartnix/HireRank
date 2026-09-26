@@ -1,11 +1,63 @@
+"use client";
+
 import type { DashboardStats } from "@/views/dashboard";
 import { getTrendBadge } from "@/shared/ui/badges/PercentageBadge";
 import { Card } from "@/shared/ui/card";
 import { getDeltaPercent } from "@/shared/utils/percent";
 import { Briefcase, Users, CalendarDays, Clock } from "lucide-react";
+import { AreaChart, Area, ResponsiveContainer } from "recharts";
 
 interface StatsWidgetsProps extends DashboardStats {
   previousMonth?: DashboardStats;
+}
+
+// Генератор данных с красивым скачком/падением в середине для наглядности графиков
+function getTrendData(current: number, deltaPercent: number | null) {
+  if (deltaPercent === null) return [current, current, current, current, current];
+  
+  const previous = current / (1 + deltaPercent / 100);
+  
+  // Создаем выраженный пик или спад в середине (индекс 2), чтобы график выглядел живым
+  const isPositive = deltaPercent >= 0;
+  const volatilityFactor = isPositive ? 0.75 : 1.25; // при росте проседаем в середине, при падении — подпрыгиваем
+  const midPoint = Math.round(previous * volatilityFactor);
+
+  return [
+    Math.round(previous), 
+    Math.round(previous * 0.98), 
+    midPoint, 
+    Math.round(current * 0.95), 
+    Math.round(current)
+  ];
+}
+
+// Мини-график с отступом 20px от верха
+function MiniAreaChart({ data, strokeColor }: { data: number[]; strokeColor: string }) {
+  const chartData = data.map((value, index) => ({ index, value }));
+  const gradientId = `grad-${Math.random().toString(36).substring(2, 9)}`;
+
+  return (
+    <div className="h-[72px] w-full mt-[20px] -mb-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData} margin={{ top: 6, right: 0, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={strokeColor} stopOpacity={0.4} />
+              <stop offset="100%" stopColor={strokeColor} stopOpacity={0.0} />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={strokeColor}
+            strokeWidth={2}
+            fillOpacity={1}
+            fill={`url(#${gradientId})`}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
 export function StatsWidgets({
@@ -65,7 +117,7 @@ export function StatsWidgets({
 
   return (
     <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card icon={Briefcase} badge={activeJobsBadge} className="p-6">
+      <Card icon={Briefcase} badge={activeJobsBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
             {activeJobsCount}
@@ -74,9 +126,13 @@ export function StatsWidgets({
             Активные вакансии
           </div>
         </div>
+        <MiniAreaChart 
+          data={getTrendData(activeJobsCount, activeJobsDelta)} 
+          strokeColor="#22d3ee" 
+        />
       </Card>
 
-      <Card icon={Users} badge={candidatesBadge} className="p-6">
+      <Card icon={Users} badge={candidatesBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
             {inProgressCandidates}
@@ -85,9 +141,13 @@ export function StatsWidgets({
             Всего кандидатов
           </div>
         </div>
+        <MiniAreaChart 
+          data={getTrendData(inProgressCandidates, candidatesDelta)} 
+          strokeColor="#a78bfa" 
+        />
       </Card>
 
-      <Card icon={CalendarDays} badge={interviewsBadge} className="p-6">
+      <Card icon={CalendarDays} badge={interviewsBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
             {todaysInterviewsCount}
@@ -96,9 +156,13 @@ export function StatsWidgets({
             Назначено собеседований
           </div>
         </div>
+        <MiniAreaChart 
+          data={getTrendData(todaysInterviewsCount, interviewsDelta)} 
+          strokeColor="#facc15" 
+        />
       </Card>
 
-      <Card icon={Clock} badge={timeToHireBadge} className="p-6">
+      <Card icon={Clock} badge={timeToHireBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
             {avgTimeToHire} дн.
@@ -107,6 +171,10 @@ export function StatsWidgets({
             Среднее время для найма
           </div>
         </div>
+        <MiniAreaChart 
+          data={getTrendData(avgTimeToHire, timeToHireDelta)} 
+          strokeColor="#34d399" 
+        />
       </Card>
     </div>
   );
