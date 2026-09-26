@@ -1,45 +1,45 @@
-interface FunnelStage {
+export interface FunnelStage {
   id: string;
   name: string;
   count: number;
-  percentage: number; 
-  color: string;      
+  percentage: number;
+  colorClass: string; 
 }
 
 export const funnelStages: FunnelStage[] = [
   {
     id: "1",
-    name: "Applications",
+    name: "Отклики",
     count: 248,
     percentage: 100,
-    color: "#22d3ee", 
+    colorClass: "bg-cyan-main",
   },
   {
     id: "2",
-    name: "AI screening",
+    name: "AI-скрининг",
     count: 156,
     percentage: 63,
-    color: "#60a5fa", 
+    colorClass: "bg-chart-1",
   },
   {
     id: "3",
-    name: "Committee review",
+    name: "Оценка коммитета",
     count: 72,
     percentage: 30,
-    color: "#a78bfa", 
+    colorClass: "bg-warning",
   },
   {
     id: "4",
-    name: "Trial lecture",
+    name: "Пробная лекция",
     count: 28,
     percentage: 15,
-    color: "#facc15", 
+    colorClass: "bg-success",
   },
   {
     id: "5",
-    name: "Offer stage",
+    name: "Этап оффера",
     count: 9,
     percentage: 8,
-    color: "#34d399",
+    colorClass: "bg-chart-4",
   },
 ];

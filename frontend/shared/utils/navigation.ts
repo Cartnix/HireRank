@@ -3,7 +3,6 @@ import {
   Briefcase,
   Users,
   CalendarDays,
-  BarChart3,
   Headset,
   Settings as SettingsIcon,
   Bot
@@ -14,7 +13,6 @@ export type View =
   | "jobs"
   | "candidates"
   | "calendar"
-  | "analytics"
   | "agent"
   | "settings"
   | "support";
@@ -43,12 +41,6 @@ export const navItems: {
     label: "Календарь",
     icon: CalendarDays,
     href: "/dashboard/calendar",
-  },
-  {
-    id: "analytics",
-    label: "Аналитика",
-    icon: BarChart3,
-    href: "/dashboard/analytics",
   },
   {
     id: "agent",
