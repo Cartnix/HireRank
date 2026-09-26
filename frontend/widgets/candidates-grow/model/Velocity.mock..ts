@@ -11,7 +11,7 @@ export interface VelocityPeriodData {
 }
 
 export const hiringVelocityMockData: Record<string, VelocityPeriodData> = {
-  "Last 7 days": {
+  "7 дн": {
     total: 48,
     delta: "+12.4%",
     isPositive: true,
@@ -25,7 +25,7 @@ export const hiringVelocityMockData: Record<string, VelocityPeriodData> = {
       { date: "Sep 26", value: 48 },
     ],
   },
-  "Last 30 days": {
+  "30 дн": {
     total: 248,
     delta: "+18.2%",
     isPositive: true,
@@ -37,7 +37,7 @@ export const hiringVelocityMockData: Record<string, VelocityPeriodData> = {
       { date: "Oct 16", value: 70 },
     ],
   },
-  "Last 90 days": {
+  "90 дн": {
     total: 620,
     delta: "+24.5%",
     isPositive: true,
