@@ -7,6 +7,7 @@ import { UpcomingPanel } from "@/widgets/upcoming-panel/ui/UpcomingPanel";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 import { CurrentDateInfo } from "@/app/dashboard/page";
 import { HiringVelocityCard } from "@/widgets/candidates-grow/ui/CandidateVelocityChart";
+import { HiringFunnelCard } from "@/widgets/candidate-funnel";
 
 export type DashboardStats = {
   activeJobsCount: number;
@@ -44,7 +45,15 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         previousMonth={props.previousMonth}
       />
 
-      <HiringVelocityCard />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div className="lg:col-span-7 xl:col-span-8">
+          <HiringVelocityCard />
+        </div>
+
+        <div className="lg:col-span-5 xl:col-span-4">
+          <HiringFunnelCard />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <div className="w-full">
