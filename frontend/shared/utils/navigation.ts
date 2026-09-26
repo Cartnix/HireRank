@@ -22,6 +22,7 @@ export const navItems: {
   label: string;
   icon: React.ElementType;
   href: string;
+  inDevelopment?: boolean;
 }[] = [
   {
     id: "dashboard",
@@ -55,17 +56,20 @@ export const secondaryNavItems: {
   label: string;
   icon: React.ElementType;
   href: string;
+  inDevelopment?: boolean;
 }[] = [
   {
     id: "settings",
     label: "Настройки",
     icon: SettingsIcon,
     href: "/dashboard/settings",
+    inDevelopment: true,
   },
   {
     id: "support",
     label: "Поддержка",
     icon: Headset,
     href: "/dashboard/support",
+    inDevelopment: true,
   },
 ];

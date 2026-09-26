@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/shared/api/auth-store";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -83,6 +84,25 @@ export function Sidebar() {
         {secondaryNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname.startsWith(item.href);
+
+          if (item.inDevelopment) {
+            return (
+              <Tooltip key={item.id}>
+                <TooltipTrigger asChild>
+                  <div className="group relative flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2.5 mx-3 text-[14px] text-muted-foreground/50">
+                    <Icon size={18} />
+                    <span>{item.label}</span>
+                    <span className="ml-auto rounded-full bg-cyan-300/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-300">
+                      Скоро
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  Раздел в разработке — скоро будет доступен
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
 
           return (
             <Link
