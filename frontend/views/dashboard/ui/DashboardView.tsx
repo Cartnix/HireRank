@@ -5,8 +5,8 @@ import { StatsWidgets } from "@/widgets/dashboard-stats";
 import { HiringFunnel } from "@/widgets/hiring-panel";
 import { UpcomingPanel } from "@/widgets/upcoming-panel/ui/UpcomingPanel";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
-import CandidateGrowChart from "@/widgets/candidates-grow/ui/CandidatesGrowChart";
 import { CurrentDateInfo } from "@/app/dashboard/page";
+import { HiringVelocityCard } from "@/widgets/candidates-grow/ui/CandidateVelocityChart";
 
 export type DashboardStats = {
   activeJobsCount: number;
@@ -44,7 +44,7 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         previousMonth={props.previousMonth}
       />
 
-      <CandidateGrowChart />
+      <HiringVelocityCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <div className="w-full">
