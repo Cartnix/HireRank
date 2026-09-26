@@ -2,12 +2,11 @@ import type { Candidate } from "@/entities/candidate";
 import type { Job } from "@/entities/job";
 import type { Interview } from "@/entities/interview";
 import { StatsWidgets } from "@/widgets/dashboard-stats";
-import { HiringFunnel } from "@/widgets/hiring-panel";
-import { UpcomingPanel } from "@/widgets/upcoming-panel/ui/UpcomingPanel";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 import { CurrentDateInfo } from "@/app/dashboard/page";
 import { HiringVelocityCard } from "@/widgets/candidates-grow/ui/CandidateVelocityChart";
 import { HiringFunnelCard } from "@/widgets/candidate-funnel";
+import { UpcomingInterviewsCard } from "@/widgets/upcoming-interviews/ui/UpcomingInterviewsCard";
 
 export type DashboardStats = {
   activeJobsCount: number;
@@ -55,21 +54,7 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <div className="w-full">
-          <HiringFunnel
-            pipelineCounts={props.pipelineCounts}
-            maxPipeline={props.maxPipeline}
-          />
-        </div>
-        <div className="w-full">
-          <UpcomingPanel
-            todaysInterviews={props.todaysInterviews}
-            candidateById={props.candidateById}
-            jobById={props.jobById}
-          />
-        </div>
-      </div>
+      <UpcomingInterviewsCard />
     </div>
   );
 }
