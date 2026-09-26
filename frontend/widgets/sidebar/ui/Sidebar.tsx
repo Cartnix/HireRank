@@ -42,7 +42,7 @@ export function Sidebar() {
 
         <div className="my-3 h-px bg-sidebar-border" />
 
-        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide/">
+        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide/ text-muted-foreground/70">
           Основное
         </div>
 

@@ -7,6 +7,7 @@ import { CurrentDateInfo } from "@/app/dashboard/page";
 import { HiringVelocityCard } from "@/widgets/candidates-grow/ui/CandidateVelocityChart";
 import { HiringFunnelCard } from "@/widgets/candidate-funnel";
 import { UpcomingInterviewsCard } from "@/widgets/upcoming-interviews/ui/UpcomingInterviewsCard";
+import { TopCandidatesCard } from "@/widgets/top-candidate";
 
 export type DashboardStats = {
   activeJobsCount: number;
@@ -54,7 +55,15 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         </div>
       </div>
 
-      <UpcomingInterviewsCard />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div className="lg:col-span-7 xl:col-span-8">
+          <TopCandidatesCard />
+        </div>
+
+        <div className="lg:col-span-5 xl:col-span-4">
+          <UpcomingInterviewsCard />
+        </div>
+      </div>
     </div>
   );
 }
