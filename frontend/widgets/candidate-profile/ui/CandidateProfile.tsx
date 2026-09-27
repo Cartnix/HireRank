@@ -36,6 +36,7 @@ export function CandidateProfile({
 }) {
   const [tab, setTab] = useState<"profile" | "history" | "files" | "notes">("profile");
   const q = candidate.questionnaire;
+  const displayName = candidate.name ?? [q.first_name, q.surname].filter(Boolean).join(" ");
 
   return (
     <div>
@@ -46,11 +47,11 @@ export function CandidateProfile({
       <div className="grid grid-cols-3 gap-5">
         <Card className="h-fit p-6">
           <div className="mb-4 flex flex-col items-center text-center">
-            <Avatar name={candidate.name} size={64} />
-            <div className="mt-3 text-[17px] font-semibold">{candidate.name}</div>
+            <Avatar name={displayName} size={64} />
+            <div className="mt-3 text-[17px] font-semibold">{displayName}</div>
             <div className="text-[13px] text-foreground-secondary">{job?.title}</div>
             <div className="mt-2">
-              <StageBadge stage={candidate.stage} />
+              <StageBadge stage={candidate.stage ?? "Новый"} />
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
               <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -79,7 +80,7 @@ export function CandidateProfile({
           <div className="mt-4 border-t border-border pt-4">
             <div className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">Навыки</div>
             <div className="flex flex-wrap gap-1.5">
-              {candidate.skills.map((s) => (
+              {(candidate.skills ?? []).map((s) => (
                 <span key={s} className="rounded-full bg-muted px-2.5 py-1 text-[12px] text-muted-foreground">
                   {s}
                 </span>
@@ -162,11 +163,11 @@ export function CandidateProfile({
           {tab === "history" && (
             <Card className="p-6">
               <div className="space-y-4">
-                {candidate.history.map((h, idx) => (
+                {(candidate.history ?? []).map((h, idx) => (
                   <div key={idx} className="flex gap-3">
                     <div className="flex flex-col items-center">
                       <div className="h-2 w-2 rounded-full bg-brand-primary" />
-                      {idx !== candidate.history.length - 1 && <div className="w-px flex-1 bg-border" />}
+                      {idx !== (candidate.history ?? []).length - 1 && <div className="w-px flex-1 bg-border" />}
                     </div>
                     <div className="pb-4">
                       <div className="text-[13px] font-medium">{h.action}</div>
@@ -186,8 +187,8 @@ export function CandidateProfile({
                     <FileText size={16} />
                   </div>
                   <div>
-                    <div className="text-[13px] font-medium">{candidate.resumeFileName}</div>
-                    <div className="text-[12px] text-muted-foreground">Резюме · загружено {candidate.appliedDate}</div>
+                    <div className="text-[13px] font-medium">{candidate.resumeFileName ?? "Резюме"}</div>
+                    <div className="text-[12px] text-muted-foreground">Резюме · загружено {candidate.appliedDate ?? candidate.created_at.slice(0, 10)}</div>
                   </div>
                 </div>
                 <GhostButton icon={<Paperclip size={13} />}>Открыть</GhostButton>

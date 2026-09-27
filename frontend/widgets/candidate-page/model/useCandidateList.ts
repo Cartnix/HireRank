@@ -9,7 +9,7 @@ export function useCandidatesList(candidates: Candidate[]) {
     return candidates.filter(
       (c) =>
         (stageFilter === "Все" || c.stage === stageFilter) &&
-        c.name.toLowerCase().includes(search.toLowerCase()),
+        (c.name ?? `${c.questionnaire.first_name} ${c.questionnaire.surname}`).toLowerCase().includes(search.toLowerCase()),
     );
   }, [candidates, search, stageFilter]);
 
