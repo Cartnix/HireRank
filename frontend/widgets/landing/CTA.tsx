@@ -11,7 +11,7 @@ export const CTA = () => (
       </h2>
 
       <p className="relative mt-3 text-foreground-secondary">
-        Оператор вводит резюме один раз. HR выбирает действие и подтверждает его.
+        рекрутер вводит резюме один раз. HR выбирает действие и подтверждает его.
       </p>
 
       <Link href="/dashboard/copilot" className="relative mt-8 inline-block rounded-xl bg-brand-primary px-5 py-3 text-sm font-semibold text-brand-primary-foreground">Попробовать сценарий →</Link>

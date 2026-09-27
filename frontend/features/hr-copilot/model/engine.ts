@@ -37,7 +37,7 @@ export function evaluate(state: CopilotState, candidate: Candidate, vacancy: Vac
   notify(state, candidate.tenantId, "hr", `AI подготовил ${result.output.recommendations.length} варианта для ${candidate.name}. Подтвердите один в ATS.`, candidate.id);
   return result;
 }
-export function intake(state: CopilotState, tenantId: string, actor: "candidate" | "operator" | "hr", input: Omit<Candidate, "id" | "tenantId" | "status" | "vacancyId" | "source" | "createdAt">): Candidate {
+export function intake(state: CopilotState, tenantId: string, actor: "candidate" | "recruiter" | "hr", input: Omit<Candidate, "id" | "tenantId" | "status" | "vacancyId" | "source" | "createdAt">): Candidate {
   if (!state.tenants.some(x => x.id === tenantId)) throw Error("Нет tenant");
   if (state.candidates.some(x => x.tenantId === tenantId && x.email.toLowerCase() === input.email.toLowerCase())) throw Error("Анкета с этим email уже есть");
   const candidate = CandidateSchema.parse({ ...input, id: id(), tenantId, status: "new", vacancyId: null, source: actor, createdAt: now() });

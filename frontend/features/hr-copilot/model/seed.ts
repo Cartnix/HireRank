@@ -12,7 +12,7 @@ export const initialCopilotState: CopilotState = {
   ],
   candidates: [
     { id: "c-aliya", tenantId, name: "Алия Садыкова", email: "aliya@example.com", phone: "+7 700 111 22 33", experience: "5 лет продуктового дизайна. Проводила интервью и создала дизайн систему для B2B платформы.", skills: "Figma, исследования пользователей, дизайн системы", resumeRef: "aliya-portfolio.pdf", resumeText: "", status: "assigned", vacancyId: "v-design", requestedVacancyId: null, source: "candidate", createdAt: "2026-09-23T10:00:00.000Z" },
-    { id: "c-timur", tenantId, name: "Тимур Омаров", email: "timur@example.com", phone: "+7 700 222 33 44", experience: "3 года React и TypeScript. Разработал доступные компоненты интерфейса.", skills: "React, TypeScript, WCAG", resumeRef: "timur-cv.pdf", resumeText: "", status: "new", vacancyId: null, requestedVacancyId: "v-frontend", source: "operator", createdAt: "2026-09-24T10:00:00.000Z" },
+    { id: "c-timur", tenantId, name: "Тимур Омаров", email: "timur@example.com", phone: "+7 700 222 33 44", experience: "3 года React и TypeScript. Разработал доступные компоненты интерфейса.", skills: "React, TypeScript, WCAG", resumeRef: "timur-cv.pdf", resumeText: "", status: "new", vacancyId: null, requestedVacancyId: "v-frontend", source: "recruiter", createdAt: "2026-09-24T10:00:00.000Z" },
     { id: "c-dana", tenantId: "tenant-almaty", name: "Дана Ким", email: "dana@example.com", phone: "+7 700 444 55 66", experience: "4 года аналитики и проектирования метрик. SQL и Python.", skills: "SQL, Python", resumeRef: "dana-cv.pdf", resumeText: "", status: "new", vacancyId: null, requestedVacancyId: "v-data", source: "candidate", createdAt: "2026-09-24T12:00:00.000Z" },
   ],
   prompts: [

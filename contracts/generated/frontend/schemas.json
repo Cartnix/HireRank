@@ -138,7 +138,7 @@
             "type": "string",
             "enum": [
               "candidate",
-              "operator",
+              "recruiter",
               "hr",
               "manager",
               "administrator"
@@ -230,7 +230,7 @@
             "type": "string",
             "enum": [
               "candidate",
-              "operator",
+              "recruiter",
               "hr"
             ]
           },
@@ -390,7 +390,7 @@
                   "type": "string",
                   "enum": [
                     "candidate",
-                    "operator",
+                    "recruiter",
                     "hr"
                   ]
                 },
@@ -698,7 +698,7 @@
                   "type": "string",
                   "enum": [
                     "candidate",
-                    "operator",
+                    "recruiter",
                     "hr",
                     "manager",
                     "administrator"
@@ -1258,7 +1258,7 @@
             "type": "string",
             "enum": [
               "candidate",
-              "operator",
+              "recruiter",
               "hr",
               "manager",
               "administrator"

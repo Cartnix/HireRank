@@ -9,11 +9,11 @@ Preconditions:
 - Tenant is resolved from JWT `tenant_id` (Core: singleton TENANT_ID)
 
 Flow:
-1. HR/operator opens the candidate intake screen.
-2. HR/operator uploads or completes an HTML resume form.
+1. HR/recruiter opens the candidate intake screen.
+2. HR/recruiter uploads or completes an HTML resume form.
 3. System validates the payload and tenant scope.
 4. Candidate profile and resume reference are created.
-5. HR/operator selects a vacancy and attaches the candidate to it.
+5. HR/recruiter selects a vacancy and attaches the candidate to it.
 6. Candidate is added to the vacancy pipeline.
 
 DoD:

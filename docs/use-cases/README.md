@@ -2,7 +2,7 @@
 
 ## North star
 
-HireRank is an ATS for HR teams. The MVP helps an operator manage vacancies,
+HireRank is an ATS for HR teams. The MVP helps an recruiter manage vacancies,
 collect resumes through an HTML form, attach candidates to vacancies, and move
 them through a simple hiring pipeline. LLM recommendations are post-MVP.
 
@@ -36,7 +36,7 @@ WhatsApp, and web notifications are delivery channels, not the core domain.
 | UC | Purpose |
 |---|---|
 | [UC-01](UC-01-candidate-registration.md) | Candidate submits an HTML resume form and enters the hiring pool |
-| [UC-02](UC-02-hr-candidate-intake.md) | HR/operator submits a resume and attaches it to a vacancy |
+| [UC-02](UC-02-hr-candidate-intake.md) | HR/recruiter submits a resume and attaches it to a vacancy |
 | [UC-03](UC-03-vacancy-management.md) | Administrator and HR vacancy CRUD |
 | [UC-04](UC-04-candidate-assignment.md) | HR/admin attaches a candidate to a vacancy and updates status |
 | [UC-05](UC-05-manager-vacancies-and-assignments.md) | Manager reads vacancies and candidates in the web app |
