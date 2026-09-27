@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-export const RoleSchema = z.enum(["candidate", "operator", "hr", "manager", "administrator"]);
+export const RoleSchema = z.enum(["candidate", "recruiter", "hr", "manager", "administrator"]);
 export const StatusSchema = z.enum(["new", "assigned", "review", "interview", "rejected"]);
 export const ActionSchema = z.enum(["review", "interview", "rejected"]);
 export const VacancySchema = z.object({ id: z.string(), tenantId: z.string(), title: z.string().min(2), department: z.string(), location: z.string(), description: z.string().min(4), open: z.boolean() });
-export const CandidateSchema = z.object({ id: z.string(), tenantId: z.string(), name: z.string().min(2), email: z.string().email(), phone: z.string(), experience: z.string().min(10), skills: z.string(), resumeRef: z.string(), resumeText: z.string(), status: StatusSchema, vacancyId: z.string().nullable(), requestedVacancyId: z.string().nullable(), source: z.enum(["candidate", "operator", "hr"]), createdAt: z.string() });
+export const CandidateSchema = z.object({ id: z.string(), tenantId: z.string(), name: z.string().min(2), email: z.string().email(), phone: z.string(), experience: z.string().min(10), skills: z.string(), resumeRef: z.string(), resumeText: z.string(), status: StatusSchema, vacancyId: z.string().nullable(), requestedVacancyId: z.string().nullable(), source: z.enum(["candidate", "recruiter", "hr"]), createdAt: z.string() });
 export const PromptSchema = z.object({ tenantId: z.string(), text: z.string().min(12), useMemory: z.boolean(), allowedActions: z.array(ActionSchema).min(1).max(3), version: z.number().int() });
 export const RecommendationSchema = z.object({ action: ActionSchema, title: z.string(), reason: z.string(), evidence: z.string() });
 export const EvaluationSchema = z.object({ id: z.string(), tenantId: z.string(), candidateId: z.string(), vacancyId: z.string(), promptVersion: z.number(), input: z.object({ resume: z.object({ reference: z.string(), text: z.string(), experience: z.string(), skills: z.string() }), vacancy: VacancySchema, prompt: z.string(), memory: z.array(z.string()), managerFeedback: z.array(z.string()) }), output: z.object({ summary: z.string(), greenFlags: z.array(z.string()), redFlags: z.array(z.string()), recommendations: z.array(RecommendationSchema).min(1).max(3) }), state: z.enum(["draft", "confirmed"]), chosenAction: ActionSchema.nullable(), createdAt: z.string(), confirmedAt: z.string().nullable() });

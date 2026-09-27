@@ -8,7 +8,7 @@ This is a browser-only Next.js adaptation of the interactive single-file prototy
 
 1. `cd frontend && npm ci && npm run dev`.
 2. Open `/dashboard/copilot` (also linked from the existing sidebar and landing).
-3. Switch to **Operator**, submit a resume using a file name, URL, or text. The file bytes stay in the browser and are not uploaded.
+3. Switch to **recruiter**, submit a resume using a file name, URL, or text. The file bytes stay in the browser and are not uploaded.
 4. Switch to **HR**. Review the new card, AI flags and three recommendations. Confirm one action in the dialog. Before confirmation there is no MCP run and no status mutation.
 5. Optionally confirm a manual or mock-generated explanation in the memory dialog. Toggle memory under HR rules; only then do previous confirmed Markdown records appear in subsequent evaluation inputs.
 6. Switch to **Manager** to leave feedback. HR must review the request; no email is sent. Switch tenants to inspect isolation.

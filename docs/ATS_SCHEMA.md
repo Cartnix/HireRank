@@ -45,7 +45,7 @@ Runtime: `SET LOCAL ROLE hirerank_app` (NOBYPASSRLS) + transaction-local GUC via
 | UC    | Persistence usage                                                                          |
 | ----- | -------------------------------------------------------------------------------------------------- |
 | UC-01 | Create/update candidate and resume record with status `unassigned`                       |
-| UC-02 | Create candidate and resume record under HR/operator access                               |
+| UC-02 | Create candidate and resume record under HR/recruiter access                               |
 | UC-03 | Vacancy CRUD; seed default `pipeline_stage` rows                                          |
 | UC-04 | Insert `application` linking candidate to vacancy; update candidate status                |
 | UC-05 | Tenant-scoped read of vacancies, applications, and candidates                             |
@@ -60,13 +60,13 @@ Runtime: `SET LOCAL ROLE hirerank_app` (NOBYPASSRLS) + transaction-local GUC via
 
 ```text
 UC-01/02 submit HTML resume form → INSERT candidate (unassigned, resume_url)
-  → HR/operator selects vacancy
+  → HR/recruiter selects vacancy
   → INSERT application (candidate, vacancy, current_stage)
   → HR updates candidate status in the pipeline
 ```
 
 Pool intake: candidates with no active `application` and `status=unassigned`
-until an HR/operator attaches them to a vacancy.
+until an HR/recruiter attaches them to a vacancy.
 
 ## Non-goals of the schema issue
 

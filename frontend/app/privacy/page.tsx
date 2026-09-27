@@ -18,9 +18,9 @@ export default function PrivacyPage() {
       </p>
 
       <section className="mt-10 space-y-4 text-foreground-secondary leading-relaxed">
-        <h2 className="text-lg font-medium text-foreground">1. Оператор и локализация</h2>
+        <h2 className="text-lg font-medium text-foreground">1. рекрутер и локализация</h2>
         <p>
-          Оператор персональных данных — контролёр инстанса HireRank (on-prem /
+          рекрутер персональных данных — контролёр инстанса HireRank (on-prem /
           in-perimeter у заказчика). Сбор, накопление и хранение ПД граждан РК,
           включая фиксацию сессий, IP и логов входа, выполняются на серверах /
           в ЦОД на территории Республики Казахстан (локализация БД). Зарубежные
@@ -98,7 +98,7 @@ export default function PrivacyPage() {
         <p>
           Отзыв согласий и удаление / анонимизация идентификатора авторизации:{" "}
           <code className="text-sm">POST /api/v1/auth/forget-me</code>. При
-          компрометации сессий оператор уведомляет уполномоченный орган РК в
+          компрометации сессий рекрутер уведомляет уполномоченный орган РК в
           установленный законом срок (ориентир — один рабочий день).
         </p>
       </section>

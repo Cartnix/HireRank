@@ -1,7 +1,7 @@
 # UC-03 Vacancy management
 
 Actor:
-Administrator, HR Operator
+Administrator, HR recruiter
 
 Preconditions:
 - Authenticated

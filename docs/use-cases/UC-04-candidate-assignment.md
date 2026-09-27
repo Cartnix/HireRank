@@ -1,7 +1,7 @@
 # UC-04 Candidate assignment
 
 Actor:
-Administrator, HR operator
+Administrator, HR recruiter
 
 Preconditions:
 - Authenticated

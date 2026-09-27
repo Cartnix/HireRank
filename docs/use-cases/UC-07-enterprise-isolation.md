@@ -1,7 +1,7 @@
 # UC-07 Tenant isolation
 
 Actor:
-Administrator, HR Operator, Manager, Candidate
+Administrator, HR recruiter, Manager, Candidate
 
 Preconditions:
 - Authenticated (cookie or Bearer session)

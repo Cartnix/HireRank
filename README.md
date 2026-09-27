@@ -1,71 +1,65 @@
-# HireRank
+# HireRank — ATS \+ AI HR Copilot
 
-**HireRank** is an ATS for HR teams. The MVP provides vacancy CRUD, HTML
-resume intake, candidate-to-vacancy attachment, and a manual candidate
-pipeline. LLM recommendations are post-MVP.
-**North star:** [docs/use-cases/](docs/use-cases/) + strict privacy and
-personal-data requirements in [docs/laws/](docs/laws/).
+ **HireRank** — ATS \+ HR Copilot for enterprise HR teams.\
+Base product — ATS, modified business outline — **HR Copilot**: the resume gets into the tenant pool, AI generates an explicable Top-3 draft, but any hiring action is performed **only after HR confirmation**.
 
-```text
-Vacancy → HTML resume form → candidate attached to vacancy → HR status update
+```
+Resume → Tenant Pool → AI Top-3 Draft → HR Confirmation → Tool/MCP Action → Audit
 ```
 
-> The MVP does not require an LLM, MCP, n8n, Telegram, or WhatsApp. Post-MVP,
-> an HR-defined prompt may produce explainable recommendations that HR confirms
-> before the candidate status changes ([UC-08](docs/use-cases/UC-08-automation-hitl-loop.md)).
+ ## Core capabilities
 
-| Plane | Role |
-|-------|------|
-| **HireRank** | Domain ATS, storage, and administration |
-| **ATS MVP** | Vacancies, resumes, candidates, statuses, and access control |
-| **Post-MVP** | Prompt-based LLM recommendations confirmed by HR |
+ - **Vacancies:** Create and manage HR/admin vacancies.
+- **Candidate intake:** the candidate submits the resume himself or the HR/recruiter registers the received resume **once**.
+- **Candidate pool:** The candidate belongs to tenant and is isolated by roles.
+- **AI HR Copilot:** Automatic draft of up to 3 evidence-backed actions/recommendations.
+- **Human-in-the-loop:** AI does not change hiring state and does not start actions without HR confirmation.
+- **Manager workflow:** manager can view vacancies, offer feedback/contact, but does not replace HR approval.
+- **Confirmed memory:** HR explicitly confirms and enables decision memory.
+- **MCP / tools:** After HR confirmation, the permitted action can be performed by the tool/MCP.
+- **Audit:** AI solutions, confirmations, and tool execution must be auditable.
+- **Fallback:**ATS intake and manual HR work remain fully operational without AI.
 
-## Core, Enterprise & SaaS
+ ## Core / Enterprise Self-Hosted / SaaS
 
-This repository is **Core** (Open Source self-host). Enterprise and SaaS reuse the same auth abstractions and swap infrastructure via config — not forks.
+ One code outline. Enterprise and SaaS are not separate forks.
 
-| | **Core** (this repo) | **Enterprise** (self-host at scale) | **SaaS** (your cloud) |
-|--|----------------------|-------------------------------------|------------------------|
-| Who | SMB, developers, one company | Large corp / bank in own K8s | Many companies on HireRank cloud |
-| Tenancy | Hidden: one `TENANT_ID` per instance | Same Core schema; scale replicas | True multi-tenant; keys & RLS per company |
-| Auth sessions | `TOKEN_STORE=memory` (default) | `TOKEN_STORE=redis` + corporate Redis | Always Redis, tenant-prefixed keys |
-| When memory is OK | Single FastAPI replica | Never if N>1 replicas | Never |
-| Background work | In-process / `BackgroundTasks` | Celery (or equivalent workers) | Celery / managed queues |
-| File storage | Local volume | Shared FS or S3 | S3 (or compatible) |
-| Extra product | — | SSO/SAML, audit (commercial) | Billing, provisioning, lockout |
+ |  | **Core** | **Enterprise Self-Hosted** | **SaaS** |
+| --- | --- | --- | --- |
+| Deployment | Single instance | Customer K8s / scaling | HireRank cloud |
+| Tenancy | One tenant / `TENANT_ID` | Tenant isolation | True multi-tenant |
+| Auth sessions | Memory for example | Redis | Redis |
+| Background jobs | In-process | Celery / workers | Celery / managed queues |
+| Files | Local volume | Shared FS / S3 | S3 |
+| Enterprise | — | SSO/SAML, audit, enterprise controls | Billing, provisioning, tenant controls |
+| AI/MCP | Optional | Full HR Copilot stack | Full HR Copilot stack |
 
-**Auth sessions:** one company + one backend process → memory is fine. Several FastAPI copies behind a balancer → Redis, or refresh/logout desync. SaaS always Redis with keys like `tenant:{tenant_id}:refresh:{jti}` so one company can be locked out without touching others.
+**Important for Enterprise:** With multiple backend replicas, an external session store (Redis) is needed; tenant data, AI memory, notifications, and execution context should not cross tenant boundary.
 
-See [RBAC.md](docs/RBAC.md) for access and session behavior.
+ ## Non-negotiable business rules
 
-## Docs
+ 1. **Tenant isolation** — candidate, AI, memory, notifications, and execution data remain inside tenant and role scope.
+2. **AI does not accept the final hiring decision.**
+3. **Any subsequent action is only after explicit HR confirmation.**
+4. **Decision memory — only after explicit HR confirmation.**
+5. **Intake ≠ disposition:** The new candidate has a business status of `New/Unprocessed`; technical `unassigned` does not mean that the candidate has been rejected or passed screening.
+6. **AI unavailable ≠ ATS unavailable:** The manual process should continue to work.
+7. **Compliance is required:** Kazakhstan personal-data/ATS requirements and GDPR are mandatory restrictions.
+8. **Mock frontend is not considered a production implementation.**
 
-| Doc | Purpose |
-|-----|---------|
-| **[use-cases/](docs/use-cases/)** | **Behavioral Source of Truth** (MVP north star) |
-| **[ATS_COMPLIANCE_RK.md](docs/laws/ATS_COMPLIANCE_RK.md)** | **RK compliance — strict** |
-| **[GDPR.md](docs/laws/GDPR.md)** | **EU / West privacy — strict** |
-| [ROADMAP.md](docs/ROADMAP.md) | Delivery phases and current focus |
-| [RBAC.md](docs/RBAC.md) | Roles, JWT, token store |
-| [contracts/](contracts/) | Generated backend OpenAPI and frontend schemas |
+ ## Stack
 
-## Stack
+ - **Frontend:** Next.js
+- **Backend:** FastAPI
+- **DB:** PostgreSQL
+- **Sessions / scale:** Redis
+- **Storage:** S3-compatible
+- **Workers:** Celery / equivalent
+- **Edge:** Traefik, Cloudflare
+- **AI integration:** LLM + MCP/tools with mandatory HITL
 
-| Area | Tech |
-|------|------|
-| HireRank | Next.js, FastAPI, PostgreSQL, Redis (optional for Core auth), S3 |
-| Edge / ops | Traefik, Cloudflare, Compose |
+ ## Product outcome
 
-## Quick start
+ > **Resume entered once → tenant pool → AI produces up to three evidence-backed actions → HR confirms → approved tool/MCP execution → audit.**
 
-```bash
-cp .env.example .env
-docker compose up --build
-```
-
-Core auth defaults to `TOKEN_STORE=memory`. Set `TOKEN_STORE=redis` when you scale backend replicas.
-
-## MVP
-
-Phase 1: working ATS without LLM. Phase 2: LLM recommendations for HR.
-See [ROADMAP.md](docs/ROADMAP.md).
+ This is the main business contour **HR Copilot**; a regular ATS remains an independent working fallback contour.

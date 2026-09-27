@@ -5,7 +5,7 @@ import { confirmDecision, evaluate, freshState, intake, saveMemory } from "./eng
 test("intake creates tenant-scoped AI draft without disposition, then HR approves one MCP action", () => {
   const state = freshState();
   const tenantId = state.tenants[0].id;
-  const candidate = intake(state, tenantId, "operator", {
+  const candidate = intake(state, tenantId, "recruiter", {
     name: "Новый кандидат", email: "new@example.com", phone: "+77000000000",
     experience: "Разработал интерфейсы на React и TypeScript в трёх проектах.", skills: "React, TypeScript", resumeRef: "cv.pdf", resumeText: "", requestedVacancyId: "v-frontend",
   });

@@ -96,7 +96,7 @@ Regulators demand: “Who looked at citizen X’s data, and when?”
 
 ### 2.1 Cold sourcing / import without consent (hh.kz, LinkedIn)
 
-- **Trap:** Recruiter parses a profile via ATS extension into the company DB → company becomes PD operator **without** subject consent.
+- **Trap:** Recruiter parses a profile via ATS extension into the company DB → company becomes PD recruiter **without** subject consent.
 - **Required flow:**
   1. Imported profile → status `Pending consent` / `Awaiting consent` (not usable for hiring automation until confirmed).
   2. Immediate SMS and/or email with link: confirm consent to process the profile.

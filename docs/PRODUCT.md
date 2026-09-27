@@ -1,59 +1,49 @@
-# HireRank — Product
+# HireRank — product source of truth
 
-Vision: [PASSPORT.md](PASSPORT.md). **Behavioral Source of Truth:** [use-cases/](use-cases/) (MVP: UC-01 through UC-07).
-**Compliance (strict):** [ATS_COMPLIANCE_RK.md](laws/ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](laws/GDPR.md) (EU / West).
+**Business goal:** an accounting-office recruiter enters a paper resume once; HR receives a candidate with an AI-prepared first analysis instead of carrying the resume between offices and analyzing it from scratch. A candidate may also submit their own resume.
 
-## What it is
+**Positioning:** **AI Agent HR Copilot with human-in-the-loop (HITL) and MCP**. New resume → AI proposes up to three explained next actions → HR reviews and explicitly confirms one → only then does an authorized tool execute it. The ATS is the tenant-scoped system of record and the place where HR makes the decision; chat is not the product.
 
-**HireRank** is an ATS for HR teams. The MVP manages vacancies, collects
-resumes through an HTML form, attaches candidates to vacancies, and tracks
-their hiring status. LLM analysis and recommendations are post-MVP.
+## Source-of-truth order
 
-MVP flow: vacancy CRUD → HTML resume intake → candidate attached to vacancy →
-manual HR status updates. Post-MVP flow: vacancy prompt → LLM analysis → HR
-confirmation → status update ([UC-08](use-cases/UC-08-automation-hitl-loop.md)).
+1. This document defines the business goal, roles and product boundary.
+2. [Use cases](use-cases/README.md) define observable behavior and acceptance. If an implementation or roadmap contradicts a use case, resolve the conflict here and in the use case before coding.
+3. [Kazakhstan compliance](laws/ATS_COMPLIANCE_RK.md) is mandatory; [GDPR](laws/GDPR.md) applies where relevant. Neither product speed nor a demo weakens these constraints.
+4. [Roadmap](ROADMAP.md), [architecture](ARCHITECTURE.md), [RBAC](RBAC.md), schemas, OpenAPI and the frontend demo describe delivery or implementation; they do not redefine the business goal.
 
-## Job-to-be-done
+## One end-to-end outcome
 
-| Stakeholder | Job |
-|-------------|-----|
-| TA / HR | Absorb flood intake into a tenant pool without losing candidates in mail/Excel |
-| Hiring manager | See candidates attached to a vacancy and process them in the ATS |
-| CHRO / CISO | Keep personal data and process logic inside the perimeter; prove meaningful human oversight |
-| Organization | Keep candidate records, resumes, vacancies, and decisions in one tenant-scoped system |
+1. Authenticated recruiter or candidate submits structured data and a resume file/reference into the chosen tenant. Candidate starts **unprocessed**, even if they suggest a vacancy.
+2. Intake emits a tenant-scoped event. HR and relevant managers see the new candidate; AI analysis starts automatically using the resume as **untrusted data**, vacancy context, the current HR prompt and optional, explicitly enabled memory. A missing vacancy/prompt or model failure leaves the candidate in the pool for manual HR handling.
+3. A validated draft with **at most three** allowed actions shows a separate rationale and evidence for each, green/red flags, context and any uncertainty. Neither draft nor notification changes status or sends a candidate email.
+4. HR opens the ATS, checks resume and manager feedback, selects a suggested action or a permitted manual action, and explicitly confirms it. Only after authorization, same-tenant validation and confirmation may an MCP/tool adapter perform the selected mutation. Record proposed options, HR choice, execution result and actor in an auditable history; retries must not duplicate the action.
+5. HR may decline memory storage or verify a manually written/generated explanation before a structured Markdown record is saved. Memory is sent to future analysis only while HR's switch is on.
 
-## Unique value (five theses)
+## Roles and ownership
 
-1. **A working ATS first** — vacancies, resumes, candidate pipeline, and statuses.
-2. **Human-controlled recommendations** — future LLM output supports HR and never silently changes status.
-3. **Tenant-owned candidate data** — resumes and decisions remain isolated and auditable.
-4. **Simple intake** — a candidate or operator can submit an HTML resume form.
-5. **Delivery choice later** — web first, then Telegram or WhatsApp if useful.
+| Actor | Responsibility |
+|---|---|
+| Candidate | Submit own resume, view current tenant's open vacancies and own profile; never see other candidates. |
+| Accounting recruiter | Register a received resume once; no candidate disposition. This is a **target product role**; existing backend `recruiter` must not silently be treated as equivalent. |
+| HR | Configure criteria and allowed actions; review AI and manager feedback; own all candidate decisions and approvals. |
+| Manager | Read authorized tenant candidates, provide feedback and propose contact; cannot independently send conflicting mail or change hiring status. |
+| Administrator | Tenant, access and technical administration; not an alternative approver for an AI hiring decision. |
 
-## Product principles
+**Success measures for a pilot:** time from intake to first HR decision, recruiter handoff steps avoided, percentage of new resumes with a reviewable AI draft, rate of evidence corrections by HR, and percentage of status mutations with a recorded HR approval. Measure against the current paper workflow; no savings or accuracy figures are asserted yet.
 
-The product should be useful before any AI integration. Candidate evaluation is
-an HR workflow, not an autonomous decision engine. Future LLM output is a
-draft recommendation with evidence; the final action belongs to HR.
+## Trace from business goal to acceptance
 
-## Anti-patterns (do not position as the product)
+| Business need | Behavior | Delivery gate |
+|---|---|---|
+| Stop carrying the same paper resume between offices | [UC-01](use-cases/UC-01-candidate-registration.md), [UC-02](use-cases/UC-02-hr-candidate-intake.md) | [M1](ROADMAP.md#phase-1--candidate-enters-a-reliable-ats-pool-uc-0103-uc-0607): one stored intake and visible HR pool. |
+| HR receives a prepared candidate | [UC-08](use-cases/UC-08-automation-hitl-loop.md) | [M2](ROADMAP.md#m2-analysis-contract-and-trigger): automatic validated Top-3 or explicit manual fallback. |
+| Avoid conflicting HR/manager actions | [UC-04](use-cases/UC-04-candidate-assignment.md), [UC-05](use-cases/UC-05-manager-vacancies-and-assignments.md), [UC-08](use-cases/UC-08-automation-hitl-loop.md) | [M3](ROADMAP.md#m3-approval-and-execution): HR approval precedes one authorized mutation. |
+| Preserve accountable, optional learning | [UC-07](use-cases/UC-07-enterprise-isolation.md), [UC-09](use-cases/UC-09-confirmed-memory.md) | [M4](ROADMAP.md#m4-confirmed-memory-and-hardening): auditable tenant scope and opt-in confirmed memory. |
 
-| Pattern | Why rejected |
-|---------|----------------|
-| LLM without a human confirmation | Candidate status must not change silently |
-| Chatbot as pipeline owner | Conversation is not the ATS workflow |
-| Raw resume sent to an uncontrolled model | Candidate data requires a documented processing boundary |
-| Telegram/WhatsApp before web workflow | Delivery channels must not replace the core ATS |
+## Boundaries
 
-**Strict rule:** [UC-08](use-cases/UC-08-automation-hitl-loop.md) is post-MVP;
-the MVP must not depend on it.
+- **Core target:** web intake, ATS pool/vacancies, automatic explainable analysis, HR confirmation, approved tool action, tenant/RBAC enforcement, notifications and audit. The underlying ATS path must still work when AI fails.
+- **Optional:** confirmed Markdown memory, candidate email only after HR approval, later delivery channels. Telegram/WhatsApp, ranking engines, autonomous rejection and third-party raw-resume processing are not required for this core flow.
+- **Current implementation:** ATS auth, RLS and CRUD foundations exist; real resume upload, model execution, MCP transport and the end-to-end server gate remain work in progress. The separate Next.js Copilot demo uses browser-local JSON and mock MCP. Its role switch and tenant filter are **not security controls**. See [roadmap](ROADMAP.md) for acceptance gates.
 
-## See also
-
-- [use-cases/](use-cases/) — **behavioral SoT** (MVP north star)
-- [ATS_COMPLIANCE_RK.md](laws/ATS_COMPLIANCE_RK.md) — RK compliance (strict)
-- [GDPR.md](laws/GDPR.md) — EU / West privacy (strict)
-- [ARCHITECTURE.md](ARCHITECTURE.md) — planes
-- [AUTOMATION.md](AUTOMATION.md) — implements UC-08
-- [MEMORY.md](MEMORY.md) — option-choice history
-- [ROADMAP.md](ROADMAP.md) — delivery
+No model may autonomously change status, send mail, write memory, or call a mutating tool. A prompt or resume cannot override server-side authorization and the approval gate.

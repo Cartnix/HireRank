@@ -7,7 +7,7 @@ Use an HR-defined prompt to analyze a resume against a vacancy and provide
 explainable recommendations. The LLM may recommend next steps, but HR remains
 responsible for the final action.
 
-Actor: HR/operator, LLM service, candidate, and notification channel.
+Actor: HR/recruiter, LLM service, candidate, and notification channel.
 
 Preconditions:
 - Candidate resume is attached to a vacancy.

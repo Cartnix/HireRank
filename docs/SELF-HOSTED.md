@@ -48,7 +48,7 @@ The application defaults are tuned for a production-safe single-process backend:
 - `pool_recycle=1800`
 - `expire_on_commit=false`
 
-These are sensible defaults, not hard limits. Operators should tune them to the
+These are sensible defaults, not hard limits. recruiters should tune them to the
 actual PostgreSQL `max_connections`, replica count, and workload shape.
 
 ### Pool sizing guidance
