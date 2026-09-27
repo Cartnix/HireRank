@@ -61,7 +61,7 @@ const createCandidate = (s: CandidateSeed): CandidateMock => {
 
   return {
     id: s.id,
-    enterprise_id: ENTERPRISE_ID,
+    tenant_id: ENTERPRISE_ID,
     user_id: null,
     status: "assigned",
     assigned_vacancy_id: s.jobId,

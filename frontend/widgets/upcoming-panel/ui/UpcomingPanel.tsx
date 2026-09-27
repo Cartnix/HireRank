@@ -34,11 +34,11 @@ export function UpcomingPanel({
           const cand = candidateById[iv.candidateId];
           return (
             <div key={iv.id} className="flex items-center gap-2.5">
-              <Avatar name={cand.name} size={28} />
+              <Avatar name={cand.name ?? `${cand.questionnaire.first_name} ${cand.questionnaire.surname}`} size={28} />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-medium">{cand.name}</div>
+                <div className="truncate text-[13px] font-medium">{cand.name ?? `${cand.questionnaire.first_name} ${cand.questionnaire.surname}`}</div>
                 <div className="text-[12px] text-foreground-secondary">
-                  {iv.startHour}:00 · {jobById[cand.jobId]?.title}
+                  {iv.startHour}:00 · {cand.jobId ? jobById[cand.jobId]?.title : ""}
                 </div>
               </div>
             </div>

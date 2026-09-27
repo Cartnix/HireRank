@@ -50,4 +50,19 @@ export interface Candidate {
   assigned_vacancy_id?: string | null;
   created_at: string;
   updated_at: string;
+  // Optional presentation fields used by the legacy dashboard mock. API candidates
+  // only guarantee the questionnaire and snake_case fields above.
+  name?: string;
+  jobId?: string;
+  source?: string;
+  rating?: number;
+  stage?: string;
+  skills?: string[];
+  phone?: string;
+  location?: string;
+  ai_score?: number | null;
+  ai_rankings?: VacancyMatchScore[];
+  history?: HistoryEvent[];
+  resumeFileName?: string;
+  appliedDate?: string;
 }
