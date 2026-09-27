@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { useId, type CSSProperties } from "react";
+import Link from "next/link";
 
 const patterns = {
     outer: "12 18 4 18 4 18",
@@ -66,8 +67,9 @@ export const Hero = () => {
             <div className="relative z-10 flex flex-col items-center text-center px-6">
                 <h1 className="text-h1 font-bold text-foreground">HireAI</h1>
                 <p className="mt-4 text-p text-foreground-secondary">
-                    Каждый кандидат — на своём месте. Без хаоса в таблицах.
+                    Одно резюме → AI Top‑3 → решение HR → действие после подтверждения.
                 </p>
+                <Link href="/dashboard/copilot" className="mt-8 rounded-xl bg-brand-primary px-6 py-3 text-sm font-semibold text-brand-primary-foreground hover:bg-brand-primary-hover">Открыть интерактивное демо</Link>
             </div>
         </section>
     )

@@ -40,7 +40,7 @@ export const Features = () => (
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {features.map((f, i) => (
-                    <Card key={f.title} icon={f.icon} title={f.title} desc={f.desc} index={i} />
+                    <Card key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
                 ))}
             </div>
         </div>
