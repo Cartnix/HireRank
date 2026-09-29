@@ -37,7 +37,7 @@ function MiniAreaChart({ data, strokeColor }: { data: number[]; strokeColor: str
   const gradientId = `grad-${Math.random().toString(36).substring(2, 9)}`;
 
   return (
-    <div className="h-[72px] w-full mt-[20px] -mb-2">
+    <div className="h-18 w-full mt-5 -mb-2">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 6, right: 0, left: 0, bottom: 0 }}>
           <defs>

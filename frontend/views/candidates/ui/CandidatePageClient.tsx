@@ -137,15 +137,17 @@ export function CandidatesPageClient({
 
   if (selectedCandidate && selectedJob) {
     return (
-      <CandidateProfile
-        candidate={selectedCandidate}
-        job={selectedJob}
-        notes={notes}
-        noteDraft={noteDraft}
-        setNoteDraft={setNoteDraft}
-        addNote={addNote}
-        onBack={back}
-      />
+      <main className="w-full p-6">
+        <CandidateProfile
+          candidate={selectedCandidate}
+          job={selectedJob}
+          notes={notes}
+          noteDraft={noteDraft}
+          setNoteDraft={setNoteDraft}
+          addNote={addNote}
+          onBack={back}
+        />
+      </main>
     );
   }
 

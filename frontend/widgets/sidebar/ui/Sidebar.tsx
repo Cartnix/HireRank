@@ -14,6 +14,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/shared/api/auth-store";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/shared/ui/components/ThemeToogle";
 
 export function Sidebar() {
@@ -43,7 +48,7 @@ export function Sidebar() {
 
         <div className="my-3 h-px bg-sidebar-border" />
 
-        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide/">
+        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide/ text-muted-foreground/70">
           Основное
         </div>
 
@@ -84,6 +89,25 @@ export function Sidebar() {
         {secondaryNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname.startsWith(item.href);
+
+          if (item.inDevelopment) {
+            return (
+              <Tooltip key={item.id}>
+                <TooltipTrigger asChild>
+                  <div className="group relative flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2.5 mx-3 text-[14px] text-muted-foreground/40 bg-secondary/20 border border-border/20">
+                    <Icon size={18} className="text-muted-foreground/30" />
+                    <span>{item.label}</span>
+                    <span className="ml-auto rounded-md bg-warning/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warning border border-warning/20">
+                      Скоро
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  Раздел в разработке — скоро будет доступен
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
 
           return (
             <Link

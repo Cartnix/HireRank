@@ -1,9 +1,9 @@
 import {
   LayoutDashboard,
+  BrainCircuit,
   Briefcase,
   Users,
   CalendarDays,
-  BarChart3,
   Headset,
   Settings as SettingsIcon,
   Bot
@@ -14,7 +14,6 @@ export type View =
   | "jobs"
   | "candidates"
   | "calendar"
-  | "analytics"
   | "agent"
   | "copilot"
   | "settings"
@@ -25,6 +24,7 @@ export const navItems: {
   label: string;
   icon: React.ElementType;
   href: string;
+  inDevelopment?: boolean;
 }[] = [
   {
     id: "dashboard",
@@ -46,19 +46,16 @@ export const navItems: {
     href: "/dashboard/calendar",
   },
   {
-    id: "analytics",
-    label: "Аналитика",
-    icon: BarChart3,
-    href: "/dashboard/analytics",
-  },
-  {
-    id: "copilot", label: "HR Copilot", icon: Bot, href: "/dashboard/copilot"
-  },
-  {
     id: "agent",
     label: "Агент",
     icon: Bot,
     href: "/dashboard/agent"
+  },
+  {
+    id: "copilot",
+    label: "Copilot",
+    icon: BrainCircuit,
+    href: "/dashboard/copilot",
   },
 ];
 
@@ -67,17 +64,20 @@ export const secondaryNavItems: {
   label: string;
   icon: React.ElementType;
   href: string;
+  inDevelopment?: boolean;
 }[] = [
   {
     id: "settings",
     label: "Настройки",
     icon: SettingsIcon,
     href: "/dashboard/settings",
+    inDevelopment: true,
   },
   {
     id: "support",
     label: "Поддержка",
     icon: Headset,
     href: "/dashboard/support",
+    inDevelopment: true,
   },
 ];

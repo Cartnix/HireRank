@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/shared/ui/components/ThemeToogle";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { LegalAcceptModal } from "@/widgets/authModal/ui/LegalAcceptModal";
 import { ThemeProvider } from "./providers/ThemeProvider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -14,7 +15,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
+    <html
+      lang="ru"
+      className={cn("font-sans", geist.variable)}
+      suppressHydrationWarning
+    >
       <body className="min-h-screen flex flex-col">
         <ThemeProvider
           attribute="class"
@@ -23,8 +28,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
-            <LegalAcceptModal />
+            <TooltipProvider>
+              {children}
+              <LegalAcceptModal />
+            </TooltipProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
