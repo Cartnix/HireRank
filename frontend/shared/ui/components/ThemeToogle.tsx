@@ -2,8 +2,9 @@
 
 import { useTheme } from "next-themes"
 import { useSyncExternalStore } from "react"
+import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Sun, Moon } from "lucide-react"
+import { Sun, Moon, Laptop } from "lucide-react" // Можешь добавить иконки для другого стиля
 
 const emptySubscribe = () => () => {}
 
@@ -14,19 +15,56 @@ function useIsClient() {
 export function ThemeToggle() {
     const { theme, setTheme } = useTheme()
     const mounted = useIsClient()
+    const pathname = usePathname()
 
     if (!mounted) {
-        return <div className="h-12 w-12 rounded-full bg-background-elevated border border-border" />
+        return <div className="h-10 w-24 rounded-md bg-muted animate-pulse" />
     }
 
     const isDark = theme === "dark"
+    const isLanding = pathname === "/"
 
+    // ==========================================
+    // ВАРИАНТ 1: ДЛЯ ДАШБОРДА (Совсем другой UI)
+    // ==========================================
+    if (!isLanding) {
+        return (
+            <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border border-border">
+                <button
+                    onClick={() => setTheme("light")}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        !isDark 
+                            ? "bg-background text-foreground shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                    <Sun className="h-3.5 w-3.5 text-amber-500" />
+                    Светлая
+                </button>
+                <button
+                    onClick={() => setTheme("dark")}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        isDark 
+                            ? "bg-background text-foreground shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                    <Moon className="h-3.5 w-3.5 text-blue-500" />
+                    Темная
+                </button>
+            </div>
+        )
+    }
+
+    // ==========================================
+    // ВАРИАНТ 2: ДЛЯ ЛЕНДИНГА (Твой оригинальный 1-в-1)
+    // ==========================================
     return (
         <motion.button
             aria-label="Сменить тему"
             onClick={() => setTheme(isDark ? "light" : "dark")}
             whileTap={{ scale: 0.88 }}
-            className="absolute bottom-5 right-5 h-12 w-12 rounded-full flex items-center justify-center overflow-hidden border"
+            className="absolute bottom-5 right-5 h-12 w-12 rounded-full flex items-center justify-center overflow-hidden border z-50 shadow-2xl"
             style={{
                 background: isDark
                     ? "linear-gradient(145deg, #2c2c2e, #1c1c1e)"
@@ -44,9 +82,7 @@ export function ThemeToggle() {
                 transition={{ duration: 0.5 }}
                 className="absolute h-7 w-7 rounded-full blur-md"
                 style={{
-                    background: isDark
-                        ? "var(--brand-primary)"
-                        : "var(--warning)",
+                    background: isDark ? "var(--brand-primary)" : "var(--warning)",
                     opacity: 0.35,
                 }}
             />
