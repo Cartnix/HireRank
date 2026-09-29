@@ -72,7 +72,12 @@ export function toDashboardJob(vacancy: Vacancy): DashboardJob {
     department: vacancy.department,
     status: vacancy.open ? "Открыта" : "Закрыта",
     description: vacancy.description,
-    requirements: [],
+    requirements: vacancy.requirements ?? [],
     location: vacancy.location,
+    employmentType: vacancy.employmentType,
+    experience: vacancy.experience,
+    salaryMin: vacancy.salaryMin,
+    salaryMax: vacancy.salaryMax,
+    recruiter: vacancy.recruiter,
   };
 }

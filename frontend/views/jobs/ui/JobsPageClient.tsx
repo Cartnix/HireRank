@@ -111,9 +111,13 @@ export function JobsPageClient({
       title: payload.title,
       department: payload.department,
       location: payload.location ?? "",
-      description: [payload.description, ...payload.requirements]
-        .filter(Boolean)
-        .join("\n\n"),
+      description: payload.description,
+      requirements: payload.requirements,
+      employmentType: payload.employmentType,
+      experience: payload.experience,
+      salaryMin: payload.salaryMin,
+      salaryMax: payload.salaryMax,
+      recruiter: payload.recruiter,
       open: payload.status === "open",
     });
     saveCopilotState(next);

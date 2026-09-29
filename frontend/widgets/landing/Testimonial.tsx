@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 const testimonials = [
     {
@@ -32,7 +32,7 @@ const testimonials = [
 ]
 
 const Card = ({ t }: { t: (typeof testimonials)[number] }) => (
-    <div className="shrink-0 w-90 rounded-3xl bg-background-elevated border border-border-subtle shadow-sm p-7 mx-3">
+    <article className="w-[min(22.5rem,calc(100vw-3rem))] shrink-0 rounded-3xl border border-border-subtle bg-background-elevated p-7 shadow-sm mx-3">
         <p className="text-base text-foreground leading-relaxed">{t.quote}</p>
         <div className="mt-6 flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-semibold flex items-center justify-center shrink-0">
@@ -43,16 +43,15 @@ const Card = ({ t }: { t: (typeof testimonials)[number] }) => (
                 <div className="text-xs">{t.role}</div>
             </div>
         </div>
-    </div>
+    </article>
 )
 
 export const Testimonial = () => {
-    const loop = [...testimonials, ...testimonials]
-
     return (
         <section className="relative py-28 overflow-hidden">
             <div
-                className="relative w-full"
+                className="testimonial-viewport relative w-full"
+                aria-label="Отзывы клиентов"
                 style={{
                     maskImage:
                         "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
@@ -60,23 +59,44 @@ export const Testimonial = () => {
                         "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
                 }}
             >
-                <div className="flex w-max marquee-track">
-                    {loop.map((t, i) => (
-                        <Card key={i} t={t} />
+                <div className="testimonial-track flex w-max">
+                    {[0, 1].map((copy) => (
+                        <div
+                            key={copy}
+                            aria-hidden={copy === 1}
+                            className="flex shrink-0"
+                        >
+                            {testimonials.map((t) => (
+                                <Card key={`${copy}-${t.name}`} t={t} />
+                            ))}
+                        </div>
                     ))}
                 </div>
             </div>
 
             <style jsx>{`
-                .marquee-track {
-                    animation: marquee 32s linear infinite;
+                .testimonial-track {
+                    animation: testimonial-marquee 36s linear infinite;
+                    will-change: transform;
                 }
-                @keyframes marquee {
-                    from {
-                        transform: translateX(0);
-                    }
+                .testimonial-viewport:hover .testimonial-track,
+                .testimonial-viewport:focus-within .testimonial-track {
+                    animation-play-state: paused;
+                }
+                @keyframes testimonial-marquee {
                     to {
                         transform: translateX(-50%);
+                    }
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .testimonial-viewport {
+                        overflow-x: auto;
+                        mask-image: none !important;
+                        -webkit-mask-image: none !important;
+                    }
+                    .testimonial-track {
+                        animation: none;
+                        will-change: auto;
                     }
                 }
             `}</style>

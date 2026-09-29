@@ -5,6 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onboardingFormSchema, OnboardingFormValues } from "../model/schema";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
+import { LoaderCircle, UserRound } from "lucide-react";
 import { useCurrentUser } from "@/shared/api/auth-store";
 import { useRouter } from "next/navigation";
 import { OnBoardingInputs } from "./onBoardingFields";
@@ -22,7 +23,6 @@ export function OnboardingCard() {
   });
 
   const onSubmit = async (data: OnboardingFormValues) => {
-    console.log("Start submitting");
     setSubmitError(null);
 
     const result = await onBoardingSubmit({
@@ -41,18 +41,21 @@ export function OnboardingCard() {
 
   return (
     <FormProvider {...methods}>
-      <pre style={{ color: "red", fontSize: 11 }}>
-        {JSON.stringify(methods.formState.errors, null, 2)}
-      </pre>
       <form
         onSubmit={methods.handleSubmit(onSubmit)}
-        className="relative w-full max-w-lg rounded-3xl p-8 md:p-10 flex flex-col gap-6 bg-background-elevated border border-border-subtle/50 shadow-2xl transition-all duration-300"
+        className="relative flex w-full flex-col gap-6 rounded-3xl border border-border-subtle/70 bg-background-elevated/95 p-6 shadow-2xl shadow-black/10 backdrop-blur-sm sm:p-9"
       >
-        <div className="mb-2 text-center">
-          <h2 className="text-foreground text-xl font-bold">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-primary/10 text-brand-primary">
+            <UserRound size={21} strokeWidth={1.8} />
+          </div>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-primary">
+            Настройка профиля
+          </p>
+          <h2 className="m-0! text-xl font-bold tracking-normal text-foreground sm:text-2xl">
             Расскажите о себе
           </h2>
-          <p className="text-foreground-secondary mt-2">
+          <p className="mx-auto mb-0 mt-2 max-w-sm text-sm leading-6 text-foreground-secondary">
             Это поможет нам персонализировать ваш опыт
           </p>
         </div>
@@ -60,17 +63,22 @@ export function OnboardingCard() {
         <OnBoardingInputs />
 
         {submitError && (
-          <p className="text-sm text-red-500 text-center">{submitError}</p>
+          <p
+            role="alert"
+            className="mb-0 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-center text-sm text-destructive"
+          >
+            {submitError}
+          </p>
         )}
 
-        <div className="flex gap-3 mt-4">
-          <MainButton
-            type="submit"
-            disabled={isLoading}
-            title={isLoading ? "Обработка..." : "Завершить"}
-            className="py-3.5 rounded-2xl font-semibold text-base flex-1"
-          />
-        </div>
+        <MainButton
+          type="submit"
+          disabled={isLoading}
+          title={isLoading ? "Сохраняем профиль..." : "Продолжить"}
+          className="mt-1 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold"
+        >
+          {isLoading && <LoaderCircle size={16} className="animate-spin" />}
+        </MainButton>
       </form>
     </FormProvider>
   );

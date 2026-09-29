@@ -22,6 +22,12 @@ export const VacancySchema = z.object({
   department: z.string(),
   location: z.string(),
   description: z.string().min(4),
+  requirements: z.array(z.string()).optional(),
+  employmentType: z.enum(["full-time", "part-time", "internship"]).optional(),
+  experience: z.string().optional(),
+  salaryMin: z.number().int().positive().nullable().optional(),
+  salaryMax: z.number().int().positive().nullable().optional(),
+  recruiter: z.string().optional(),
   open: z.boolean(),
 });
 export const CandidateSchema = z.object({

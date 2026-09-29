@@ -30,7 +30,10 @@ export const jobFormSchema = z
     title: z.string().trim().min(1, "Укажите название вакансии"),
     status: z.enum(JOB_STATUSES).default("open"),
     department: z.string().trim().min(1, "Укажите отдел"),
-    description: z.string().trim(),
+    description: z
+      .string()
+      .trim()
+      .max(1000, "Описание не должно превышать 1000 символов"),
     requirements: z
       .array(z.string().trim().min(1, "Требование не может быть пустым"))
       .min(1, "Укажите хотя бы одно требование"),

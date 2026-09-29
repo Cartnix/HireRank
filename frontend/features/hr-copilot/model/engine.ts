@@ -65,7 +65,8 @@ export function evaluate(
   if (!prompt) throw Error("Нет инструкции HR");
   const source =
     `${candidate.experience} ${candidate.skills} ${candidate.resumeText}`.toLowerCase();
-  const words = vacancy.description
+  const words = [vacancy.description, ...(vacancy.requirements ?? [])]
+    .join(" ")
     .toLowerCase()
     .split(/[^\p{L}\p{N}]+/u)
     .filter((x) => x.length > 4);

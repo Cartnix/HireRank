@@ -42,10 +42,10 @@ export function NewJobFormFields({
   setValue,
 }: Props) {
   const fieldClass =
-    "w-full rounded-[10px] border border-border bg-background px-3 py-2 text-[13.5px] outline-none transition-colors focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10";
+    "h-11 w-full rounded-xl border border-input bg-background px-3.5 text-sm text-foreground outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10";
 
   const labelClass =
-    "mb-1 flex items-center gap-1.5 text-[13px] font-medium text-foreground-secondary";
+    "mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-foreground";
 
   const errorClass = "mt-1 text-xs text-danger";
 
@@ -92,204 +92,232 @@ export function NewJobFormFields({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {/* Название вакансии */}
-      <div>
-        <label className={labelClass}>
-          <Briefcase size={13} /> Название вакансии
-        </label>
-        <input
-          placeholder="Например, Frontend-разработчик"
-          className={fieldClass}
-          {...register("title")}
-        />
-        {errors.title && (
-          <p className={errorClass}>{errors.title.message as string}</p>
-        )}
-      </div>
-
-      {/* Отдел */}
-      <div>
-        <label className={labelClass}>
-          <Building2 size={13} /> Отдел
-        </label>
-        <input
-          placeholder="Например, Разработка"
-          className={fieldClass}
-          {...register("department")}
-        />
-        {errors.department && (
-          <p className={errorClass}>{errors.department.message as string}</p>
-        )}
-      </div>
-
-      <div>
-        <label className={labelClass}>Статус</label>
-        <select className={`${fieldClass} cursor-pointer`} {...register("status")}>
-          {JOB_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {JOB_STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
-        {errors.status && (
-          <p className={errorClass}>{errors.status.message as string}</p>
-        )}
-      </div>
-
-      {/* Локация */}
-      <div>
-        <label className={labelClass}>
-          <MapPin size={13} /> Локация
-        </label>
-        <select className={`${fieldClass} cursor-pointer`} {...register("location")}>
-          <option value="">Не указано</option>
-          {LOCATIONS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Формат занятости */}
-      <div>
-        <label className={labelClass}>
-          <Briefcase size={13} /> Формат занятости
-        </label>
-        <select className={`${fieldClass} cursor-pointer`} {...register("employmentType")}>
-          <option value="">Не указано</option>
-          {EMPLOYMENT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {EMPLOYMENT_TYPE_LABELS[t]}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Опыт работы */}
-      <div>
-        <label className={labelClass}>Опыт работы</label>
-        <input
-          placeholder="Например, 1–3 года"
-          className={fieldClass}
-          {...register("experience")}
-        />
-      </div>
-
-      {/* Рекрутер */}
-      <div>
-        <label className={labelClass}>
-          <User size={13} /> Рекрутер
-        </label>
-        <input
-          placeholder="Имя ответственного рекрутера"
-          className={fieldClass}
-          {...register("recruiter")}
-        />
-      </div>
-
-      {/* Зарплатная вилка */}
-      <div className="md:col-span-2">
-        <label className={labelClass}>
-          <Wallet size={13} /> Зарплатная вилка
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            placeholder="От"
-            className={fieldClass}
-            {...register("salaryMin", { valueAsNumber: true })}
-          />
-          <span className="shrink-0 text-foreground-secondary">—</span>
-          <input
-            type="number"
-            placeholder="До"
-            className={fieldClass}
-            {...register("salaryMax", { valueAsNumber: true })}
-          />
-        </div>
-        {(errors.salaryMin || errors.salaryMax) && (
-          <p className={errorClass}>
-            {(errors.salaryMin?.message as string) ||
-              (errors.salaryMax?.message as string)}
+    <div className="space-y-6">
+      <section>
+        <div className="mb-3 border-b border-border pb-2">
+          <h3 className="m-0! text-sm font-semibold text-foreground">Основное</h3>
+          <p className="mb-0 mt-1 text-xs text-muted-foreground">
+            Эти данные появятся в карточке открытой вакансии.
           </p>
-        )}
-      </div>
-
-      <div className="md:col-span-2">
-        <div className="mb-1 flex items-center justify-between">
-          <label className={`${labelClass} mb-0`}>
-            <FileText size={13} /> Описание
-          </label>
-          <span className="text-[11px] text-muted-foreground">
-            {description?.length ?? 0}/{MAX_DESCRIPTION_LENGTH}
-          </span>
         </div>
-        <textarea
-          placeholder="Расскажите о задачах и условиях работы"
-          className={`${fieldClass} min-h-25 resize-y`}
-          maxLength={MAX_DESCRIPTION_LENGTH}
-          {...register("description")}
-        />
-        {errors.description && (
-          <p className={errorClass}>{errors.description.message as string}</p>
-        )}
-      </div>
-
-      <div className="md:col-span-2">
-        <label className={labelClass}>
-          <ListChecks size={13} /> Требования
-        </label>
-        <div className="flex gap-2">
-          <input
-            placeholder="Введите требование и нажмите Enter или +"
-            className={fieldClass}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={!text.trim()}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-border bg-brand-primary text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <Plus size={16} />
-          </button>
-        </div>
-
-        {currentRequirements.length > 0 ? (
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {currentRequirements.map((req, i) => (
-              <span
-                key={i}
-                className="flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs"
-              >
-                {req}
-                <button
-                  type="button"
-                  onClick={() => handleDelete(i)}
-                  className="text-foreground-secondary transition-colors hover:text-danger"
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            ))}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>
+              <Briefcase size={14} /> Название вакансии
+            </label>
+            <input
+              placeholder="Например, Frontend-разработчик"
+              className={fieldClass}
+              {...register("title")}
+            />
+            {errors.title && <p className={errorClass}>{errors.title.message}</p>}
           </div>
-        ) : (
-          <p className="mt-2 text-[12px] text-muted-foreground">
-            Добавьте хотя бы одно требование к кандидату
-          </p>
-        )}
 
-        {errors.requirements && (
-          <p className={errorClass}>
-            {(errors.requirements.message as string) ||
-              "Проверьте список требований"}
-          </p>
-        )}
-      </div>
+          <div>
+            <label className={labelClass}>
+              <Building2 size={14} /> Отдел
+            </label>
+            <input
+              placeholder="Например, Разработка"
+              className={fieldClass}
+              {...register("department")}
+            />
+            {errors.department && (
+              <p className={errorClass}>{errors.department.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className={labelClass}>Публикация</label>
+            <select className={`${fieldClass} cursor-pointer`} {...register("status")}>
+              {JOB_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {JOB_STATUS_LABELS[status]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <MapPin size={14} /> Формат работы
+            </label>
+            <select className={`${fieldClass} cursor-pointer`} {...register("location")}>
+              <option value="">Не указан</option>
+              {LOCATIONS.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <Briefcase size={14} /> Занятость
+            </label>
+            <select
+              className={`${fieldClass} cursor-pointer`}
+              {...register("employmentType")}
+            >
+              <option value="">Не указана</option>
+              {EMPLOYMENT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {EMPLOYMENT_TYPE_LABELS[type]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>Опыт работы</label>
+            <input
+              placeholder="Например, от 2 лет"
+              className={fieldClass}
+              {...register("experience")}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-3 border-b border-border pb-2">
+          <h3 className="m-0! text-sm font-semibold text-foreground">
+            Описание и требования
+          </h3>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <label className={`${labelClass} mb-0`}>
+                <FileText size={14} /> Описание
+              </label>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {description?.length ?? 0}/{MAX_DESCRIPTION_LENGTH}
+              </span>
+            </div>
+            <textarea
+              placeholder="Задачи, команда и особенности роли"
+              className={`${fieldClass} h-auto min-h-32 resize-y py-3 leading-6`}
+              maxLength={MAX_DESCRIPTION_LENGTH}
+              {...register("description")}
+            />
+            {errors.description && (
+              <p className={errorClass}>{errors.description.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <ListChecks size={14} /> Требования
+            </label>
+            <div className="flex gap-2">
+              <input
+                placeholder="Добавьте требование"
+                className={fieldClass}
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={!text.trim()}
+                aria-label="Добавить требование"
+                title="Добавить требование"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-primary text-brand-primary-foreground transition hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Plus size={17} />
+              </button>
+            </div>
+
+            {currentRequirements.length > 0 ? (
+              <ul className="mt-3 space-y-2">
+                {currentRequirements.map((requirement, index) => (
+                  <li
+                    key={`${requirement}-${index}`}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0 break-words">{requirement}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(index)}
+                      aria-label={`Удалить требование: ${requirement}`}
+                      title="Удалить требование"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-danger/10 hover:text-danger"
+                    >
+                      <X size={14} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mb-0 mt-2 text-xs text-muted-foreground">
+                Добавьте хотя бы одно требование.
+              </p>
+            )}
+            {errors.requirements && (
+              <p className={errorClass}>
+                {errors.requirements.message || "Проверьте список требований"}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-3 border-b border-border pb-2">
+          <h3 className="m-0! text-sm font-semibold text-foreground">
+            Условия и команда
+          </h3>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className={labelClass}>
+              <Wallet size={14} /> Зарплатная вилка, ₸
+            </label>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                placeholder="От"
+                aria-label="Зарплата от"
+                className={fieldClass}
+                {...register("salaryMin", {
+                  setValueAs: (value) => (value === "" ? undefined : Number(value)),
+                })}
+              />
+              <span className="text-muted-foreground">—</span>
+              <input
+                type="number"
+                min="1"
+                placeholder="До"
+                aria-label="Зарплата до"
+                className={fieldClass}
+                {...register("salaryMax", {
+                  setValueAs: (value) => (value === "" ? undefined : Number(value)),
+                })}
+              />
+            </div>
+            {(errors.salaryMin || errors.salaryMax) && (
+              <p className={errorClass}>
+                {errors.salaryMin?.message || errors.salaryMax?.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <User size={14} /> Ответственный рекрутер
+            </label>
+            <input
+              placeholder="Имя рекрутера"
+              className={fieldClass}
+              {...register("recruiter")}
+            />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
