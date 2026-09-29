@@ -1,20 +1,21 @@
 "use client";
 
 import { X } from "lucide-react";
-import type { Job } from "@/entities/job";
+import type { CreateVacancyPayload, Job } from "@/entities/job";
 import { Card } from "@/shared/ui/card";
 import { GhostButton } from "@/shared/ui/buttons/GhostButton";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { useNewJobForm } from "../model/useNewJobForm";
 import { NewJobFormFields } from "./NewJobFormFields";
-import { apiFetch } from "@/shared/api/client";
 
 export function NewJobModal({
   onClose,
   onCreate,
+  createJob,
 }: {
   onClose: () => void;
   onCreate: (job: Job) => void;
+  createJob?: (payload: CreateVacancyPayload) => Promise<Job>;
 }) {
   const {
     register,
@@ -22,7 +23,7 @@ export function NewJobModal({
     setValue,
     formState: { errors },
     onSubmit,
-  } = useNewJobForm(onCreate);
+  } = useNewJobForm(onCreate, createJob);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">

@@ -15,6 +15,7 @@ export const JobsView = ({
   onCreateJob,
   onUpdateStages,
   onOpenCandidate,
+  onDeleteJob,
 }: {
   jobs: Job[];
   candidates: Candidate[];
@@ -24,6 +25,7 @@ export const JobsView = ({
   onCreateJob: () => void;
   onUpdateStages: (stages: Stage[]) => void;
   onOpenCandidate: (id: string) => void;
+  onDeleteJob?: (id: string) => Promise<void>;
 }) => {
   if (selectedJob) {
     return (
@@ -35,6 +37,7 @@ export const JobsView = ({
         onBack={onBack}
         onUpdateStages={onUpdateStages}
         onOpenCandidate={onOpenCandidate}
+        onDeleteJob={onDeleteJob}
       />
     );
   }

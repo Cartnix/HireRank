@@ -48,7 +48,8 @@ export function JobOverview({
 
     setIsDeleting(true);
     try {
-      await deleteVacancy(job.id);
+      if (onDeleteJob) await onDeleteJob(job.id);
+      else await deleteVacancy(job.id);
       setIsMenuOpen(false);
       onDeleteJob?.(job.id);
       onBack();

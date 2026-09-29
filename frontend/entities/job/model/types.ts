@@ -1,4 +1,4 @@
-export type JobStatus = "draft";
+export type JobStatus = "draft" | "open" | "Открыта" | "Закрыта" | "На паузе";
 
 export interface Stage {
   id: string;
@@ -16,7 +16,7 @@ export interface Job {
 
   createdAt?: string;
   stages?: Stage[];
-  location?: "Удалённо" | "Офис" | "Гибрид";
+  location?: string;
   employmentType?: "full-time" | "part-time" | "internship";
   salaryMin?: number | null;
   salaryMax?: number | null;

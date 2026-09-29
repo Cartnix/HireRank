@@ -1,6 +1,8 @@
 import { JobStatus } from "../model/types";
 
 const jobStatusColor: Record<string, string> = {
+  open: "bg-success/15 text-success",
+  draft: "bg-muted text-muted-foreground",
   Открыта: "bg-success/15 text-success",
   "На паузе": "bg-warning/15 text-warning",
   Закрыта: "bg-muted text-muted-foreground",

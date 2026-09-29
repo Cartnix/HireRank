@@ -1,4 +1,4 @@
-import { CopilotWorkspace } from "@/features/hr-copilot/ui/CopilotWorkspace";
+import { CopilotWorkspace } from "@/features/hr-copilot";
 
 export default function CopilotPage() {
   return <CopilotWorkspace />;

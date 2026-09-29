@@ -2,10 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { getCandidates, type Candidate } from "@/entities/candidate";
-import { getVacancies, type Job, type Stage } from "@/entities/job";
+import type { CreateVacancyPayload, Job, Stage } from "@/entities/job";
 import { JobsView } from "@/views/jobs";
 import { NewJobModal } from "@/features/create-vacancy";
+import { addVacancy, removeVacancy } from "@/features/hr-copilot/model/engine";
+import {
+  toDashboardCandidate,
+  toDashboardJob,
+} from "@/features/hr-copilot/model/dashboardAdapters";
+import {
+  loadCopilotState,
+  saveCopilotState,
+} from "@/features/hr-copilot/model/storage";
+import type { CopilotState } from "@/features/hr-copilot/model/types";
 
 type Props = {
   initialSelectedJobId?: string | null;
@@ -17,41 +26,42 @@ export function JobsPageClient({
   const router = useRouter();
   const pathname = usePathname();
 
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [copilotState, setCopilotState] = useState<CopilotState | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(
     initialSelectedJobId,
   );
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-
-    setLoading(true);
-    setError(null);
-
-    Promise.all([getVacancies(), getCandidates()])
-      .then(([jobsData, candidatesData]) => {
-        if (cancelled) return;
-        setJobs(Array.isArray(jobsData) ? (jobsData as Job[]) : []);
-        setCandidates(
-          Array.isArray(candidatesData) ? (candidatesData as Candidate[]) : [],
-        );
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Ошибка загрузки данных");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    const frame = window.requestAnimationFrame(() => {
+      setCopilotState(loadCopilotState());
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  const tenantId = copilotState?.tenants[0]?.id ?? "";
+  const jobs = useMemo(
+    () =>
+      copilotState?.vacancies
+        .filter((vacancy) => vacancy.tenantId === tenantId)
+        .map(toDashboardJob) ?? [],
+    [copilotState, tenantId],
+  );
+  const candidates = useMemo(() => {
+    const vacanciesById = new Map(
+      copilotState?.vacancies.map((vacancy) => [vacancy.id, vacancy]) ?? [],
+    );
+    return (
+      copilotState?.candidates
+        .filter((candidate) => candidate.tenantId === tenantId)
+        .map((candidate) =>
+          toDashboardCandidate(
+            candidate,
+            vacanciesById.get(candidate.vacancyId ?? candidate.requestedVacancyId ?? ""),
+          ),
+        ) ?? []
+    );
+  }, [copilotState, tenantId]);
 
   const jobById = useMemo(() => {
     const map: Record<string, Job> = {};
@@ -78,23 +88,40 @@ export function JobsPageClient({
   };
 
   const handleUpdateStages = (stages: Stage[]) => {
-    if (!selectedJob) return;
-    setJobs((prev) =>
-      prev.map((j) => (j.id === selectedJob.id ? { ...j, stages } : j)),
-    );
+    void stages;
+  };
+
+  const handleDeleteJob = async (id: string) => {
+    if (!copilotState) throw Error("Данные Copilot ещё загружаются");
+    const next = structuredClone(copilotState);
+    removeVacancy(next, tenantId, "hr", id);
+    saveCopilotState(next);
+    setCopilotState(next);
   };
 
   const handleJobCreated = (job: Job) => {
-    setJobs((prev) => [job, ...prev]);
     setSelectedJobId(job.id);
     setIsCreateModalOpen(false);
   };
 
-  if (loading) return <div>Loading...</div>;
+  const createCopilotVacancy = async (payload: CreateVacancyPayload) => {
+    if (!copilotState || !tenantId) throw Error("Данные Copilot ещё загружаются");
+    const next = structuredClone(copilotState);
+    const vacancy = addVacancy(next, tenantId, "hr", {
+      title: payload.title,
+      department: payload.department,
+      location: payload.location ?? "",
+      description: [payload.description, ...payload.requirements]
+        .filter(Boolean)
+        .join("\n\n"),
+      open: payload.status === "open",
+    });
+    saveCopilotState(next);
+    setCopilotState(next);
+    return toDashboardJob(vacancy);
+  };
 
-  if (error) {
-    return <div>Не удалось загрузить данные: {error}</div>;
-  }
+  if (!copilotState) return <div>Loading...</div>;
 
   return (
     <>
@@ -107,11 +134,13 @@ export function JobsPageClient({
         onCreateJob={() => setIsCreateModalOpen(true)}
         onUpdateStages={handleUpdateStages}
         onOpenCandidate={handleOpenCandidate}
+        onDeleteJob={handleDeleteJob}
       />
       {isCreateModalOpen && (
         <NewJobModal
           onClose={() => setIsCreateModalOpen(false)}
           onCreate={handleJobCreated}
+          createJob={createCopilotVacancy}
         />
       )}
     </>
