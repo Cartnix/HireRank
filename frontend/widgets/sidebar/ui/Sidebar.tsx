@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/shared/api/auth-store";
+import { ThemeToggle } from "@/shared/ui/components/ThemeToogle";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -123,6 +124,13 @@ export function Sidebar() {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem
+            onSelect={(e) => e.preventDefault()}
+            className="p-0 focus:bg-transparent"
+          >
+            <ThemeToggle />
+          </DropdownMenuItem>
+
           <DropdownMenuItem
             onClick={handleSignOut}
             className="text-red-600 focus:text-red-600 cursor-pointer"

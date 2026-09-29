@@ -25,9 +25,6 @@ export default function RootLayout({
           <AuthProvider>
             {children}
             <LegalAcceptModal />
-            <div className="fixed bottom-5 right-5 z-50">
-              <ThemeToggle />
-            </div>
           </AuthProvider>
         </ThemeProvider>
       </body>
