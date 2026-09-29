@@ -1,4 +1,6 @@
 "use client";
+import { useDemo } from "@/features/demo/DemoProvider";
+import { DemoCandidates } from "@/features/demo/DemoCandidates";
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -16,7 +18,7 @@ import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 
-export function CandidatesPageClient({
+function LiveCandidatesPageClient({
   currentUserName,
   initialSelectedCandidateId = null,
 }: {
@@ -27,6 +29,8 @@ export function CandidatesPageClient({
   const { candidates, jobs, user, can, loading, error, reload } = useAtsData(initialSelectedCandidateId);
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [formMessage, setFormMessage] = useState("");
+  const [skillFilter, setSkillFilter] = useState("");
+  const [sortOrder, setSortOrder] = useState("default");
   const [saving, setSaving] = useState(false);
   const jobById = useMemo(() => Object.fromEntries(jobs.map(job => [job.id, job])) as Record<string, Job>, [jobs]);
   const vacancies = jobs.map(job => ({ id: job.id, title: job.title, open: job.status === "open" }));
@@ -75,6 +79,9 @@ export function CandidatesPageClient({
     [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.email || currentUserName,
     initialSelectedCandidateId,
   );
+
+  const skills = [...new Set(candidates.flatMap(candidate => (candidate.skills ?? String((candidate.questionnaire as unknown as Record<string, unknown>).skills ?? "").split(/[,;]/)).map(skill => skill.trim()).filter(Boolean)))].sort();
+  const displayedCandidates = filteredCandidates.filter(candidate => !skillFilter || (candidate.skills ?? String((candidate.questionnaire as unknown as Record<string, unknown>).skills ?? "").split(/[,;]/)).some(skill => skill.trim().toLowerCase() === skillFilter.toLowerCase())).sort((a, b) => sortOrder === "name" ? (a.name ?? a.email).localeCompare(b.name ?? b.email, "ru") : sortOrder === "score" ? (b.ai_score ?? 0) - (a.ai_score ?? 0) : 0);
 
   if (loading) return <div>Загрузка кандидатов...</div>;
   if (error) return <div role="alert">{error}<button onClick={reload} className="ml-3 text-brand-primary">Повторить</button></div>;
@@ -220,14 +227,18 @@ export function CandidatesPageClient({
         <div className="shrink-0 border-t border-border pt-3 text-xs text-muted-foreground lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
           Найдено{" "}
           <span className="font-semibold text-foreground">
-            {filteredCandidates.length}
+            {displayedCandidates.length}
           </span>{" "}
           из {candidates.length}
         </div>
       </section>
 
+      <div className="flex flex-wrap gap-3">
+        <label className="text-xs">Навык<select className="ml-2 rounded-lg border border-input bg-background px-3 py-2" value={skillFilter} onChange={event => setSkillFilter(event.target.value)}><option value="">Все навыки</option>{skills.map(skill => <option key={skill}>{skill}</option>)}</select></label>
+        <label className="text-xs">Сортировка<select className="ml-2 rounded-lg border border-input bg-background px-3 py-2" value={sortOrder} onChange={event => setSortOrder(event.target.value)}><option value="default">По умолчанию</option><option value="score">Демо · по баллам ↓</option><option value="name">По имени</option></select></label>
+      </div>
       <CandidatesTable
-        candidates={filteredCandidates}
+        candidates={displayedCandidates}
         jobById={jobById}
         onOpenCandidate={openCandidate}
       />
@@ -263,3 +274,5 @@ export function CandidatesPageClient({
     </div>
   );
 }
+
+export function CandidatesPageClient(props: { currentUserName: string; initialSelectedCandidateId?: string | null }) { const demo = useDemo(); return demo.enabled ? <DemoCandidates key={demo.role} initialId={props.initialSelectedCandidateId} /> : <LiveCandidatesPageClient {...props} />; }

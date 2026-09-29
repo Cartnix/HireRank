@@ -36,5 +36,5 @@ test("tenant and memory are isolated; memory is included only when HR enables it
   assert.equal(evaluate(state, candidate, vacancy, "hr").input.memory.length, 0);
   state.prompts[0].useMemory = true;
   assert.equal(evaluate(state, candidate, vacancy, "hr").input.memory.length, 1);
-  assert.throws(() => evaluate(state, candidate, state.vacancies.find(x => x.id === "v-data")!, "hr"));
+  assert.throws(() => evaluate(state, candidate, { ...vacancy, tenantId: "another-tenant" }, "hr"));
 });

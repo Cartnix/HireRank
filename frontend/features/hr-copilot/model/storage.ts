@@ -12,6 +12,12 @@ export function loadCopilotState(): CopilotState {
     state = freshState();
   }
 
+  const tenantId = "550e8400-e29b-41d4-a716-446655440000";
+  state.tenants = [{ id: tenantId, name: "HireRank · Demo Enterprise" }];
+  for (const key of ["vacancies", "candidates", "prompts", "evaluations", "feedback", "notifications", "audit", "memory", "mcpRuns"] as const) {
+    // Remove legacy second-tenant demo records when loading existing browser storage.
+    Object.assign(state, { [key]: state[key].filter(item => item.tenantId === tenantId) });
+  }
   if (!state.evaluations.length) {
     const candidate = state.candidates.find((x) => x.id === "c-timur");
     const vacancy = state.vacancies.find((x) => x.id === "v-frontend");

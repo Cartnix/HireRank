@@ -1,4 +1,6 @@
 "use client";
+import { useDemo } from "@/features/demo/DemoProvider";
+import { DemoDashboard } from "@/features/demo/DemoSections";
 import { useEffect, useState } from "react";
 import { useAuthSession } from "@/features/auth/AuthProvider";
 import { apiFetch } from "@/shared/api/client";
@@ -6,7 +8,7 @@ import type { DashboardDTO } from "@/shared/api/ats";
 import { DashboardPageView } from "./DashboardView";
 import { dashboardMock } from "@/app/dashboard/dashboard.mock";
 
-export function DashboardClient() {
+function LiveDashboardClient() {
   const { user } = useAuthSession();
   const [dashboard, setDashboard] = useState<DashboardDTO | null>(null);
   const [error, setError] = useState("");
@@ -25,3 +27,5 @@ export function DashboardClient() {
     candidateLabel={dashboard.role === "manager" ? "Назначенные кандидаты" : "Всего кандидатов"}
     demoActiveJobs={!("open_vacancies" in dashboard)} demoCandidates={candidateCount === undefined} />;
 }
+
+export function DashboardClient() { const demo = useDemo(); return demo.enabled ? <DemoDashboard /> : <LiveDashboardClient />; }

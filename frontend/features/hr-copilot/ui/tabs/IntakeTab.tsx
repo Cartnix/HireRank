@@ -21,7 +21,7 @@ export function IntakeTab({
   };
   return (
     <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-      <Section title="Одна анкета вместо обхода кабинетов" description={mvp ? "Анкета сохраняется в кандидатском пуле организации. Назначение на вакансию подтверждается отдельно." : "Кандидат или рекрутер вводит резюме в портал выбранной компании. Новый кандидат попадает в пул, AI запускается автоматически."}>
+      <Section title="Одна анкета вместо обхода кабинетов" description={mvp ? "Анкета сохраняется в кандидатском пуле организации. Назначение на вакансию подтверждается отдельно." : "Кандидат или рекрутер вводит резюме в портал компании. Новый кандидат попадает в пул, AI запускается автоматически."}>
         <form onSubmit={submitIntake} className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="text-xs font-semibold">
             ФИО
@@ -67,7 +67,7 @@ export function IntakeTab({
             </select>
           </label>
           <label className="flex gap-2 text-xs sm:col-span-2">
-            <input name="processingConsent" type="checkbox" required /> Согласен на обработку данных для рассмотрения анкеты в выбранной организации
+            <input name="processingConsent" type="checkbox" required /> Согласен на обработку данных для рассмотрения анкеты в организации
           </label>
           <button disabled={busy} className={`${primary} sm:col-span-2`}>
             {mvp ? (busy ? "Сохраняем..." : "Сохранить анкету") : "Зарегистрировать и запустить AI"}
@@ -75,7 +75,7 @@ export function IntakeTab({
         </form>
       </Section>
 
-      <Section title="Что произойдёт" description="Всё в пределах выбранного tenant.">
+      <Section title="Что произойдёт" description="Анкета поступит в HireRank — единую организацию.">
         <ol className="mt-5 space-y-3 text-sm">
           {(mvp ? ["Анкета, текст и ссылка сохраняются на сервере", "Кандидат остаётся в пуле без автоматического назначения", "HR отдельно подтверждает назначение на открытую вакансию", "AI и загрузка файла ожидают следующих этапов"] : [
             "Карточка и ссылка / имя файла сохраняются в демо JSON",

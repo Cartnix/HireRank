@@ -1,4 +1,6 @@
 "use client";
+import { useDemo } from "@/features/demo/DemoProvider";
+import { DemoJobs } from "@/features/demo/DemoSections";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createVacancy, deleteVacancy, updateVacancy, type Job } from "@/entities/job";
@@ -6,7 +8,7 @@ import { JobsView } from "@/views/jobs";
 import { NewJobModal } from "@/features/create-vacancy";
 import { useAtsData } from "@/shared/api/useAtsData";
 
-export function JobsPageClient({ initialSelectedJobId = null }: { initialSelectedJobId?: string | null }) {
+function LiveJobsPageClient({ initialSelectedJobId = null }: { initialSelectedJobId?: string | null }) {
   const router = useRouter();
   const { jobs, candidates, can, loading, error, reload } = useAtsData(null, initialSelectedJobId);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -31,3 +33,5 @@ export function JobsPageClient({ initialSelectedJobId = null }: { initialSelecte
       onCreate={(job: Job) => { setIsCreateModalOpen(false); reload(); router.push(`/dashboard/jobs/${job.id}`); }} />}
   </>;
 }
+
+export function JobsPageClient(props: { initialSelectedJobId?: string | null }) { const demo = useDemo(); return demo.enabled ? <DemoJobs key={demo.role} initialId={props.initialSelectedJobId} /> : <LiveJobsPageClient {...props} />; }

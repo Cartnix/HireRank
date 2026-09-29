@@ -1,5 +1,6 @@
 "use client";
 
+import { useDemo } from "@/features/demo/DemoProvider";
 import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { useEffect, useState } from "react";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
@@ -18,6 +19,7 @@ function formatDate(value: string) {
 }
 
 export function DashboardNotifications() {
+  const demo = useDemo();
   const [state, setState] = useState<CopilotState | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -39,7 +41,7 @@ export function DashboardNotifications() {
 
   const tenantId = state?.tenants[0]?.id;
   const notifications = state?.notifications.filter(
-    (item) => item.tenantId === tenantId,
+    (item) => item.tenantId === tenantId && item.role === demo.role && (demo.role !== "manager" || state.candidates.some(c => c.id === item.candidateId && c.vacancyId === "v-design")),
   ) ?? [];
   const unreadCount = notifications.filter((item) => !item.read).length;
 
@@ -59,13 +61,13 @@ export function DashboardNotifications() {
     if (!state || !tenantId || !unreadCount) return;
     const next = structuredClone(state);
     next.notifications.forEach((item) => {
-      if (item.tenantId === tenantId) item.read = true;
+      if (notifications.some(n => n.id === item.id)) item.read = true;
     });
     saveCopilotState(next);
     setState(next);
   };
 
-  if (!state) return null;
+  if (!state || !demo.enabled) return null;
 
   return (
     <div className="fixed bottom-5 right-5 z-50">

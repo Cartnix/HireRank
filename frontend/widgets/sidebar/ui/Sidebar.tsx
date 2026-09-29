@@ -1,5 +1,9 @@
 "use client";
+import { useState } from "react";
 
+import { useDemo, demoCan } from "@/features/demo/DemoProvider";
+import { label } from "@/features/hr-copilot/ui/constants";
+import type { Role } from "@/features/hr-copilot/model/types";
 import { Avatar } from "@/shared/ui/Avatar";
 import { navItems, secondaryNavItems } from "@/shared/utils/navigation";
 import Link from "next/link";
@@ -22,6 +26,8 @@ import {
 import { ThemeToggle } from "@/shared/ui/components/ThemeToogle";
 
 export function Sidebar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const demo = useDemo();
   const pathname = usePathname();
   const { signOut } = useAuth();
   const router = useRouter();
@@ -35,8 +41,9 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r bg-sidebar border-sidebar-border py-5 text-sidebar-foreground">
-      <nav className="flex flex-1 flex-col gap-2">
+    <aside className="relative flex h-auto w-full md:sticky md:top-0 md:h-screen md:w-60 shrink-0 flex-col border-r bg-sidebar border-sidebar-border py-5 text-sidebar-foreground">
+      <button type="button" aria-expanded={mobileOpen} aria-controls="dashboard-sidebar-navigation" className="mx-4 flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>HireAI · Меню <span>{mobileOpen ? "Закрыть" : "Открыть"}</span></button>
+      <nav id="dashboard-sidebar-navigation" className={`${mobileOpen ? "flex" : "hidden"} md:flex flex-1 flex-col gap-2`}>
         <div className="flex h-14 items-center gap-2.5 rounded-lg px-5 text-[14px]">
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-cyan-300 text-[15px] font-bold text-background">
             H
@@ -46,13 +53,18 @@ export function Sidebar() {
           </div>
         </div>
 
+        <div className="mx-3 my-3 space-y-2 rounded-lg border border-border p-3">
+          <label className="flex gap-2 text-xs"><input type="checkbox" checked={demo.enabled} onChange={e => demo.setEnabled(e.target.checked)} /> Демо проекта</label>
+          {demo.enabled && <label className="block text-xs">Демо · роль<select aria-label="Демо роль" className="mt-2 w-full rounded border border-input bg-background p-2" value={demo.role} onChange={e => { demo.setRole(e.target.value as Role); router.push("/dashboard"); }}>{Object.entries(label).map(([role, name]) => <option key={role} value={role}>{name}</option>)}</select></label>}
+        </div>
+        {((demo.enabled && demo.role === "administrator") || (!demo.enabled && user?.role === "administrator")) && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/audit">Демо · Журнал действий</Link>}
         <div className="my-3 h-px bg-sidebar-border" />
 
         <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide/ text-muted-foreground/70">
           Основное
         </div>
 
-        {navItems.map((item) => {
+        {navItems.filter(item => demo.enabled ? demoCan(demo.role, item.id) : item.id !== "copilot" || user?.role === "hr" || user?.role === "administrator").map((item) => {
           const Icon = item.icon;
           const isActive =
             item.href === "/dashboard"
@@ -63,6 +75,7 @@ export function Sidebar() {
             <Link
               key={item.id}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={`group flex items-center gap-2.5 rounded-lg px-3 py-2.5 mx-3 text-[14px] transition-all duration-200 ${
                 isActive
                   ? "active-glow-item font-semibold text-cyan-300"
@@ -75,7 +88,7 @@ export function Sidebar() {
                   isActive ? "text-active-item" : "group-hover:text-foreground"
                 }`}
               />
-              {item.label}
+              {demo.enabled && ["dashboard", "jobs", "candidates", "copilot"].includes(item.id) ? `Демо · ${item.id === "candidates" && demo.role === "recruiter" ? "Приём резюме" : item.id === "candidates" && demo.role === "candidate" ? "Моя анкета" : item.label}` : item.label}
             </Link>
           );
         })}
@@ -113,6 +126,7 @@ export function Sidebar() {
             <Link
               key={item.id}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={`group flex items-center gap-2.5 rounded-lg px-3 py-2.5 mx-3 text-[14px] transition-all duration-200 ${
                 isActive
                   ? "active-glow-item font-semibold text-cyan-300"
@@ -131,6 +145,7 @@ export function Sidebar() {
         })}
       </nav>
 
+      <div className={`${mobileOpen ? "block" : "hidden"} md:block`}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex w-full items-center justify-between rounded-[10px] border border-border px-3 py-2.5 transition-colors hover:bg-background-hover cursor-pointer outline-none">
@@ -164,6 +179,7 @@ export function Sidebar() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </aside>
   );
 }
