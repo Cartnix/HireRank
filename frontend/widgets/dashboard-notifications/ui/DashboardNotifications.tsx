@@ -71,7 +71,7 @@ export function DashboardNotifications() {
 
   return (
     <div className="fixed bottom-5 right-5 z-50">
-      <span className="absolute bottom-0 right-16 whitespace-nowrap"><DemoBadge /></span>
+      <span className="absolute bottom-0 right-16 whitespace-nowrap"><DemoBadge label="Dev mode" /></span>
       <section
         id="dashboard-notifications-panel"
         role="dialog"

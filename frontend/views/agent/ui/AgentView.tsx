@@ -87,7 +87,7 @@ export function AgentsView() {
               ИИ Агент-рекрутер
             </h1>
             <p className="text-[11px] text-muted-foreground m-0">
-              <DemoBadge label="Демо · AI не подключён" />
+              <DemoBadge label="Dev mode · AI не подключён" />
             </p>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import type { DashboardPageViewProps, DashboardStats } from "@/views/dashboard";
 import { statsMock } from "@/widgets/dashboard-stats/model/dashboard-stats.mock";
 
-type CandidateMock = DashboardPageViewProps["candidateById"][string];
+type CandidateMock = NonNullable<DashboardPageViewProps["candidateById"]>[string];
 
 const todaysInterviewsMock: DashboardPageViewProps["todaysInterviews"] = [
   {
@@ -164,7 +164,7 @@ const candidateByIdMock: DashboardPageViewProps["candidateById"] = {
   }),
 };
 
-type JobMock = DashboardPageViewProps["jobById"][string];
+type JobMock = NonNullable<DashboardPageViewProps["jobById"]>[string];
 
 const createJob = (id: string, title: string, department: string): JobMock => ({
   id,

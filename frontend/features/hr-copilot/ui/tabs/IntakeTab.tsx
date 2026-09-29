@@ -36,7 +36,7 @@ export function IntakeTab({
             <input defaultValue={value("phone")} name="phone" required className={`${inputClass} mt-2`} />
           </label>
           <label className="text-xs font-semibold">
-            Файл резюме {mvp ? <DemoBadge label="Демо · загрузка не подключена" /> : "(имя сохраняется, байты нет)"}
+            Файл резюме {mvp ? <DemoBadge label="Dev mode · загрузка не подключена" /> : "(имя сохраняется, байты нет)"}
             <input disabled={mvp} name="resumeFile" type="file" accept=".pdf,.doc,.docx,.html,.htm,.txt" className={`${inputClass} mt-2`} />
           </label>
           <label className="text-xs font-semibold sm:col-span-2">

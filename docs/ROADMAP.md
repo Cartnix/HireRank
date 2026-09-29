@@ -57,24 +57,23 @@ not declare resume storage, pipeline mutations or full MVP acceptance complete.
 Existing tokens must be refreshed or the user must sign in again after the new
 HR permission migration; permissions in an issued access JWT do not change in place.
 No API failure may enable a seed-data fallback. LLM/MCP/memory remain post-MVP.
+### Role demo layout — completed (2026-09-30)
 
-### Компоновка ролевого демо — завершено (2026-09-30)
+Local frontend demo; these items do not cover the server stages of AI/MCP and MVP acceptance.
 
-Локальная frontend-демка; эти пункты не закрывают серверные этапы AI/MCP и приёмку MVP.
-
-- [x] Распределить демо по существующим разделам ролей с префиксом «Демо», без дублей в Copilot.
-- [x] Перенести выбор роли в общее меню и сохранять его после перезагрузки.
-- [x] Зафиксировать одну организацию и мигрировать старые локальные данные второго тенанта.
-- [x] Оставить в Copilot только настройки инструкции, разрешённых рекомендаций и памяти.
-- [x] Добавить поиск, фильтры навыков/этапов/вакансий и сортировку кандидатов по баллам/имени/дате.
-- [x] Открывать анкету и Copilot независимо справа; добавить анимации и reduced motion.
-- [x] Реализовать локальный CRUD вакансий для HR/администратора с защитой назначений при удалении.
-- [x] Ограничить демо-пул, действия и уведомления по ролям и фиксированному scope.
-- [x] Вынести журнал в отдельный раздел только администратора и закрыть прямой URL другим ролям.
-- [x] Сохранить HR-подтверждение рекомендаций, проверенную память и согласование менеджера.
-- [x] Добавить фильтр навыков и сортировку в обычный список кандидатов.
-- [x] Проверить сценарии через agent-browser с тестовой сессией, включая CRUD, перезагрузку и ограничения ролей.
-- [x] Исправить типографику панелей и мобильное меню; проверить экран 390 px без горизонтального переполнения.
+- [x] Distribute the demo across existing role sections with the “Demo” prefix, without duplicates in Copilot.
+- [x] Move the role selection to the main menu and save it after a reboot.
+- [x] Fix one organization and migrate the old local data of the second tenant.
+- [x] Leave only the settings for the instruction, allowed recommendations, and memory in Copilot.
+- [x] Add search, filters for skills/stages/vacancies, and sorting of candidates by score/name/date.
+- [x] Open the questionnaire and Copilot independently on the right; add animations and reduced motion.
+- [x] Implement local CRUD for vacancies for HR/administrator with protection of assignments when deleting.
+- [x] Limit the demo pool, actions, and notifications by roles and fixed scope.
+- [x] Move the journal to a separate section for administrators only and block direct URLs for other roles.
+- [x] Save HR confirmation of recommendations, verified memory, and manager approval.
+- [x] Add a skills filter and sorting to the regular candidate list.
+- [x] Check the scenarios via agent-browser with a test session, including CRUD, reload, and role restrictions.
+- [x] Fix the typography of the panels and the mobile menu; check the screen at 390 px without horizontal overflow.
 
 ### Current work
 

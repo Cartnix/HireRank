@@ -14,7 +14,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const role = previewRole ?? (user?.role as Role | undefined) ?? "hr";
   const [state, setState] = useState(freshState);
   const [message, setMessage] = useState("");
-  useEffect(() => { const frame = requestAnimationFrame(() => { setState(loadCopilotState()); setEnabled(localStorage.getItem("hirerank-demo-enabled") === "true"); const savedRole = localStorage.getItem("hirerank-demo-role"); if (["hr", "administrator", "manager", "recruiter", "candidate"].includes(savedRole ?? "")) setPreviewRole(savedRole as Role); }); return () => cancelAnimationFrame(frame); }, []);
+  useEffect(() => { const frame = requestAnimationFrame(() => { setState(loadCopilotState()); setEnabled(localStorage.getItem("hirerank-demo-enabled") === "true"); const savedRole = localStorage.getItem("hirerank-demo-role"); if (localStorage.getItem("hirerank-demo-enabled") === "true" && ["hr", "administrator", "manager", "recruiter", "candidate"].includes(savedRole ?? "")) setPreviewRole(savedRole as Role); }); return () => cancelAnimationFrame(frame); }, []);
   useEffect(() => {
     const sync = () => setState(loadCopilotState());
     const storage = (event: StorageEvent) => { if (event.key === COPILOT_STORAGE_KEY || event.key === null) sync(); };
@@ -24,6 +24,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   function setRole(value: Role) { localStorage.setItem("hirerank-demo-role", value); setPreviewRole(value); }
   function toggle(value: boolean) { localStorage.setItem("hirerank-demo-enabled", String(value)); setEnabled(value); setPreviewRole(null); localStorage.removeItem("hirerank-demo-role"); }
   function update(fn: (next: CopilotState) => void) {
+    if (!enabled) return false;
     try { const next = structuredClone(state); fn(next); saveCopilotState(next); setState(next); setMessage(""); return true; }
     catch (error) { setMessage(error instanceof Error ? error.message : "Ошибка операции"); return false; }
   }

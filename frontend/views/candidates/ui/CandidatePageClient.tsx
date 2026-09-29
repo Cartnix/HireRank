@@ -15,7 +15,6 @@ import { IntakeTab } from "@/features/hr-copilot/ui/tabs/IntakeTab";
 import { useAtsData } from "@/shared/api/useAtsData";
 import { assignCandidate, createCandidate, deleteCandidate, updateQuestionnaire } from "@/shared/api/ats";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
-import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 
 function LiveCandidatesPageClient({
@@ -192,7 +191,7 @@ function LiveCandidatesPageClient({
         aria-label="Сводка по кандидатам"
         className="grid grid-cols-2 divide-x divide-y divide-border border-y border-border sm:grid-cols-4 sm:divide-y-0"
       >
-        {candidateStats.map(({ label, value, icon: Icon, color }) => (
+        {candidateStats.filter(item => item.label !== "Отклонены").map(({ label, value, icon: Icon, color }) => (
           <div
             key={label}
             className="flex min-w-0 items-center gap-3 px-3 py-4 first:pl-0 sm:px-5 sm:first:pl-0"
@@ -207,7 +206,7 @@ function LiveCandidatesPageClient({
                 {value}
               </div>
               <div className="mt-1 truncate text-xs text-muted-foreground">
-                {label} {label === "Отклонены" && <DemoBadge />}
+                {label}
               </div>
             </div>
           </div>
@@ -235,7 +234,7 @@ function LiveCandidatesPageClient({
 
       <div className="flex flex-wrap gap-3">
         <label className="text-xs">Навык<select className="ml-2 rounded-lg border border-input bg-background px-3 py-2" value={skillFilter} onChange={event => setSkillFilter(event.target.value)}><option value="">Все навыки</option>{skills.map(skill => <option key={skill}>{skill}</option>)}</select></label>
-        <label className="text-xs">Сортировка<select className="ml-2 rounded-lg border border-input bg-background px-3 py-2" value={sortOrder} onChange={event => setSortOrder(event.target.value)}><option value="default">По умолчанию</option><option value="score">Демо · по баллам ↓</option><option value="name">По имени</option></select></label>
+        <label className="text-xs">Сортировка<select className="ml-2 rounded-lg border border-input bg-background px-3 py-2" value={sortOrder} onChange={event => setSortOrder(event.target.value)}><option value="default">По умолчанию</option><option value="name">По имени</option></select></label>
       </div>
       <CandidatesTable
         candidates={displayedCandidates}

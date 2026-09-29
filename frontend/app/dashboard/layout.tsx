@@ -1,3 +1,4 @@
+import { DevRouteGate } from "@/features/demo/DevRouteGate";
 import { DemoProvider } from "@/features/demo/DemoProvider";
 import { SessionGate } from "@/features/auth/SessionGate";
 import { DashboardHeader } from "@/widgets/dashboard-header";
@@ -14,7 +15,7 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader />
-        <main className="min-w-0 flex-1 px-4 py-6 md:px-8">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-6 md:px-8"><DevRouteGate>{children}</DevRouteGate></main>
       </div>
       <DashboardNotifications />
     </div></DemoProvider></SessionGate>

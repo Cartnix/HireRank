@@ -1,3 +1,4 @@
+import { useDemo } from "@/features/demo/DemoProvider";
 import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import {
   useWatch,
@@ -42,6 +43,7 @@ export function NewJobFormFields({
   control,
   setValue,
 }: Props) {
+  const { enabled } = useDemo();
   const fieldClass =
     "h-11 w-full rounded-xl border border-input bg-background px-3.5 text-sm text-foreground outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10";
 
@@ -139,9 +141,9 @@ export function NewJobFormFields({
             </select>
           </div>
 
-          <div>
+          {enabled && <div>
             <label className={labelClass}>
-              <MapPin size={14} /> Формат работы <DemoBadge label="Демо · не сохраняется" />
+              <MapPin size={14} /> Формат работы <DemoBadge label="Dev mode · не сохраняется" />
             </label>
             <select className={`${fieldClass} cursor-pointer`} disabled {...register("location")}>
               <option value="">Не указан</option>
@@ -151,11 +153,11 @@ export function NewJobFormFields({
                 </option>
               ))}
             </select>
-          </div>
+          </div>}
 
-          <div>
+          {enabled && <div>
             <label className={labelClass}>
-              <Briefcase size={14} /> Занятость <DemoBadge label="Демо · не сохраняется" />
+              <Briefcase size={14} /> Занятость <DemoBadge label="Dev mode · не сохраняется" />
             </label>
             <select
               className={`${fieldClass} cursor-pointer`}
@@ -168,16 +170,16 @@ export function NewJobFormFields({
                 </option>
               ))}
             </select>
-          </div>
+          </div>}
 
-          <div>
-            <label className={labelClass}>Опыт работы <DemoBadge label="Демо · не сохраняется" /></label>
+          {enabled && <div>
+            <label className={labelClass}>Опыт работы <DemoBadge label="Dev mode · не сохраняется" /></label>
             <input
               placeholder="Например, от 2 лет"
               className={fieldClass}
               disabled {...register("experience")}
             />
-          </div>
+          </div>}
         </div>
       </section>
 
@@ -266,16 +268,16 @@ export function NewJobFormFields({
         </div>
       </section>
 
-      <section>
+      {enabled && <section>
         <div className="mb-3 border-b border-border pb-2">
           <h3 className="m-0! text-sm font-semibold text-foreground">
             Условия и команда
           </h3>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
+          {enabled && <div className="sm:col-span-2">
             <label className={labelClass}>
-              <Wallet size={14} /> Зарплатная вилка, ₸ <DemoBadge label="Демо · не сохраняется" />
+              <Wallet size={14} /> Зарплатная вилка, ₸ <DemoBadge label="Dev mode · не сохраняется" />
             </label>
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               <input
@@ -305,20 +307,20 @@ export function NewJobFormFields({
                 {errors.salaryMin?.message || errors.salaryMax?.message}
               </p>
             )}
-          </div>
+          </div>}
 
-          <div>
+          {enabled && <div>
             <label className={labelClass}>
-              <User size={14} /> Ответственный рекрутер <DemoBadge label="Демо · не сохраняется" />
+              <User size={14} /> Ответственный рекрутер <DemoBadge label="Dev mode · не сохраняется" />
             </label>
             <input
               placeholder="Имя рекрутера"
               className={fieldClass}
               disabled {...register("recruiter")}
             />
-          </div>
+          </div>}
         </div>
-      </section>
+      </section>}
     </div>
   );
 }

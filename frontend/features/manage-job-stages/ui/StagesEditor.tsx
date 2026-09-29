@@ -20,7 +20,7 @@ export function StagesEditor({
 
   return (
     <Card className="h-fit p-6">
-      {demo && <DemoBadge label="Демо · редактирование не сохраняется" />}
+      {demo && <DemoBadge label="Dev mode · редактирование не сохраняется" />}
       <div className="mb-1 text-[15px] font-semibold">Этапы отбора</div>
       <div className="mb-4 text-[12.5px] text-foreground-secondary">Настройте порядок этапов воронки для этой вакансии.</div>
       <div className="space-y-2">

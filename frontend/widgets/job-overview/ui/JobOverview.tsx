@@ -1,5 +1,6 @@
 "use client";
 
+import { useDemo } from "@/features/demo/DemoProvider";
 import { useEffect, useRef, useState } from "react";
 import {
   BriefcaseBusiness,
@@ -36,6 +37,7 @@ export function JobOverview({
   onOpenCandidate: (id: string) => void;
   onDeleteJob?: (id: string) => void;
 }) {
+  const { enabled } = useDemo();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -229,13 +231,13 @@ export function JobOverview({
           </section>
         </Card>
 
-        <aside>
+        {enabled && <aside>
           <StagesEditor
             demo
             stages={job.stages ?? []}
             onChange={onUpdateStages}
           />
-        </aside>
+        </aside>}
       </div>
     </div>
   );

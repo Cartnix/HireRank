@@ -1,5 +1,6 @@
 "use client";
 
+import { useDemo } from "@/features/demo/DemoProvider";
 import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { useState } from "react";
 import { ChevronLeft, Mail, Phone, MapPin, FileText, Paperclip } from "lucide-react";
@@ -36,6 +37,7 @@ export function CandidateProfile({
   onBack: () => void;
 }) {
   const [tab, setTab] = useState<"profile" | "history" | "files" | "notes">("profile");
+  const { enabled } = useDemo();
   const q = candidate.questionnaire;
   const displayName = candidate.name ?? [q.first_name, q.surname].filter(Boolean).join(" ");
 
@@ -92,7 +94,7 @@ export function CandidateProfile({
 
         <div className="col-span-2">
           <div className="mb-4 inline-flex rounded-[10px] border border-border bg-background p-1">
-            {tabs.map((item) => {
+            {tabs.filter(item => enabled || item.key === "profile").map((item) => {
               const active = tab === item.key;
               return (
                 <button
@@ -108,7 +110,7 @@ export function CandidateProfile({
             })}
           </div>
 
-          {tab === "profile" && (
+          {(tab === "profile" || !enabled) && (
             <Card className="p-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-3">
@@ -143,7 +145,7 @@ export function CandidateProfile({
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[10px] border border-border bg-muted/30 p-4">
+              {enabled && <div className="mt-5 rounded-[10px] border border-border bg-muted/30 p-4">
                 <DemoBadge />
                 <div className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">AI Match по вакансиям</div>
                 {candidate.ai_rankings && candidate.ai_rankings.length > 0 ? (
@@ -158,7 +160,7 @@ export function CandidateProfile({
                 ) : (
                   <div className="text-[13px] text-muted-foreground">Пока нет оценок совместимости.</div>
                 )}
-              </div>
+              </div>}
             </Card>
           )}
 
@@ -182,7 +184,7 @@ export function CandidateProfile({
           )}
 
           {tab === "files" && (
-            <Card className="p-6"><DemoBadge label="Демо · защищённое хранилище не подключено" />
+            <Card className="p-6"><DemoBadge label="Dev mode · защищённое хранилище не подключено" />
               <div className="flex items-center justify-between rounded-[10px] border border-border px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-danger/10 text-danger">
@@ -199,7 +201,7 @@ export function CandidateProfile({
           )}
 
           {tab === "notes" && (
-            <Card className="p-6"><DemoBadge label="Демо · заметки не сохраняются на сервере" />
+            <Card className="p-6"><DemoBadge label="Dev mode · заметки не сохраняются на сервере" />
               <div className="mb-4 space-y-3">
                 {notes.length === 0 && <div className="text-[13px] text-muted-foreground">Заметок пока нет.</div>}
                 {notes.map((n) => (

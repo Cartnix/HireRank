@@ -18,13 +18,13 @@ export type DashboardStats = {
 
 export type DashboardPageViewProps = DashboardStats & {
   live?: boolean; candidateLabel?: string; demoActiveJobs?: boolean; demoCandidates?: boolean;
-  currentDate: CurrentDateInfo;
-  previousMonth: DashboardStats;
-  pipelineCounts: { stage: string; count: number }[];
-  maxPipeline: number;
-  todaysInterviews: Interview[];
-  candidateById: Record<string, Candidate>;
-  jobById: Record<string, Job>;
+  currentDate?: CurrentDateInfo;
+  previousMonth?: DashboardStats;
+  pipelineCounts?: { stage: string; count: number }[];
+  maxPipeline?: number;
+  todaysInterviews?: Interview[];
+  candidateById?: Record<string, Candidate>;
+  jobById?: Record<string, Job>;
 };
 
 export function DashboardPageView(props: DashboardPageViewProps) {
@@ -41,7 +41,7 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         live={props.live} candidateLabel={props.candidateLabel} demoActiveJobs={props.demoActiveJobs} demoCandidates={props.demoCandidates}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+      {!props.live && <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         <div className="lg:col-span-7 xl:col-span-8">
           <HiringVelocityCard />
         </div>
@@ -49,9 +49,9 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         <div className="lg:col-span-5 xl:col-span-4">
           <HiringFunnelCard />
         </div>
-      </div>
+      </div>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+      {!props.live && <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         <div className="lg:col-span-7 xl:col-span-8">
           <TopCandidatesCard />
         </div>
@@ -59,7 +59,7 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         <div className="lg:col-span-5 xl:col-span-4">
           <UpcomingInterviewsCard />
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

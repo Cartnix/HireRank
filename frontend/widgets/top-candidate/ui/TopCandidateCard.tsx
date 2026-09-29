@@ -10,7 +10,7 @@ export function TopCandidatesCard() {
     <Card className="p-6 bg-card border border-border rounded-2xl flex flex-col justify-between h-full">
       <DemoBadge />
       {/* Шапка карточки */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground tracking-tight m-0">
             Топ кандидаты
@@ -31,11 +31,11 @@ export function TopCandidatesCard() {
         {topCandidatesMock.map((candidate) => (
           <div
             key={candidate.id}
-            className="flex items-center justify-between p-3.5 rounded-xl bg-secondary/40 border border-border/50 hover:border-border transition-all"
+            className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-xl bg-secondary/40 border border-border/50 hover:border-border transition-all"
           >
-            <div className="flex items-center gap-3.5">
+            <div className="flex min-w-0 items-center gap-3.5">
               {/* Аватар с инициалами */}
-              <div className="w-10 h-10 rounded-xl bg-cyan-main/10 text-cyan-main font-semibold flex items-center justify-center text-sm border border-cyan-main/20">
+              <div className="w-10 h-10 shrink-0 rounded-xl bg-cyan-main/10 text-cyan-main font-semibold flex items-center justify-center text-sm border border-cyan-main/20">
                 {candidate.initials}
               </div>
 
@@ -51,7 +51,7 @@ export function TopCandidatesCard() {
             </div>
 
             {/* Этап, AI Скор и меню */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${candidate.stageColorClass}`}>
                 {candidate.stage}
               </span>
@@ -71,7 +71,7 @@ export function TopCandidatesCard() {
       </div>
 
       {/* Футер */}
-      <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between text-xs text-foreground-secondary">
+      <div className="mt-6 pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-secondary">
         <span>Ранжирование выполнено нейросетью HireAI</span>
         <span className="text-success font-medium">Обновлено только что</span>
       </div>

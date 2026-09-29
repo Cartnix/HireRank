@@ -1,6 +1,5 @@
 "use client";
 
-import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { useId } from "react";
 import type { DashboardStats } from "@/views/dashboard";
 import { getTrendBadge } from "@/shared/ui/badges/PercentageBadge";
@@ -17,19 +16,19 @@ interface StatsWidgetsProps extends DashboardStats {
 // Генератор данных с красивым скачком/падением в середине для наглядности графиков
 function getTrendData(current: number, deltaPercent: number | null) {
   if (deltaPercent === null) return [current, current, current, current, current];
-  
+
   const previous = current / (1 + deltaPercent / 100);
-  
+
   // Создаем выраженный пик или спад в середине (индекс 2), чтобы график выглядел живым
   const isPositive = deltaPercent >= 0;
   const volatilityFactor = isPositive ? 0.75 : 1.25; // при росте проседаем в середине, при падении — подпрыгиваем
   const midPoint = Math.round(previous * volatilityFactor);
 
   return [
-    Math.round(previous), 
-    Math.round(previous * 0.98), 
-    midPoint, 
-    Math.round(current * 0.95), 
+    Math.round(previous),
+    Math.round(previous * 0.98),
+    midPoint,
+    Math.round(current * 0.95),
     Math.round(current)
   ];
 }
@@ -121,68 +120,64 @@ export function StatsWidgets({
 
   return (
     <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card icon={Briefcase} badge={demoActiveJobs ? <DemoBadge /> : activeJobsBadge} className="p-7 pb-4">
+      <Card icon={Briefcase} badge={activeJobsBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
-            {activeJobsCount}
+            {demoActiveJobs ? "—" : activeJobsCount}
           </div>
           <div className="text-sm text-foreground-secondary font-medium">
             Активные вакансии
           </div>
         </div>
-        {live && <DemoBadge label="Демо · динамика" />}
-        <MiniAreaChart 
-          data={getTrendData(activeJobsCount, activeJobsDelta)} 
-          strokeColor="#22d3ee" 
-        />
+        {!live && <MiniAreaChart
+          data={getTrendData(activeJobsCount, activeJobsDelta)}
+          strokeColor="#22d3ee"
+        />}
       </Card>
 
-      <Card icon={Users} badge={demoCandidates ? <DemoBadge /> : candidatesBadge} className="p-7 pb-4">
+      <Card icon={Users} badge={candidatesBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
-            {inProgressCandidates}
+            {demoCandidates ? "—" : inProgressCandidates}
           </div>
           <div className="text-sm text-foreground-secondary font-medium">
             {candidateLabel}
           </div>
         </div>
-        {live && <DemoBadge label="Демо · динамика" />}
-        <MiniAreaChart 
-          data={getTrendData(inProgressCandidates, candidatesDelta)} 
-          strokeColor="#a78bfa" 
-        />
+        {!live && <MiniAreaChart
+          data={getTrendData(inProgressCandidates, candidatesDelta)}
+          strokeColor="#a78bfa"
+        />}
       </Card>
 
-      <Card icon={CalendarDays} badge={live ? <DemoBadge /> : interviewsBadge} className="p-7 pb-4">
+      <Card icon={CalendarDays} badge={interviewsBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
-            {todaysInterviewsCount}
+            {live ? "—" : todaysInterviewsCount}
           </div>
           <div className="text-sm text-foreground-secondary font-medium">
             Назначено собеседований
           </div>
         </div>
-        {live && <DemoBadge label="Демо · динамика" />}
-        <MiniAreaChart 
-          data={getTrendData(todaysInterviewsCount, interviewsDelta)} 
-          strokeColor="#facc15" 
-        />
+        {!live && <MiniAreaChart
+          data={getTrendData(todaysInterviewsCount, interviewsDelta)}
+          strokeColor="#facc15"
+        />}
       </Card>
 
-      <Card icon={Clock} badge={live ? <DemoBadge /> : timeToHireBadge} className="p-7 pb-4">
+      <Card icon={Clock} badge={timeToHireBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
-            {avgTimeToHire} дн.
+            {live ? "—" : `${avgTimeToHire} дн.`}
           </div>
           <div className="text-sm text-foreground-secondary font-medium">
             Среднее время для найма
           </div>
         </div>
-        {live && <DemoBadge label="Демо · динамика" />}
-        <MiniAreaChart 
-          data={getTrendData(avgTimeToHire, timeToHireDelta)} 
-          strokeColor="#34d399" 
-        />
+        {!live && <MiniAreaChart
+          data={getTrendData(avgTimeToHire, timeToHireDelta)}
+          strokeColor="#34d399"
+        />}
       </Card>
     </div>
   );

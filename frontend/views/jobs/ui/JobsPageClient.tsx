@@ -26,7 +26,7 @@ function LiveJobsPageClient({ initialSelectedJobId = null }: { initialSelectedJo
     <JobsView jobs={jobs} candidates={candidates} selectedJob={selectedJob}
       onOpenJob={id => router.push(`/dashboard/jobs/${id}`)} onBack={() => router.push("/dashboard/jobs")}
       onCreateJob={() => setIsCreateModalOpen(true)} canCreate={can("vacancy.create")} canUpdate={can("vacancy.update")} canDelete={can("vacancy.delete")}
-      onUpdateJob={runUpdate} onUpdateStages={() => setActionError("Демо · редактирование этапов ожидает backend")}
+      onUpdateJob={runUpdate} onUpdateStages={() => setActionError("Dev mode · редактирование этапов ожидает backend")}
       onOpenCandidate={id => router.push(`/dashboard/candidates/${id}`)}
       onDeleteJob={async id => { await deleteVacancy(id); reload(); }} />
     {isCreateModalOpen && <NewJobModal onClose={() => setIsCreateModalOpen(false)} createJob={createVacancy}

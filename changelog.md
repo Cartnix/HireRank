@@ -1,21 +1,21 @@
 # Changelog
 
-## 2026-09-30 — Компоновка демо по ролям
+## 2026-09-30 — Demo layout by role
 
-- [x] Демо распределено по дашборду, кандидатам и вакансиям без дублирования в Copilot.
-- [x] Общий переключатель демо-ролей в меню; роль и данные сохраняются после перезагрузки.
-- [x] Один фиксированный тенант; старые данные второго тенанта удаляются при загрузке.
-- [x] В Copilot оставлены только настройки промпта, рекомендаций и памяти.
-- [x] В кандидатах добавлены фильтры навыков/этапов/вакансий и сортировка по баллам, имени и дате.
-- [x] Анкета и HR Copilot открываются независимо справа, с анимацией и поддержкой reduced motion.
-- [x] Локальный CRUD вакансий доступен HR/администратору; удаление вакансии с назначенными кандидатами запрещено.
-- [x] Кабинеты и уведомления учитывают роль; менеджер видит назначенных, кандидат — свою анкету, рекрутер — приём резюме.
-- [x] Журнал вынесен отдельно и доступен только администратору, включая прямой URL.
-- [x] Сохранены подтверждение HR, проверенная память и согласование предложений менеджера.
-- [x] Фильтр навыков и сортировка добавлены также в обычный список кандидатов.
-- [x] Проверка agent-browser: роли, фильтры, панели, настройки, intake → HR → память, CRUD и перезагрузка; исправлены размеры заголовков и мобильное меню (390 px без переполнения).
+- [x] The demo is distributed across the dashboard, candidates, and vacancies without duplication in Copilot.
+- [x] A common demo role switcher in the menu; the role and data are saved after a reboot.
+- [x] One fixed tenant; old data from the second tenant is deleted upon loading.
+- [x] In Copilot, only the prompt, recommendation, and memory settings are retained.
+- [x] Filters for skills/stages/vacancies have been added to the candidates, along with sorting by score, name, and date.
+- [x] The questionnaire and HR Copilot open independently on the right, with animation and reduced motion support.
+- [x] Local CRUD for vacancies is available to HR/administrator; deleting a vacancy with assigned candidates is prohibited.
+- [x] Cabinets and notifications take the role into account; the manager sees the assigned ones, the candidate sees their own profile, and the recruiter sees the resume submission.
+- [x] The log is displayed separately and is available only to the administrator, including a direct URL.
+- [x] HR confirmation, verified memory, and approval of manager’s offers are retained.
+- [x] Skill filter and sorting are also added to the regular candidate list.
+- [x] Agent-browser check: roles, filters, panels, settings, intake → HR → memory, CRUD and reload; header sizes and mobile menu fixed (390 px without overflow).
 
-Браузерная проверка использует тестовый ответ `/auth/me`; проверена локальная демка, не серверная авторизация. AI/MCP и память остаются демо.
+Browser check uses the test response `/auth/me`; local demo checked, not server-side authorization. AI/MCP and memory remain demo.
 
 ## 2026-09-30 — ATS MVP frontend layout ↔ backend
 

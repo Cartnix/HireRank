@@ -6,7 +6,7 @@ import { useAuthSession } from "@/features/auth/AuthProvider";
 import { apiFetch } from "@/shared/api/client";
 import type { DashboardDTO } from "@/shared/api/ats";
 import { DashboardPageView } from "./DashboardView";
-import { dashboardMock } from "@/app/dashboard/dashboard.mock";
+
 
 function LiveDashboardClient() {
   const { user } = useAuthSession();
@@ -21,9 +21,10 @@ function LiveDashboardClient() {
   if (error) return <p role="alert">{error}</p>;
   if (!dashboard) return <p>Загрузка сводки...</p>;
   const candidateCount = "total_candidates" in dashboard ? dashboard.total_candidates : "assigned_candidates" in dashboard ? dashboard.assigned_candidates : undefined;
-  return <DashboardPageView {...dashboardMock} live
-    activeJobsCount={"open_vacancies" in dashboard ? dashboard.open_vacancies : dashboardMock.activeJobsCount}
-    inProgressCandidates={candidateCount ?? dashboardMock.inProgressCandidates}
+  return <DashboardPageView live
+    todaysInterviewsCount={0} avgTimeToHire={0}
+    activeJobsCount={"open_vacancies" in dashboard ? dashboard.open_vacancies : 0}
+    inProgressCandidates={candidateCount ?? 0}
     candidateLabel={dashboard.role === "manager" ? "Назначенные кандидаты" : "Всего кандидатов"}
     demoActiveJobs={!("open_vacancies" in dashboard)} demoCandidates={candidateCount === undefined} />;
 }
