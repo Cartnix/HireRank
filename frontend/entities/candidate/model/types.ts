@@ -1,7 +1,9 @@
 export type CandidateStatus =
   | "unassigned"
   | "assigned"
-  | "rejected";
+  | "rejected"
+  | "pending_hitl"
+  | "action_applied";
 
 export interface HistoryEvent {
   date: string;

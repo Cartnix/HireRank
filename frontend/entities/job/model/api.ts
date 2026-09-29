@@ -1,60 +1,22 @@
 import { apiFetch } from "@/shared/api/client";
-import { Job } from "./types";
-
+import { listVacancyViews, vacancyDetail, vacancyView, type VacancyDTO, type VacancyInput, type VacancyUpdate } from "@/shared/api/ats";
+import type { Job } from "./types";
 export type VacancyStatus = "draft" | "open";
-
 export interface CreateVacancyPayload {
-  title: string;
-  department: string;
-  description: string;
-  requirements: string[];
-  status?: VacancyStatus;
-
-  location?: "Удалённо" | "Офис" | "Гибрид";
-  employmentType?: "full-time" | "part-time" | "internship";
-  salaryMin?: number | null;
-  salaryMax?: number | null;
-  recruiter?: string;
-  experience?: string;
+  title: string; department: string; description: string; requirements: string[]; status?: VacancyStatus;
+  location?: "Удалённо" | "Офис" | "Гибрид"; employmentType?: "full-time" | "part-time" | "internship";
+  salaryMin?: number | null; salaryMax?: number | null; recruiter?: string; experience?: string;
 }
-
-export async function createVacancy(
-  payload: CreateVacancyPayload,
-): Promise<Job> {
-  const res = await apiFetch<Job>("/vacancies", {
-    method: "POST",
-    json: payload,
-  });
-
-  return res;
+export async function createVacancy(payload: CreateVacancyPayload): Promise<Job> {
+  for (const key of ["location", "employmentType", "salaryMin", "salaryMax", "recruiter", "experience"] as const) {
+    if (payload[key] != null && payload[key] !== "") throw new Error("Демо-поля условий вакансии ещё не сохраняются на сервере");
+  }
+  const json: VacancyInput = { title: payload.title, department: payload.department, description: payload.description, requirements: payload.requirements, status: payload.status ?? "draft" };
+  return vacancyView(await apiFetch<VacancyDTO>("/vacancies/", { method: "POST", json }));
 }
-
-export async function getVacancies(headers?: HeadersInit): Promise<Job[]> {
-  const res = await apiFetch<{ items: Job[] }>("/vacancies/", {
-    method: "GET",
-    headers,
-  });
-  return res.items;
+export const getVacancies = listVacancyViews;
+export const getVacancy = vacancyDetail;
+export async function updateVacancy(id: string, payload: VacancyUpdate): Promise<Job> {
+  return vacancyView(await apiFetch<VacancyDTO>(`/vacancies/${id}`, { method: "PATCH", json: payload }));
 }
-
-export async function getVacancy(id: string): Promise<Job> {
-  return apiFetch<Job>(`/vacancies/${id}/`, {
-    method: "GET",
-  });
-}
-
-export async function updateVacancy(
-  id: string,
-  payload: Partial<CreateVacancyPayload> & { stages?: Job["stages"] },
-): Promise<Job> {
-  return apiFetch<Job>(`/vacancies/${id}/`, {
-    method: "PATCH",
-    json: payload,
-  });
-}
-
-export async function deleteVacancy(id: string): Promise<void> {
-  await apiFetch<void>(`/vacancies/${id}/`, {
-    method: "DELETE",
-  });
-}
+export async function deleteVacancy(id: string): Promise<void> { await apiFetch<void>(`/vacancies/${id}`, { method: "DELETE" }); }

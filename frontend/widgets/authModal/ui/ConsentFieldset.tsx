@@ -1,19 +1,20 @@
-import { useController, FieldValues, Control } from "react-hook-form";
+import type { Control, FieldErrors, UseFormRegister } from "react-hook-form";
+import type { RegisterFormValuesType } from "@/features/auth/model/FormSchema";
 import { InputField } from "@/shared/ui/FieldInput";
 
-interface ConsentFieldsetProps<T extends FieldValues> {
-  control: Control<T>;
-  register: any;
-  errors: any;
+interface ConsentFieldsetProps {
+  control: Control<RegisterFormValuesType>;
+  register: UseFormRegister<RegisterFormValuesType>;
+  errors: FieldErrors<RegisterFormValuesType>;
   crossBorder: boolean;
 }
 
-export function ConsentFieldset<T extends FieldValues>({
+export function ConsentFieldset({
   control,
   register,
   errors,
   crossBorder,
-}: ConsentFieldsetProps<T>) {
+}: ConsentFieldsetProps) {
   return (
     <fieldset className="flex flex-col gap-3 rounded-2xl border border-border-subtle p-4">
       <legend className="px-1 text-sm text-foreground-secondary">

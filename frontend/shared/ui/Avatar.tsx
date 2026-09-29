@@ -2,7 +2,7 @@ import { memo } from "react";
 import { initials } from "../lib/initials";
 
 export const Avatar = memo(
-  ({ name, size = 32 }: { name?: string; size?: number }) => {
+  function Avatar({ name, size = 32 }: { name?: string; size?: number }) {
     const displayName = name || "";
 
     return (

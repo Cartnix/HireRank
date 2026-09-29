@@ -11,7 +11,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { DEFAULT_STAGES, deleteVacancy, Job, JobStatusBadge, Stage } from "@/entities/job";
+import { deleteVacancy, Job, JobStatusBadge, Stage } from "@/entities/job";
 import { Candidate, getCandidateFullName, StageBadge } from "@/entities/candidate";
 import { StagesEditor } from "@/features/manage-job-stages";
 import { Card } from "@/shared/ui/card";
@@ -25,7 +25,10 @@ export function JobOverview({
   onUpdateStages,
   onOpenCandidate,
   onDeleteJob,
+  canUpdate = true, canDelete = true, onUpdateJob,
 }: {
+  canUpdate?: boolean; canDelete?: boolean;
+  onUpdateJob?: (id: string, payload: import("@/shared/api/ats").VacancyUpdate) => Promise<void>;
   job: Job;
   candidates: Candidate[];
   onBack: () => void;
@@ -115,7 +118,7 @@ export function JobOverview({
             <div className="absolute right-0 top-full z-10 mt-1 w-44 rounded-lg border border-border bg-background py-1 shadow-lg">
               <button
                 onClick={handleDelete}
-                disabled={isDeleting}
+                disabled={isDeleting || !canDelete}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-danger hover:bg-muted disabled:opacity-50"
               >
                 <Trash2 size={14} />
@@ -159,6 +162,21 @@ export function JobOverview({
         )}
       </div>
 
+      {canUpdate && onUpdateJob && <form key={job.id + (job.status ?? "")} onSubmit={event => {
+        event.preventDefault(); const form = new FormData(event.currentTarget);
+        void onUpdateJob(job.id, { title: String(form.get("title")), department: String(form.get("department")), description: String(form.get("description")), requirements: String(form.get("requirements")).split("\n").map(s => s.trim()).filter(Boolean), status: String(form.get("status")) as "draft" | "open" | "closed" });
+      }} className="rounded-xl border border-border p-4 space-y-3">
+        <details><summary className="cursor-pointer text-sm font-medium">Редактировать вакансию</summary>
+          <div className="mt-3 grid gap-3">
+            <input aria-label="Название" name="title" required maxLength={255} defaultValue={job.title} className="rounded-lg border border-input bg-background p-2" />
+            <input aria-label="Отдел" name="department" maxLength={255} defaultValue={job.department} className="rounded-lg border border-input bg-background p-2" />
+            <textarea aria-label="Описание" name="description" defaultValue={job.description} className="rounded-lg border border-input bg-background p-2" />
+            <textarea aria-label="Требования, по одному на строку" name="requirements" defaultValue={job.requirements.join("\n")} className="rounded-lg border border-input bg-background p-2" />
+            <select aria-label="Статус вакансии" name="status" defaultValue={job.status} className="rounded-lg border border-input bg-background p-2"><option value="draft">Черновик</option><option value="open">Открыта</option><option value="closed">Закрыта</option></select>
+            <button type="submit" className="text-brand-primary">Сохранить</button>
+          </div>
+        </details>
+      </form>}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card className="p-5 sm:p-6">
           <section>
@@ -213,7 +231,8 @@ export function JobOverview({
 
         <aside>
           <StagesEditor
-            stages={job.stages ?? DEFAULT_STAGES}
+            demo
+            stages={job.stages ?? []}
             onChange={onUpdateStages}
           />
         </aside>

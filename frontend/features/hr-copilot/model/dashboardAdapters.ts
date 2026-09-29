@@ -53,7 +53,7 @@ export function toDashboardCandidate(
     resume_url: /^https?:\/\//i.test(candidate.resumeRef)
       ? candidate.resumeRef
       : null,
-    assigned_vacancy_id: candidate.vacancyId ?? candidate.requestedVacancyId,
+    assigned_vacancy_id: candidate.vacancyId,
     created_at: candidate.createdAt,
     updated_at: candidate.createdAt,
     name: candidate.name,

@@ -1,3 +1,4 @@
+import { SessionGate } from "@/features/auth/SessionGate";
 import { DashboardHeader } from "@/widgets/dashboard-header";
 import { DashboardNotifications } from "@/widgets/dashboard-notifications/ui/DashboardNotifications";
 import { Sidebar } from "@/widgets/sidebar/ui/Sidebar";
@@ -8,13 +9,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen w-full bg-background text-foreground">
+    <SessionGate><div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader />
         <main className="min-w-0 flex-1 px-10 py-8">{children}</main>
       </div>
       <DashboardNotifications />
-    </div>
+    </div></SessionGate>
   );
 }

@@ -1,9 +1,11 @@
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { Card } from "@/shared/ui/card";
 import { funnelStages } from "../model/candidate-funnel.mock";
 
 export function HiringFunnelCard() {
   return (
     <Card className="p-6 bg-card border border-border rounded-2xl flex flex-col justify-between h-full">
+      <DemoBadge />
       <div className="flex items-start justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground tracking-tight m-0">

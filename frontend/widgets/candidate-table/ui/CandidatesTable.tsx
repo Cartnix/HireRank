@@ -34,6 +34,8 @@ export function CandidatesTable({
                 unassigned: "Без назначения",
                 assigned: "В работе",
                 rejected: "Отклонён",
+                pending_hitl: "Ожидает рассмотрения",
+                action_applied: "Обработан",
               }[c.status] ?? c.status);
 
             return (

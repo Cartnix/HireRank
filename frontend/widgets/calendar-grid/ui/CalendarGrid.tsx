@@ -1,5 +1,6 @@
 "use client";
 
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { Fragment, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Candidate } from "@/entities/candidate";
@@ -29,6 +30,7 @@ export function CalendarGrid({
 
   return (
     <div>
+      <DemoBadge />
       <div className="mb-6 flex items-center justify-end gap-3">
         {mode === "day" && (
           <div className="flex items-center gap-1">

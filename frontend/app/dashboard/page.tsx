@@ -1,5 +1,4 @@
-import { DashboardPageView, DashboardPageViewProps } from "@/views/dashboard";
-import { dashboardMock } from "./dashboard.mock";
+import { DashboardClient } from "@/views/dashboard/ui/DashboardClient";
 
 export type CurrentDateInfo = {
   greeting: string;
@@ -13,5 +12,5 @@ export type CurrentDateInfo = {
 
 export default async function DashboardPage() {
 
-  return <DashboardPageView {...dashboardMock} />;
+  return <DashboardClient />;
 }

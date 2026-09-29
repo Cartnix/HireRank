@@ -11,7 +11,7 @@ const jobStatusColor: Record<string, string> = {
 export function JobStatusBadge({ status }: { status: JobStatus }) {
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-medium ${jobStatusColor[status] ?? "bg-muted text-muted-foreground"}`}>
-      {status}
+      {({ open: "Открыта", closed: "Закрыта", draft: "Черновик" } as Record<string, string>)[status] ?? status}
     </span>
   );
 }

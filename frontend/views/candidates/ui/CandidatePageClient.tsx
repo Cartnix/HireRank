@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, Clock3, Plus, Users, UserX } from "lucide-react";
 import { CandidateProfile } from "@/widgets/candidate-profile";
@@ -10,17 +10,10 @@ import { CandidatesTable } from "@/widgets/candidate-table/ui/CandidatesTable";
 import type { Job } from "@/entities/job";
 import { useCandidatesPage } from "@/features/candidate-page";
 import { IntakeTab } from "@/features/hr-copilot/ui/tabs/IntakeTab";
-import { intake } from "@/features/hr-copilot/model/engine";
-import {
-  toDashboardCandidate,
-  toDashboardJob,
-} from "@/features/hr-copilot/model/dashboardAdapters";
-import {
-  loadCopilotState,
-  saveCopilotState,
-} from "@/features/hr-copilot/model/storage";
-import type { CopilotState } from "@/features/hr-copilot/model/types";
+import { useAtsData } from "@/shared/api/useAtsData";
+import { assignCandidate, createCandidate, deleteCandidate, updateQuestionnaire } from "@/shared/api/ats";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 
 export function CandidatesPageClient({
@@ -31,98 +24,35 @@ export function CandidatesPageClient({
   initialSelectedCandidateId?: string | null;
 }) {
   const router = useRouter();
-  const [copilotState, setCopilotState] = useState<CopilotState | null>(null);
+  const { candidates, jobs, user, can, loading, error, reload } = useAtsData(initialSelectedCandidateId);
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [formMessage, setFormMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+  const jobById = useMemo(() => Object.fromEntries(jobs.map(job => [job.id, job])) as Record<string, Job>, [jobs]);
+  const vacancies = jobs.map(job => ({ id: job.id, title: job.title, open: job.status === "open" }));
 
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setCopilotState(loadCopilotState());
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  const tenantId = copilotState?.tenants[0]?.id ?? "";
-  const vacancies = useMemo(
-    () =>
-      copilotState?.vacancies.filter(
-        (vacancy) => vacancy.tenantId === tenantId,
-      ) ?? [],
-    [copilotState, tenantId],
-  );
-  const jobById = useMemo(
-    () =>
-      Object.fromEntries(
-        vacancies.map((vacancy) => [vacancy.id, toDashboardJob(vacancy)]),
-      ) as Record<string, Job>,
-    [vacancies],
-  );
-  const candidates = useMemo(
-    () =>
-      copilotState?.candidates
-        .filter((candidate) => candidate.tenantId === tenantId)
-        .map((candidate) =>
-          toDashboardCandidate(
-            candidate,
-            vacancies.find(
-              (vacancy) =>
-                vacancy.id ===
-                (candidate.vacancyId ?? candidate.requestedVacancyId),
-            ),
-          ),
-        ) ?? [],
-    [copilotState, tenantId, vacancies],
-  );
-
-  function submitIntake(event: FormEvent<HTMLFormElement>) {
+  async function submitIntake(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!copilotState || !tenantId) return;
-
-    const form = event.currentTarget;
-    const values = new FormData(form);
-    const file = form.querySelector<HTMLInputElement>(
-      'input[name="resumeFile"]',
-    )?.files?.[0];
+    if (saving) return;
+    const values = new FormData(event.currentTarget);
+    const file = event.currentTarget.querySelector<HTMLInputElement>('input[name="resumeFile"]')?.files?.[0];
+    if (file) { setFormMessage("Загрузка файлов ожидает backend. Введите текст резюме или ссылку; файл сейчас не будет сохранён."); return; }
     const resumeText = String(values.get("resumeText") ?? "").trim();
-    const resumeRef =
-      file?.name ||
-      String(values.get("resumeUrl") ?? "").trim() ||
-      (resumeText ? "Текст в HTML форме" : "");
-
-    if (!resumeRef) {
-      setFormMessage("Добавьте файл, ссылку или текст резюме");
-      return;
-    }
-    if (file && !/\.(pdf|docx?|html?|txt)$/i.test(file.name)) {
-      setFormMessage("Доступны PDF, DOC, DOCX, HTML и TXT");
-      return;
-    }
-
-    const next = structuredClone(copilotState);
+    const resumeUrl = String(values.get("resumeUrl") ?? "").trim();
+    if (!resumeText && !resumeUrl) { setFormMessage("Введите текст резюме или ссылку"); return; }
+    if (values.get("processingConsent") !== "on") { setFormMessage("Подтвердите согласие на обработку данных"); return; }
+    setSaving(true); setFormMessage("");
     try {
-      const created = intake(next, tenantId, "hr", {
-        name: String(values.get("name") ?? "").trim(),
-        email: String(values.get("email") ?? "")
-          .trim()
-          .toLowerCase(),
-        phone: String(values.get("phone") ?? "").trim(),
-        experience: String(values.get("experience") ?? "").trim(),
-        skills: String(values.get("skills") ?? "").trim(),
-        resumeRef,
-        resumeText,
-        requestedVacancyId: String(values.get("vacancyId") ?? "") || null,
-      });
-      saveCopilotState(next);
-      setCopilotState(next);
-      setIsIntakeOpen(false);
-      router.push(`/dashboard/candidates/${created.id}`);
-    } catch (error) {
-      setFormMessage(
-        error instanceof Error
-          ? error.message
-          : "Не удалось добавить кандидата",
-      );
-    }
+      const questionnaire = { name: String(values.get("name") ?? "").trim(), email: String(values.get("email") ?? "").trim(), phone: String(values.get("phone") ?? "").trim(), experience: String(values.get("experience") ?? "").trim(), skills: String(values.get("skills") ?? "").trim(), resume_text: resumeText, resume_reference: resumeUrl || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true };
+      let created;
+      if (user?.role === "candidate") {
+        const own = candidates.find(candidate => candidate.user_id === user.id);
+        if (!own) throw Error("Профиль кандидата не найден. Обратитесь к администратору.");
+        created = await updateQuestionnaire(own.id, { ...own.questionnaire, ...questionnaire });
+      } else created = await createCandidate({ questionnaire, email: questionnaire.email, resume_url: resumeUrl || null });
+      setIsIntakeOpen(false); reload(); router.push(`/dashboard/candidates/${created.id}`);
+    } catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось сохранить анкету"); }
+    finally { setSaving(false); }
   }
 
   const {
@@ -142,15 +72,52 @@ export function CandidatesPageClient({
   } = useCandidatesPage(
     candidates,
     jobById,
-    currentUserName,
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.email || currentUserName,
     initialSelectedCandidateId,
   );
 
-  if (!copilotState) return <div>Loading...</div>;
+  if (loading) return <div>Загрузка кандидатов...</div>;
+  if (error) return <div role="alert">{error}<button onClick={reload} className="ml-3 text-brand-primary">Повторить</button></div>;
+  if (!can("candidate.read")) return <p role="alert">Нет доступа к кандидатскому пулу</p>;
+  if (initialSelectedCandidateId && !selectedCandidate) return <p role="alert">Кандидат не найден</p>;
 
-  if (selectedCandidate && selectedJob) {
+  if (selectedCandidate) {
     return (
       <main className="w-full p-6">
+        {formMessage && <p role="alert" className="text-danger">{formMessage}</p>}
+        {can("application.assign") && <form className="mb-4 flex flex-wrap gap-3" onSubmit={async event => {
+          event.preventDefault(); if (saving) return;
+          const vacancyId = String(new FormData(event.currentTarget).get("vacancyId") ?? "");
+          if (!vacancyId || !confirm("Подтвердить назначение кандидата на выбранную вакансию?")) return;
+          setSaving(true); setFormMessage("");
+          try { await assignCandidate(selectedCandidate.id, vacancyId); reload(); }
+          catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось назначить кандидата"); }
+          finally { setSaving(false); }
+        }}>
+          <select name="vacancyId" required aria-label="Вакансия для назначения" className="rounded-lg border border-input bg-background px-3 py-2"><option value="">Выберите открытую вакансию</option>{jobs.filter(j => j.status === "open").map(j => <option key={j.id} value={j.id}>{j.title}</option>)}</select>
+          <button disabled={saving} className="text-brand-primary">Назначить</button>
+        </form>}
+        {(can("candidate.update") || user?.role === "candidate") && <details className="mb-4"><summary className="cursor-pointer text-sm">Редактировать анкету</summary>
+          <IntakeTab mvp busy={saving} initialValues={selectedCandidate.questionnaire as unknown as Record<string, unknown>} vacancies={vacancies} submitIntake={async event => {
+            event.preventDefault(); if (saving) return;
+            const values = new FormData(event.currentTarget);
+            if (values.get("processingConsent") !== "on") return;
+            setSaving(true); setFormMessage("");
+            try {
+              const questionnaire = { ...selectedCandidate.questionnaire, name: String(values.get("name") ?? ""), email: String(values.get("email") ?? ""), phone: String(values.get("phone") ?? ""), experience: String(values.get("experience") ?? ""), skills: String(values.get("skills") ?? ""), resume_text: String(values.get("resumeText") ?? ""), resume_reference: String(values.get("resumeUrl") ?? "") || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true };
+              if (!questionnaire.resume_text.trim() && !questionnaire.resume_reference) throw Error("Введите текст резюме или ссылку");
+              await updateQuestionnaire(selectedCandidate.id, questionnaire); reload();
+            } catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось обновить анкету"); }
+            finally { setSaving(false); }
+          }} />
+        </details>}
+        {can("candidate.delete") && <button disabled={saving} className="mb-4 text-danger" onClick={async () => {
+          if (!confirm("Удалить кандидата?")) return;
+          setSaving(true); setFormMessage("");
+          try { await deleteCandidate(selectedCandidate.id); router.push("/dashboard/candidates"); reload(); }
+          catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось удалить кандидата"); }
+          finally { setSaving(false); }
+        }}>Удалить кандидата</button>}
         <CandidateProfile
           candidate={selectedCandidate}
           job={selectedJob}
@@ -202,6 +169,7 @@ export function CandidatesPageClient({
           subtitle="Кандидатский пул компании и текущий этап рассмотрения."
         />
         <MainButton
+          disabled={!can("candidate.create") && user?.role !== "candidate"}
           onClick={() => {
             setFormMessage("");
             setIsIntakeOpen(true);
@@ -232,7 +200,7 @@ export function CandidatesPageClient({
                 {value}
               </div>
               <div className="mt-1 truncate text-xs text-muted-foreground">
-                {label}
+                {label} {label === "Отклонены" && <DemoBadge />}
               </div>
             </div>
           </div>
@@ -288,7 +256,7 @@ export function CandidatesPageClient({
                 {formMessage}
               </p>
             )}
-            <IntakeTab vacancies={vacancies} submitIntake={submitIntake} />
+            <IntakeTab mvp busy={saving} vacancies={vacancies} submitIntake={submitIntake} />
           </div>
         </div>
       )}

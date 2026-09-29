@@ -1,5 +1,6 @@
 "use client";
 
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import React, { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { Bot, User, Send } from "lucide-react";
 
@@ -65,31 +66,10 @@ export function AgentsView() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: trimmedInput }),
-      });
-
-      if (!response.ok) throw new Error("Ошибка сети");
-
-      const data = await response.json();
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.reply || data.answer || "Ответ от сервера пуст.",
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Ошибка отправки:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "⚠️ Произошла ошибка при получении ответа от сервера.",
-        },
-      ]);
+      setMessages((prev) => [...prev, {
+        id: crypto.randomUUID(), role: "assistant",
+        content: "Демо: AI-анализ ещё не подключён. Для MVP используйте разделы вакансий и кандидатов; сообщение не отправляется модели.",
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +87,7 @@ export function AgentsView() {
               ИИ Агент-рекрутер
             </h1>
             <p className="text-[11px] text-muted-foreground m-0">
-              Работает в реальном времени
+              <DemoBadge label="Демо · AI не подключён" />
             </p>
           </div>
         </div>

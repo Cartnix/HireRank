@@ -1,5 +1,6 @@
 "use client";
 
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { useState } from "react";
 import { AreaChart, Area, XAxis, ResponsiveContainer } from "recharts";
 import { Card } from "@/shared/ui/card";
@@ -13,6 +14,7 @@ export function HiringVelocityCard() {
 
   return (
     <Card className="p-6 bg-card border border-border rounded-2xl flex flex-col justify-between h-full">
+      <DemoBadge />
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-foreground tracking-tight m-0">

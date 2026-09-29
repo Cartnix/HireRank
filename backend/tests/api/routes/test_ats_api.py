@@ -249,9 +249,7 @@ async def test_candidate_can_apply_to_open_vacancy_and_duplicate_is_conflict(
         )
     ).json()
     candidate_pair = await register_bearer_pair(client, role="candidate")
-    candidate_headers = {
-        "Authorization": f"Bearer {candidate_pair['access_token']}"
-    }
+    candidate_headers = {"Authorization": f"Bearer {candidate_pair['access_token']}"}
 
     applied = await client.post(
         f"{VACANCIES}/{vacancy['id']}/applications",
@@ -292,9 +290,7 @@ async def test_cookie_candidate_application_requires_and_accepts_csrf(
     )
     assert candidate.status_code == 201, candidate.text
 
-    missing = await client.post(
-        f"{VACANCIES}/{vacancy['id']}/applications", json={}
-    )
+    missing = await client.post(f"{VACANCIES}/{vacancy['id']}/applications", json={})
     assert missing.status_code == 403
 
     csrf = client.cookies.get(settings.AUTH_COOKIE_CSRF_NAME)
@@ -408,9 +404,7 @@ async def test_candidate_cannot_apply_to_closed_vacancy(
         )
     ).json()
     candidate_pair = await register_bearer_pair(client, role="candidate")
-    candidate_headers = {
-        "Authorization": f"Bearer {candidate_pair['access_token']}"
-    }
+    candidate_headers = {"Authorization": f"Bearer {candidate_pair['access_token']}"}
 
     response = await client.post(
         f"{VACANCIES}/{vacancy['id']}/applications",
@@ -636,3 +630,52 @@ async def test_validate_stage_for_vacancy_rejects_foreign_stage(
                 stage_id=stage_b_id,
             )
     assert ei.value.status_code == 400
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("vacancy_status", ["draft", "closed"])
+async def test_manual_assignment_requires_open_vacancy(
+    client: AsyncClient,
+    superuser_token_headers: dict[str, str],
+    vacancy_status: str,
+) -> None:
+    vacancy = await client.post(
+        f"{VACANCIES}/",
+        headers=superuser_token_headers,
+        json={"title": "Not open", "status": vacancy_status},
+    )
+    assert vacancy.status_code == 201
+    hr = await _headers_for_role(client, "hr")
+    created = await client.post(
+        f"{CANDIDATES}/",
+        headers=hr,
+        json={
+            "questionnaire": {"name": "Unassigned candidate"},
+            "email": random_email(),
+        },
+    )
+    assert created.status_code == 201
+    candidate_id = created.json()["id"]
+    response = await client.post(
+        f"{CANDIDATES}/{candidate_id}/assign",
+        headers=hr,
+        json={"vacancy_id": vacancy.json()["id"]},
+    )
+    assert response.status_code == 409
+    detail = await client.get(f"{CANDIDATES}/{candidate_id}", headers=hr)
+    assert detail.json()["status"] == "unassigned"
+    assert detail.json()["assigned_vacancy_id"] is None
+
+
+@pytest.mark.asyncio
+async def test_me_exposes_permissions_for_ui_without_granting_manager_writes(
+    client: AsyncClient,
+) -> None:
+    headers = await _headers_for_role(client, "manager")
+    response = await client.get(f"{API}/auth/me", headers=headers)
+    assert response.status_code == 200
+    permissions = response.json()["permissions"]
+    assert "vacancy.read" in permissions
+    assert "candidate.read" in permissions
+    assert "vacancy.create" not in permissions
+    assert "application.assign" not in permissions

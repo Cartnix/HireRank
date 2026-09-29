@@ -1,5 +1,6 @@
 "use client";
 
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { Card } from "@/shared/ui/card";
 import { MoreHorizontal, ArrowRight, Sparkles } from "lucide-react";
 import { topCandidatesMock } from "../model/top-candidate.mock";
@@ -7,6 +8,7 @@ import { topCandidatesMock } from "../model/top-candidate.mock";
 export function TopCandidatesCard() {
   return (
     <Card className="p-6 bg-card border border-border rounded-2xl flex flex-col justify-between h-full">
+      <DemoBadge />
       {/* Шапка карточки */}
       <div className="flex items-start justify-between mb-6">
         <div>

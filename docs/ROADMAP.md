@@ -28,6 +28,36 @@ LLM, MCP, messaging, memory and automation are **post-MVP capabilities**. They m
 - [x] Candidate assignment and basic dashboard API.
 - [x] Consent, legal acceptance and auth audit foundation.
 
+### MVP integration audit remediation (2026-09-30)
+
+Tracking: [integration audit](MVP_INTEGRATION_AUDIT.md), [changelog](../changelog.md).
+This connects the existing ATS implementation to the existing web design; it does
+not declare resume storage, pipeline mutations or full MVP acceptance complete.
+
+- [x] Replace browser-local vacancy/candidate/career data with tenant-scoped API reads.
+- [x] Wire vacancy CRUD, HR candidate intake, questionnaire updates and manual assignment.
+- [x] Wire candidate own HTML questionnaire and vacancy application.
+- [x] Read role-shaped dashboard aggregates; label unsupported analytics as demo.
+- [x] Align OpenAPI DTOs, canonical paths, pagination and presentation defaults.
+- [x] Expose server permissions for UI affordances; retain server-side enforcement.
+- [x] Restore HR manual assignment permission through an Alembic migration (UC-04).
+- [x] Reject manual assignment to draft/closed vacancies on the server.
+- [x] Open unassigned candidate profiles without requiring a vacancy.
+- [x] Preserve existing UI blocks and label demo fields/features individually.
+- [x] Add regression checks for API wiring, pagination, RBAC and tenant isolation.
+- [ ] Protected resume upload/download: replace presign.local stub and verify real bytes.
+- [ ] Validate structured resume and legally sufficient candidate processing consent on the server.
+- [ ] Add tenant-scoped manual candidate/application status and stage mutations with audit.
+- [ ] Expose application stage/state for pipeline rendering; distinguish application from HR assignment.
+- [ ] Add candidate-history/notes and notification list/read APIs before replacing their demo blocks.
+- [ ] Complete admin UI coverage and OAuth candidate-profile provisioning checks.
+- [ ] Persist the currently demo vacancy conditions (location, employment, salary, experience, recruiter) through reviewed schema/migrations.
+- [ ] Prove complete M5 acceptance with storage, manual statuses and full access/submission audit.
+
+Existing tokens must be refreshed or the user must sign in again after the new
+HR permission migration; permissions in an issued access JWT do not change in place.
+No API failure may enable a seed-data fallback. LLM/MCP/memory remain post-MVP.
+
 ### Current work
 
 - [ ] End-to-end HTML resume intake.

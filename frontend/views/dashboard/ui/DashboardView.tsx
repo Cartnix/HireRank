@@ -17,6 +17,7 @@ export type DashboardStats = {
 };
 
 export type DashboardPageViewProps = DashboardStats & {
+  live?: boolean; candidateLabel?: string; demoActiveJobs?: boolean; demoCandidates?: boolean;
   currentDate: CurrentDateInfo;
   previousMonth: DashboardStats;
   pipelineCounts: { stage: string; count: number }[];
@@ -25,12 +26,6 @@ export type DashboardPageViewProps = DashboardStats & {
   candidateById: Record<string, Candidate>;
   jobById: Record<string, Job>;
 };
-
-interface StatsWidgetsProps {
-  stats: DashboardStats;
-  previousMonth: DashboardStats;
-  className?: string;
-}
 
 export function DashboardPageView(props: DashboardPageViewProps) {
   return (
@@ -42,7 +37,8 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         inProgressCandidates={props.inProgressCandidates}
         todaysInterviewsCount={props.todaysInterviewsCount}
         avgTimeToHire={props.avgTimeToHire}
-        previousMonth={props.previousMonth}
+        previousMonth={props.live ? undefined : props.previousMonth}
+        live={props.live} candidateLabel={props.candidateLabel} demoActiveJobs={props.demoActiveJobs} demoCandidates={props.demoCandidates}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">

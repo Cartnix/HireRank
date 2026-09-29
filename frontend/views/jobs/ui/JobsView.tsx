@@ -25,7 +25,10 @@ export const JobsView = ({
   onUpdateStages,
   onOpenCandidate,
   onDeleteJob,
+  canCreate = true, canUpdate = true, canDelete = true, onUpdateJob,
 }: {
+  canCreate?: boolean; canUpdate?: boolean; canDelete?: boolean;
+  onUpdateJob?: (id: string, payload: import("@/shared/api/ats").VacancyUpdate) => Promise<void>;
   jobs: Job[];
   candidates: Candidate[];
   selectedJob: Job | null;
@@ -44,6 +47,7 @@ export const JobsView = ({
   if (selectedJob) {
     return (
       <JobOverview
+        canUpdate={canUpdate} canDelete={canDelete} onUpdateJob={onUpdateJob}
         job={selectedJob}
         candidates={candidates.filter(
           (c) => c.assigned_vacancy_id === selectedJob.id,
@@ -78,6 +82,7 @@ export const JobsView = ({
           subtitle="Управляйте позициями и отслеживайте поток кандидатов."
         />
         <MainButton
+          disabled={!canCreate}
           onClick={onCreateJob}
           title="Создать вакансию"
           className="h-10 gap-2 rounded-lg px-4"

@@ -3574,6 +3574,13 @@
             ],
             "title": "Last Name"
           },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          },
           "id": {
             "type": "string",
             "format": "uuid",

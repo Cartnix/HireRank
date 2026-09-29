@@ -1,4 +1,4 @@
-export type JobStatus = "draft" | "open" | "Открыта" | "Закрыта" | "На паузе";
+export type JobStatus = "draft" | "open" | "closed" | "Открыта" | "Закрыта" | "На паузе";
 
 export interface Stage {
   id: string;

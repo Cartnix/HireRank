@@ -13,6 +13,9 @@
 
 ## One end-to-end outcome
 
+This is the target flow across phases. The current Phase 1 MVP is the manual ATS
+flow in UC-01–07 and ROADMAP.md; automatic AI, MCP and confirmed memory follow it.
+
 1. Authenticated recruiter or candidate submits structured data and a resume file/reference into the chosen tenant. Candidate starts **unprocessed**, even if they suggest a vacancy.
 2. Intake emits a tenant-scoped event. HR and relevant managers see the new candidate; AI analysis starts automatically using the resume as **untrusted data**, vacancy context, the current HR prompt and optional, explicitly enabled memory. A missing vacancy/prompt or model failure leaves the candidate in the pool for manual HR handling.
 3. A validated draft with **at most three** allowed actions shows a separate rationale and evidence for each, green/red flags, context and any uncertainty. Neither draft nor notification changes status or sends a candidate email.
@@ -35,15 +38,17 @@
 
 | Business need | Behavior | Delivery gate |
 |---|---|---|
-| Stop carrying the same paper resume between offices | [UC-01](use-cases/UC-01-candidate-registration.md), [UC-02](use-cases/UC-02-hr-candidate-intake.md) | [M1](ROADMAP.md#phase-1--candidate-enters-a-reliable-ats-pool-uc-0103-uc-0607): one stored intake and visible HR pool. |
-| HR receives a prepared candidate | [UC-08](use-cases/UC-08-automation-hitl-loop.md) | [M2](ROADMAP.md#m2-analysis-contract-and-trigger): automatic validated Top-3 or explicit manual fallback. |
-| Avoid conflicting HR/manager actions | [UC-04](use-cases/UC-04-candidate-assignment.md), [UC-05](use-cases/UC-05-manager-vacancies-and-assignments.md), [UC-08](use-cases/UC-08-automation-hitl-loop.md) | [M3](ROADMAP.md#m3-approval-and-execution): HR approval precedes one authorized mutation. |
-| Preserve accountable, optional learning | [UC-07](use-cases/UC-07-enterprise-isolation.md), [UC-09](use-cases/UC-09-confirmed-memory.md) | [M4](ROADMAP.md#m4-confirmed-memory-and-hardening): auditable tenant scope and opt-in confirmed memory. |
+| Stop carrying the same paper resume between offices | [UC-01](use-cases/UC-01-candidate-registration.md), [UC-02](use-cases/UC-02-hr-candidate-intake.md) | [Resume intake / M4](ROADMAP.md#milestone-4--resume-intake-and-vacancy-attachment): one stored intake and visible HR pool. |
+| HR receives a prepared candidate | [UC-08](use-cases/UC-08-automation-hitl-loop.md) | [LLM analysis / M7](ROADMAP.md#milestone-7--llm-analysis): automatic validated Top-3 or explicit manual fallback. |
+| Avoid conflicting HR/manager actions | [UC-04](use-cases/UC-04-candidate-assignment.md), [UC-05](use-cases/UC-05-manager-vacancies-and-assignments.md), [UC-08](use-cases/UC-08-automation-hitl-loop.md) | [Approval / M8](ROADMAP.md#milestone-8--hr-approval-and-controlled-execution): HR approval precedes one authorized mutation. |
+| Preserve accountable, optional learning | [UC-07](use-cases/UC-07-enterprise-isolation.md), [UC-08](use-cases/UC-08-automation-hitl-loop.md) | [Memory / M10](ROADMAP.md#milestone-10--confirmed-memory): auditable tenant scope and opt-in confirmed memory. |
 
 ## Boundaries
 
 - **Core target:** web intake, ATS pool/vacancies, automatic explainable analysis, HR confirmation, approved tool action, tenant/RBAC enforcement, notifications and audit. The underlying ATS path must still work when AI fails.
 - **Optional:** confirmed Markdown memory, candidate email only after HR approval, later delivery channels. Telegram/WhatsApp, ranking engines, autonomous rejection and third-party raw-resume processing are not required for this core flow.
-- **Current implementation:** ATS auth, RLS and CRUD foundations exist; real resume upload, model execution, MCP transport and the end-to-end server gate remain work in progress. The separate Next.js Copilot demo uses browser-local JSON and mock MCP. Its role switch and tenant filter are **not security controls**. See [roadmap](ROADMAP.md) for acceptance gates.
+- **Current implementation:** ATS auth, RLS and CRUD foundations exist; real resume upload, model execution, MCP transport and the end-to-end server gate remain work in progress. The separate Next.js Copilot demo uses browser-local JSON and mock MCP. Its role switch and tenant filter are **not security controls**. The ATS vacancy,
+candidate and career pages now call the real API; browser-local Copilot data is
+kept only in explicitly labelled demo features. See [roadmap](ROADMAP.md) for acceptance gates.
 
 No model may autonomously change status, send mail, write memory, or call a mutating tool. A prompt or resume cannot override server-side authorization and the approval gate.

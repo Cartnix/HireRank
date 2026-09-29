@@ -1,3 +1,4 @@
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { Card } from "@/shared/ui/card";
 import { upcomingInterviews } from "../model/upcomingInterviews.mock";
 import { Calendar, Clock, Video } from "lucide-react";
@@ -5,6 +6,7 @@ import { Calendar, Clock, Video } from "lucide-react";
 export function UpcomingInterviewsCard() {
   return (
     <Card className="p-6 bg-card border border-border rounded-2xl flex flex-col justify-between h-full">
+      <DemoBadge />
       {/* Шапка карточки */}
       <div className="flex items-start justify-between mb-6">
         <div>

@@ -1141,6 +1141,8 @@ export interface components {
             first_name?: string | null;
             /** Last Name */
             last_name?: string | null;
+            /** Permissions */
+            permissions?: string[];
             /**
              * Id
              * Format: uuid

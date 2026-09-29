@@ -1,9 +1,11 @@
+import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import type { RegisterFormValuesType } from "@/features/auth/model/FormSchema";
 import { InputField } from "@/shared/ui/FieldInput";
 
 interface EmailPasswordFormProps {
   isRegister: boolean;
-  register: any;
-  errors: any;
+  register: UseFormRegister<RegisterFormValuesType>;
+  errors: FieldErrors<RegisterFormValuesType>;
   emailHint: string | null;
   onEmailBlur: () => Promise<void>;
 }
