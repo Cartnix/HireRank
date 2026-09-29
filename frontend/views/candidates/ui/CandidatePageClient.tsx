@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { CircleCheck, Clock3, Plus, Users, UserX } from "lucide-react";
 import { CandidateProfile } from "@/widgets/candidate-profile";
 import { SearchInput } from "@/features/search-candidates/ui/SearchInputCandidate";
 import { StageFilter } from "@/features/filter-candidates/ui/StageFilter";
@@ -21,6 +21,7 @@ import {
 } from "@/features/hr-copilot/model/storage";
 import type { CopilotState } from "@/features/hr-copilot/model/types";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
+import { SectionTitle } from "@/shared/ui/SectionTitle";
 
 export function CandidatesPageClient({
   currentUserName,
@@ -44,12 +45,16 @@ export function CandidatesPageClient({
   const tenantId = copilotState?.tenants[0]?.id ?? "";
   const vacancies = useMemo(
     () =>
-      copilotState?.vacancies.filter((vacancy) => vacancy.tenantId === tenantId) ?? [],
+      copilotState?.vacancies.filter(
+        (vacancy) => vacancy.tenantId === tenantId,
+      ) ?? [],
     [copilotState, tenantId],
   );
   const jobById = useMemo(
     () =>
-      Object.fromEntries(vacancies.map((vacancy) => [vacancy.id, toDashboardJob(vacancy)])) as Record<string, Job>,
+      Object.fromEntries(
+        vacancies.map((vacancy) => [vacancy.id, toDashboardJob(vacancy)]),
+      ) as Record<string, Job>,
     [vacancies],
   );
   const candidates = useMemo(
@@ -75,7 +80,9 @@ export function CandidatesPageClient({
 
     const form = event.currentTarget;
     const values = new FormData(form);
-    const file = form.querySelector<HTMLInputElement>('input[name="resumeFile"]')?.files?.[0];
+    const file = form.querySelector<HTMLInputElement>(
+      'input[name="resumeFile"]',
+    )?.files?.[0];
     const resumeText = String(values.get("resumeText") ?? "").trim();
     const resumeRef =
       file?.name ||
@@ -95,7 +102,9 @@ export function CandidatesPageClient({
     try {
       const created = intake(next, tenantId, "hr", {
         name: String(values.get("name") ?? "").trim(),
-        email: String(values.get("email") ?? "").trim().toLowerCase(),
+        email: String(values.get("email") ?? "")
+          .trim()
+          .toLowerCase(),
         phone: String(values.get("phone") ?? "").trim(),
         experience: String(values.get("experience") ?? "").trim(),
         skills: String(values.get("skills") ?? "").trim(),
@@ -108,7 +117,11 @@ export function CandidatesPageClient({
       setIsIntakeOpen(false);
       router.push(`/dashboard/candidates/${created.id}`);
     } catch (error) {
-      setFormMessage(error instanceof Error ? error.message : "Не удалось добавить кандидата");
+      setFormMessage(
+        error instanceof Error
+          ? error.message
+          : "Не удалось добавить кандидата",
+      );
     }
   }
 
@@ -151,23 +164,100 @@ export function CandidatesPageClient({
     );
   }
 
+  const candidateStats = [
+    {
+      label: "Всего кандидатов",
+      value: candidates.length,
+      icon: Users,
+      color: "text-brand-primary bg-brand-primary/10",
+    },
+    {
+      label: "Без назначения",
+      value: candidates.filter((candidate) => candidate.status === "unassigned")
+        .length,
+      icon: Clock3,
+      color: "text-warning bg-warning/10",
+    },
+    {
+      label: "В работе",
+      value: candidates.filter((candidate) => candidate.status === "assigned")
+        .length,
+      icon: CircleCheck,
+      color: "text-success bg-success/10",
+    },
+    {
+      label: "Отклонены",
+      value: candidates.filter((candidate) => candidate.status === "rejected")
+        .length,
+      icon: UserX,
+      color: "text-muted-foreground bg-muted",
+    },
+  ];
+
   return (
-    <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <SearchInput value={search} onChange={setSearch} />
-          <StageFilter value={stageFilter} onChange={setStageFilter} />
-        </div>
+    <div className="px-6 md:px-10 lg:px-15 space-y-8 pb-12">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <SectionTitle
+          title="Кандидаты"
+          subtitle="Кандидатский пул компании и текущий этап рассмотрения."
+        />
         <MainButton
           onClick={() => {
             setFormMessage("");
             setIsIntakeOpen(true);
           }}
           title="Добавить кандидата"
+          className="h-10 gap-2 rounded-lg px-4"
         >
           <Plus size={15} />
         </MainButton>
-      </div>
+      </header>
+
+      <section
+        aria-label="Сводка по кандидатам"
+        className="grid grid-cols-2 divide-x divide-y divide-border border-y border-border sm:grid-cols-4 sm:divide-y-0"
+      >
+        {candidateStats.map(({ label, value, icon: Icon, color }) => (
+          <div
+            key={label}
+            className="flex min-w-0 items-center gap-3 px-3 py-4 first:pl-0 sm:px-5 sm:first:pl-0"
+          >
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}`}
+            >
+              <Icon size={17} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xl font-semibold leading-none tabular-nums text-foreground">
+                {value}
+              </div>
+              <div className="mt-1 truncate text-xs text-muted-foreground">
+                {label}
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section
+        aria-label="Поиск и фильтры"
+        className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between"
+      >
+        <div className="w-full lg:max-w-sm">
+          <SearchInput value={search} onChange={setSearch} />
+        </div>
+        <div className="min-w-0 flex-1 lg:pl-3">
+          <StageFilter value={stageFilter} onChange={setStageFilter} />
+        </div>
+        <div className="shrink-0 border-t border-border pt-3 text-xs text-muted-foreground lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+          Найдено{" "}
+          <span className="font-semibold text-foreground">
+            {filteredCandidates.length}
+          </span>{" "}
+          из {candidates.length}
+        </div>
+      </section>
+
       <CandidatesTable
         candidates={filteredCandidates}
         jobById={jobById}
@@ -191,7 +281,10 @@ export function CandidatesPageClient({
               </button>
             </div>
             {formMessage && (
-              <p role="alert" className="mb-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              <p
+                role="alert"
+                className="mb-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+              >
                 {formMessage}
               </p>
             )}

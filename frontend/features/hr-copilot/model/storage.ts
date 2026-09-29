@@ -2,6 +2,7 @@ import { evaluate, freshState, parseSavedState } from "./engine";
 import type { CopilotState } from "./types";
 
 export const COPILOT_STORAGE_KEY = "hirerank-copilot-demo-v1";
+export const COPILOT_STATE_EVENT = "hirerank:copilot-state-change";
 
 export function loadCopilotState(): CopilotState {
   let state: CopilotState;
@@ -22,4 +23,5 @@ export function loadCopilotState(): CopilotState {
 
 export function saveCopilotState(state: CopilotState): void {
   localStorage.setItem(COPILOT_STORAGE_KEY, JSON.stringify(state));
+  window.dispatchEvent(new Event(COPILOT_STATE_EVENT));
 }

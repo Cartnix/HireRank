@@ -33,7 +33,6 @@ import { AuditTab } from "./tabs/AuditTab";
 import { CopilotDashboardTab } from "./tabs/CopilotDashboardTab";
 import { IntakeTab } from "./tabs/IntakeTab";
 import { MemoryTab } from "./tabs/MemoryTab";
-import { NotificationsTab } from "./tabs/NotificationsTab";
 
 type Tab = (typeof tabs)[number]["id"];
 
@@ -97,9 +96,6 @@ export function CopilotWorkspace() {
   const evaluations = state.evaluations.filter((x) => x.tenantId === tenantId);
   const ownCandidate = (id: string) => candidates.find((x) => x.id === id);
   const prompt = state.prompts.find((x) => x.tenantId === tenantId);
-  const notifications = state.notifications.filter(
-    (x) => x.tenantId === tenantId && x.role === role,
-  );
 
   const chooseRole = (next: Role) => {
     setRole(next);
@@ -285,20 +281,6 @@ export function CopilotWorkspace() {
         ) : null;
       case "intake":
         return <IntakeTab vacancies={vacancies} submitIntake={submitIntake} />;
-      case "notifications":
-        return (
-          <NotificationsTab
-            notifications={notifications}
-            onMarkRead={(id) =>
-              update((next) => {
-                const notification = next.notifications.find(
-                  (n) => n.id === id && n.tenantId === tenantId && n.role === role,
-                );
-                if (notification) notification.read = true;
-              })
-            }
-          />
-        );
       case "memory":
         return role === "hr" ? (
           <MemoryTab
@@ -353,7 +335,6 @@ export function CopilotWorkspace() {
         role={role}
         tab={tab}
         onChange={setTab}
-        notifications={notifications.map(({ id, read }) => ({ id, read }))}
       />
       <CopilotPanels>
         {message && (

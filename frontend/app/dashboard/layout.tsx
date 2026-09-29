@@ -1,4 +1,5 @@
 import { DashboardHeader } from "@/widgets/dashboard-header";
+import { DashboardNotifications } from "@/widgets/dashboard-notifications/ui/DashboardNotifications";
 import { Sidebar } from "@/widgets/sidebar/ui/Sidebar";
 
 export default function DashboardLayout({
@@ -13,6 +14,7 @@ export default function DashboardLayout({
         <DashboardHeader />
         <main className="min-w-0 flex-1 px-10 py-8">{children}</main>
       </div>
+      <DashboardNotifications />
     </div>
   );
 }

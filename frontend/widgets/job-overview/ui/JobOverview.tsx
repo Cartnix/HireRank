@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CalendarDays,
+  ChevronLeft,
+  Clock3,
+  MapPin,
+  MoreHorizontal,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { DEFAULT_STAGES, deleteVacancy, Job, JobStatusBadge, Stage } from "@/entities/job";
 import { Candidate, getCandidateFullName, StageBadge } from "@/entities/candidate";
 import { StagesEditor } from "@/features/manage-job-stages";
@@ -51,7 +60,6 @@ export function JobOverview({
       if (onDeleteJob) await onDeleteJob(job.id);
       else await deleteVacancy(job.id);
       setIsMenuOpen(false);
-      onDeleteJob?.(job.id);
       onBack();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Не удалось удалить вакансию");
@@ -61,24 +69,37 @@ export function JobOverview({
   };
 
   return (
-    <div>
+    <div className="space-y-6 pb-8">
       <button
         onClick={onBack}
-        className="mb-5 flex items-center gap-1 text-[13px] font-medium text-foreground-secondary hover:text-foreground"
+        className="flex items-center gap-1 text-[13px] font-medium text-foreground-secondary transition-colors hover:text-foreground"
       >
         <ChevronLeft size={15} /> Все вакансии
       </button>
 
-      <div className="mb-4 flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="text-[26px] font-bold tracking-tight">
+      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
+        <div className="min-w-0">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-primary">
+            Детали позиции
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
               {job.title}
-            </div>
+            </h1>
             <JobStatusBadge status={job.status} />
           </div>
-          <div className="mt-1 text-[13.5px] text-foreground-secondary">
-            {job.department} · {job.location} · {job.employmentType}
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-foreground-secondary">
+            {job.department && <span>{job.department}</span>}
+            {job.location && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin size={14} /> {job.location}
+              </span>
+            )}
+            {job.employmentType && (
+              <span className="inline-flex items-center gap-1.5">
+                <BriefcaseBusiness size={14} /> {job.employmentType}
+              </span>
+            )}
           </div>
         </div>
 
@@ -103,91 +124,99 @@ export function JobOverview({
             </div>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* Переработанная плашка метаданных */}
-      <div className="mb-6 flex flex-wrap items-center gap-2.5">
-        {job.salaryMin != null && job.salaryMax != null ? (
-          <span className="rounded-full border border-brand-primary/20 bg-brand-primary/10 px-3 py-1 text-[12px] font-medium text-brand-primary">
-            💰 {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()}
-          </span>
-        ) : null}
-
-        {job.experience ? (
-          <span className="rounded-full bg-muted px-3 py-1 text-[12px] font-medium text-foreground-secondary">
-            📈 Опыт: {job.experience}
-          </span>
-        ) : null}
-
-        {job.department ? (
-          <span className="rounded-full bg-muted px-3 py-1 text-[12px] font-medium text-foreground-secondary">
-            🏢 {job.department}
-          </span>
-        ) : null}
-
-        <span className="rounded-full bg-muted px-3 py-1 text-[12px] font-medium text-foreground-secondary">
-          👥 Кандидатов: {candidates.length}
-        </span>
-
-        {job.createdAt ? (
-          <span className="ml-auto text-[12px] text-muted-foreground">
-            Создано: {job.createdAt}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="grid grid-cols-3 gap-5">
-        <div className="col-span-2">
-          <Card className="p-6">
-            <div className="mb-3 text-[15px] font-semibold">
-              Описание вакансии
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-border pb-5 text-sm">
+        {job.salaryMin != null && job.salaryMax != null && (
+          <div>
+            <div className="text-[11px] font-medium uppercase text-muted-foreground">Зарплата</div>
+            <div className="mt-1 font-semibold text-foreground">
+              {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()} ₸
             </div>
-            <p className="mb-0 max-w-none text-[13.5px] leading-relaxed text-foreground-secondary">
-              {job.description}
+          </div>
+        )}
+        {job.experience && (
+          <div>
+            <div className="text-[11px] font-medium uppercase text-muted-foreground">Опыт</div>
+            <div className="mt-1 inline-flex items-center gap-1.5 font-medium text-foreground">
+              <Clock3 size={14} className="text-muted-foreground" /> {job.experience}
+            </div>
+          </div>
+        )}
+        <div>
+          <div className="text-[11px] font-medium uppercase text-muted-foreground">Кандидаты</div>
+          <div className="mt-1 inline-flex items-center gap-1.5 font-semibold text-foreground">
+            <Users size={14} className="text-muted-foreground" /> {candidates.length}
+          </div>
+        </div>
+        {job.createdAt && (
+          <div className="ml-auto">
+            <div className="text-[11px] font-medium uppercase text-muted-foreground">Создана</div>
+            <div className="mt-1 inline-flex items-center gap-1.5 text-foreground-secondary">
+              <CalendarDays size={14} /> {job.createdAt}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <Card className="p-5 sm:p-6">
+          <section>
+            <h2 className="text-sm font-semibold text-foreground">Описание вакансии</h2>
+            <p className="mt-3 whitespace-pre-line text-[13.5px] leading-6 text-foreground-secondary">
+              {job.description || "Описание пока не добавлено."}
             </p>
+          </section>
 
-            <div className="my-5 border-t border-border" />
-
-            <div className="mb-4 flex items-center justify-between">
-              <div className="text-[15px] font-semibold">
-                Кандидаты по вакансии ({candidates.length})
-              </div>
+          <section className="mt-6 border-t border-border pt-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-foreground">
+                Кандидаты по вакансии
+              </h2>
+              <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium tabular-nums text-foreground-secondary">
+                {candidates.length}
+              </span>
             </div>
             <div className="divide-y divide-border">
               {candidates.length === 0 && (
-                <div className="py-6 text-center text-[13px] text-muted-foreground">
+                <div className="py-8 text-center text-[13px] text-muted-foreground">
                   Пока нет кандидатов на эту позицию.
                 </div>
               )}
-              {candidates.map((c) => {
-                const fullName = getCandidateFullName(c);
+              {candidates.map((candidate) => {
+                const fullName = getCandidateFullName(candidate);
                 return (
-                  <div
-                    key={c.id}
-                    onClick={() => onOpenCandidate(c.id)}
-                    className="flex cursor-pointer items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 hover:opacity-80"
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    onClick={() => onOpenCandidate(candidate.id)}
+                    className="flex w-full items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-muted/40"
                   >
-                    <div className="flex items-center gap-3">
-                      <Avatar name={fullName} size={32} />
-                      <div>
-                        <div className="text-[13.5px] font-medium">{fullName}</div>
-                        <div className="text-[12px] text-foreground-secondary">
-                          {new Date(c.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                    <StageBadge stage={c.status} />
-                  </div>
+                    <span className="flex min-w-0 items-center gap-3">
+                      <Avatar name={fullName} size={34} />
+                      <span className="min-w-0">
+                        <span className="block truncate text-[13.5px] font-medium text-foreground">
+                          {fullName}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-foreground-secondary">
+                          {new Date(candidate.created_at).toLocaleDateString()}
+                        </span>
+                      </span>
+                    </span>
+                    <StageBadge stage={candidate.stage ?? candidate.status} />
+                  </button>
                 );
               })}
             </div>
-          </Card>
-        </div>
+          </section>
+        </Card>
 
-        <StagesEditor
-          stages={job.stages ?? DEFAULT_STAGES}
-          onChange={onUpdateStages}
-        />
+        <aside>
+          <StagesEditor
+            stages={job.stages ?? DEFAULT_STAGES}
+            onChange={onUpdateStages}
+          />
+        </aside>
       </div>
     </div>
   );

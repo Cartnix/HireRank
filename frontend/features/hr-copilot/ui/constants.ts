@@ -1,5 +1,4 @@
 import {
-  Bell,
   BrainCircuit,
   ClipboardList,
   FileUp,
@@ -11,7 +10,6 @@ import type { Action, Candidate, Role } from "../model/types";
 export type Tab =
   | "copilot"
   | "intake"
-  | "notifications"
   | "memory"
   | "audit";
 
@@ -52,7 +50,6 @@ export const time = () => new Date().toISOString();
 export const tabs: { id: Tab; title: string; icon: typeof BrainCircuit }[] = [
   { id: "copilot", title: "HR Copilot", icon: BrainCircuit },
   { id: "intake", title: "Приём резюме", icon: FileUp },
-  { id: "notifications", title: "Уведомления", icon: Bell },
   { id: "memory", title: "Память", icon: ClipboardList },
   { id: "audit", title: "Аудит", icon: History },
 ];
@@ -61,12 +58,11 @@ export const allowedTabs: Record<Role, Tab[]> = {
   hr: [
     "copilot",
     "intake",
-    "notifications",
     "memory",
     "audit",
   ],
-  recruiter: ["intake", "notifications"],
-  manager: ["notifications"],
+  recruiter: ["intake"],
+  manager: [],
   candidate: ["intake"],
   administrator: ["audit"],
 };

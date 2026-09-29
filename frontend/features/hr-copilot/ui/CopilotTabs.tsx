@@ -6,12 +6,10 @@ export function CopilotTabs({
   role,
   tab,
   onChange,
-  notifications,
 }: {
   role: Role;
   tab: Tab;
   onChange: (next: Tab) => void;
-  notifications: { id: string; read: boolean }[];
 }) {
   return (
     <nav
@@ -28,10 +26,6 @@ export function CopilotTabs({
           >
             <item.icon size={16} />
             {item.title}
-            {item.id === "notifications" &&
-            notifications.some((x) => !x.read) ? (
-              <span className="h-2 w-2 rounded-full bg-warning" />
-            ) : null}
           </button>
         ))}
     </nav>

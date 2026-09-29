@@ -28,6 +28,13 @@ export function CandidatesTable({
             const fullName = getCandidateFullName(c);
             const job = c.assigned_vacancy_id ? jobById[c.assigned_vacancy_id] : null;
             const specialty = c.questionnaire.education[0]?.specialty ?? "—";
+            const stage =
+              c.stage ??
+              ({
+                unassigned: "Без назначения",
+                assigned: "В работе",
+                rejected: "Отклонён",
+              }[c.status] ?? c.status);
 
             return (
               <tr
@@ -43,7 +50,7 @@ export function CandidatesTable({
                 </td>
                 <td className="px-5 py-3 text-foreground-secondary">{job?.title ?? "—"}</td>
                 <td className="px-5 py-3">
-                  <StageBadge stage={c.status} />
+                  <StageBadge stage={stage} />
                 </td>
                 <td className="px-5 py-3 text-foreground-secondary">{specialty}</td>
               </tr>
