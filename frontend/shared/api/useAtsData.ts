@@ -9,13 +9,16 @@ import { candidateDetail, listCandidateViews, listVacancyViews, vacancyDetail } 
 export function useAtsData(candidateId?: string | null, vacancyId?: string | null) {
   const { user, isLoading: sessionLoading } = useAuthSession();
   const demo = useOptionalDemo();
+  const role = demo?.role ?? user?.role;
+  const permissions = demo?.permissions ?? user?.permissions;
+  const effectiveUser = user ? { ...user, role: role ?? user.role, permissions } : null;
   const canMutate = demo?.canMutate ?? !["superuser", "administrator"].includes(user?.role ?? "");
   const [data, setData] = useState<{ candidates: Candidate[]; jobs: Job[] }>({ candidates: [], jobs: [] });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState(0);
   const reload = useCallback(() => setVersion(v => v + 1), []);
-  const can = useCallback((permission: string) => (user?.role === "superuser" || (user?.permissions?.includes(permission) ?? false)) && (permission.endsWith(".read") || canMutate), [user, canMutate]);
+  const can = useCallback((permission: string) => (role === "superuser" || (permissions?.includes(permission) ?? false)) && (permission.endsWith(".read") || canMutate), [role, permissions, canMutate]);
   useEffect(() => {
     if (sessionLoading) return;
     let cancelled = false;
@@ -24,7 +27,7 @@ export function useAtsData(candidateId?: string | null, vacancyId?: string | nul
       if (!user) { setError("Войдите в аккаунт для доступа к ATS"); setLoading(false); return; }
       try {
         const [candidates, jobs, candidate, vacancy] = await Promise.all([
-          user.permissions?.includes("candidate.read") ? listCandidateViews() : Promise.resolve([]),
+          permissions?.includes("candidate.read") ? listCandidateViews() : Promise.resolve([]),
           listVacancyViews(),
           candidateId ? candidateDetail(candidateId) : Promise.resolve(null),
           vacancyId ? vacancyDetail(vacancyId) : Promise.resolve(null),
@@ -38,6 +41,6 @@ export function useAtsData(candidateId?: string | null, vacancyId?: string | nul
     }
     void load();
     return () => { cancelled = true; };
-  }, [user, sessionLoading, candidateId, vacancyId, version]);
-  return { ...data, user, can, loading: loading || sessionLoading, error, reload };
+  }, [user, sessionLoading, candidateId, vacancyId, version, role, permissions]);
+  return { ...data, user: effectiveUser, can, loading: loading || sessionLoading, error, reload };
 }

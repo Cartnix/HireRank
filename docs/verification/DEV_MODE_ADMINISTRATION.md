@@ -109,3 +109,31 @@ npx tsx --test features/demo/access.test.ts \
 The administration checkbox controls UI affordances. Backend permissions and
 PostgreSQL tenant RLS remain authoritative; a checkbox or preview role is not an
 API credential and does not change the authenticated identity.
+
+## Owner tools update — 2026-09-30
+
+Role preview is now independent of Dev mode; real data remains the default.
+DEV settings adds configurable generation (20/20), optional dev-only clearing,
+and confirmed direct dev-to-live ATS import. Editable dev entities persist;
+Copilot/MCP simulation results remain temporary. Earlier checklist claims about
+reload discarding entity edits describe the previous implementation.
+
+Verified with `python -m scripts.verify_developer_tools` against two newly
+created temporary PostgreSQL databases, both removed after the run:
+
+- [x] 35 backend tests pass; ordinary roles cannot access owner tools or forge role preview headers.
+- [x] Real-data owner preview enforces the selected role's database matrix.
+- [x] Generation creates 20 candidates and 20 vacancies with linked interviews; candidate dev preview retains its own record.
+- [x] Dev entity edits survive API reload; stale revisions return 409.
+- [x] Import rejects missing confirmation, preserves existing real records and copies ATS relationships without copying dev auth users.
+- [x] Production rejects dev generation/import operations.
+- [x] 11 frontend tests pass, including readable validation errors and preview-header exclusion from auth/developer requests.
+- [x] TypeScript, changed-file ESLint, Ruff and whitespace checks pass.
+- [x] Real owner browser checks pass for independent role/data selection, import confirmation/cancellation, hidden tabs, full-card navigation, synchronized vacancy, 720 px panels, month grid and mobile width; no browser errors.
+- [x] Generated API contracts, RBAC matrix and dev database documentation are updated.
+
+Working live/dev datasets were not modified by these tests. Import was exercised
+only in isolated databases. Detailed browser evidence: [UX checklist](UX_PANELS.md).
+
+- [ ] Production LLM/MCP execution and durable evaluation/feedback/memory.
+- [ ] Protected resume storage, complete manual pipeline/status APIs and remaining M4/M5 acceptance.

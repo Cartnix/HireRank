@@ -665,6 +665,60 @@
     ],
     "title": "DashboardAnalytics"
   },
+  "DatasetWrite": {
+    "properties": {
+      "revision": {
+        "type": "integer",
+        "minimum": 0.0,
+        "title": "Revision"
+      },
+      "users": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 1000,
+        "title": "Users"
+      },
+      "vacancies": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 2000,
+        "title": "Vacancies"
+      },
+      "candidates": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Candidates"
+      },
+      "prompts": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "title": "Prompts"
+      }
+    },
+    "type": "object",
+    "required": [
+      "revision",
+      "users",
+      "vacancies",
+      "candidates",
+      "prompts"
+    ],
+    "title": "DatasetWrite"
+  },
   "Distribution": {
     "properties": {
       "stage": {
@@ -700,6 +754,31 @@
       "message"
     ],
     "title": "ErrorResponse"
+  },
+  "GenerateRequest": {
+    "properties": {
+      "candidates": {
+        "type": "integer",
+        "maximum": 500.0,
+        "minimum": 1.0,
+        "title": "Candidates",
+        "default": 20
+      },
+      "vacancies": {
+        "type": "integer",
+        "maximum": 100.0,
+        "minimum": 1.0,
+        "title": "Vacancies",
+        "default": 20
+      },
+      "clear_existing": {
+        "type": "boolean",
+        "title": "Clear Existing",
+        "default": false
+      }
+    },
+    "type": "object",
+    "title": "GenerateRequest"
   },
   "HRDashboard": {
     "properties": {
@@ -744,6 +823,19 @@
     },
     "type": "object",
     "title": "HTTPValidationError"
+  },
+  "ImportRequest": {
+    "properties": {
+      "confirmation": {
+        "type": "string",
+        "title": "Confirmation"
+      }
+    },
+    "type": "object",
+    "required": [
+      "confirmation"
+    ],
+    "title": "ImportRequest"
   },
   "Interview": {
     "properties": {

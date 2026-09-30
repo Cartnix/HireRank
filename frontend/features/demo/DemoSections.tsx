@@ -4,7 +4,6 @@ import { JobsView } from "@/views/jobs";
 import { NewJobModal } from "@/features/create-vacancy";
 import { toDashboardJob, toDashboardCandidate } from "@/features/hr-copilot/model/dashboardAdapters";
 import { useState, type FormEvent } from "react";
-import { useAuthSession } from "@/features/auth/AuthProvider";
 import { canReadDemoCandidate } from "./access";
 import { useDemo, DEMO_TENANT } from "./DemoProvider";
 import { addVacancy, removeVacancy } from "@/features/hr-copilot/model/engine";
@@ -48,8 +47,8 @@ export function DemoJobs({ initialId }: { initialId?: string | null }) {
   </>;
 }
 export function CopilotSettings() {
-  const demo = useDemo(); const { user } = useAuthSession();
-  const role = demo.enabled ? demo.role : user?.role;
+  const demo = useDemo();
+  const role = demo.role;
   const prompt = demo.state.prompts.find(p => p.tenantId === DEMO_TENANT)!;
   if (!demo.enabled || !["hr", "administrator", "superuser"].includes(role ?? "")) return <p role="alert">Настройки Copilot доступны HR и администратору.</p>;
   function save(event: FormEvent<HTMLFormElement>) {

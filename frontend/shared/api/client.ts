@@ -33,6 +33,20 @@ type ApiFetchOptions = Omit<RequestInit, "credentials"> & {
 };
 
 let refreshPromise: Promise<boolean> | null = null;
+let previewRole: string | null = null;
+export function setApiPreviewRole(role: string | null) { previewRole = role; }
+
+function errorDetail(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map(item => {
+    if (item && typeof item === "object" && "msg" in item) {
+      const location = "loc" in item && Array.isArray(item.loc) ? item.loc.join(".") : "";
+      return `${location ? `${location}: ` : ""}${String(item.msg)}`;
+    }
+    return errorDetail(item);
+  }).join("; ");
+  return value == null ? "Ошибка запроса" : JSON.stringify(value);
+}
 
 async function refreshAccessToken(): Promise<boolean> {
   if (!refreshPromise) {
@@ -57,6 +71,7 @@ export async function apiFetch<T = unknown>(
 ): Promise<T> {
   const { json, skipCsrf, headers: initHeaders, _retried, ...rest } = options;
   const headers = new Headers(initHeaders);
+  if (previewRole && !/^\/(auth|login|developer)(\/|$)/.test(path)) headers.set("X-Preview-Role", previewRole);
 
   if (json !== undefined) {
     headers.set("Content-Type", "application/json");
@@ -103,7 +118,7 @@ export async function apiFetch<T = unknown>(
     if (!res.ok) {
       const detail =
         typeof data === "object" && data && "detail" in data
-          ? String((data as { detail: unknown }).detail)
+          ? errorDetail((data as { detail: unknown }).detail)
           : typeof data === "string"
             ? data
             : res.statusText;

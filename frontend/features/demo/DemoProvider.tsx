@@ -1,27 +1,32 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useAuthSession } from "@/features/auth/AuthProvider";
-import { apiFetch } from "@/shared/api/client";
+import { apiFetch, setApiPreviewRole } from "@/shared/api/client";
 import { freshState } from "@/features/hr-copilot/model/engine";
 
 import { CopilotStateSchema, type CopilotState, type Role } from "@/features/hr-copilot/model/types";
 export { DEMO_TENANT, demoCan } from "./access";
-type Demo = { ready: boolean; enabled: boolean; canDevelop: boolean; administration: boolean; canAdminister: boolean; setAdministration: (value: boolean) => void; canMutate: boolean; setEnabled: (value: boolean) => void; role: Role; setRole: (value: Role) => void; state: CopilotState; update: (fn: (state: CopilotState) => void) => boolean; message: string };
+type Demo = { ready: boolean; enabled: boolean; canDevelop: boolean; devAvailable: boolean; permissions: string[]; administration: boolean; canAdminister: boolean; setAdministration: (value: boolean) => void; canMutate: boolean; setEnabled: (value: boolean) => void; role: Role; setRole: (value: Role) => void; state: CopilotState; reload: () => Promise<void>; update: (fn: (state: CopilotState) => void) => boolean; message: string };
 const Context = createContext<Demo | null>(null);
 export function DemoProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthSession();
   const [authorizedUser, setAuthorizedUser] = useState<typeof user>(null);
   const [verifiedUser, setVerifiedUser] = useState<typeof user>(null);
+  const [datasetUser, setDatasetUser] = useState<typeof user>(null);
   const [requested, setRequested] = useState(false);
   const [previewRole, setPreviewRole] = useState<Role | null>(null);
   const [adminSession, setAdminSession] = useState<{ identity: typeof user; role: Role; enabled: boolean } | null>(null);
   const canDevelop = !isLoading && user?.role === "superuser" && authorizedUser === user;
-  const enabled = canDevelop && requested;
+  const devAvailable = canDevelop && datasetUser === user;
+  const enabled = devAvailable && requested;
   const ready = !isLoading && (user?.role !== "superuser" || verifiedUser === user);
-  const role = (enabled ? previewRole : null) ?? (user?.role as Role | undefined) ?? "candidate";
+  const role = (canDevelop ? previewRole : null) ?? (user?.role as Role | undefined) ?? "candidate";
   const canAdminister = !isLoading && !!user && ["superuser", "administrator"].includes(role);
   const administration = canAdminister && adminSession?.identity === user && adminSession?.role === role && adminSession?.enabled === enabled;
   const canMutate = !["superuser", "administrator"].includes(role) || administration;
+  const saving = useRef(false);
+  const revision = useRef(0);
+  const [matrix, setMatrix] = useState<Record<string, string[]>>({});
   const [state, setState] = useState(freshState);
   const [message, setMessage] = useState("");
   useEffect(() => {
@@ -31,32 +36,49 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   }, []);
   useEffect(() => {
     if (!isLoading && user) return;
-    const frame = requestAnimationFrame(() => { setAdminSession(null); setAuthorizedUser(null); setVerifiedUser(null); setRequested(false); setPreviewRole(null); setState(freshState()); });
+    const frame = requestAnimationFrame(() => { setApiPreviewRole(null); setDatasetUser(null); setAdminSession(null); setAuthorizedUser(null); setVerifiedUser(null); setRequested(false); setPreviewRole(null); setState(freshState()); });
     return () => cancelAnimationFrame(frame);
   }, [isLoading, user]);
   useEffect(() => {
     if (isLoading || user?.role !== "superuser") return;
     let cancelled = false;
-    void apiFetch("/developer/dataset", { cache: "no-store" }).then(data => {
-      const loaded = CopilotStateSchema.parse(data);
+    void apiFetch<{ permissions: Record<string, string[]> }>("/developer/access", { cache: "no-store" }).then(async access => {
       if (cancelled) return;
+      setMatrix(access.permissions);
       setAuthorizedUser(user);
       setVerifiedUser(user);
-      setState(loaded);
+      setApiPreviewRole(null);
       setRequested(false);
       setPreviewRole(null);
-    }).catch(() => { if (!cancelled) { setAuthorizedUser(null); setVerifiedUser(user); setMessage("Тестовые данные недоступны. Проверьте dev БД и миграции."); } });
+      try {
+        const raw = await apiFetch<{ revision: number }>("/developer/dataset", { cache: "no-store" });
+        const loaded = CopilotStateSchema.parse(raw);
+        revision.current = raw.revision;
+        if (!cancelled) { setState(loaded); setDatasetUser(user); setMessage(""); }
+      } catch { if (!cancelled) setMessage("Тестовые данные недоступны. Проверьте dev БД и миграции."); }
+    }).catch(() => { if (!cancelled) { setAuthorizedUser(null); setVerifiedUser(user); } });
     return () => { cancelled = true; };
   }, [user, isLoading]);
-  function setRole(value: Role) { if (!canDevelop || !enabled) return; setPreviewRole(value); setAdminSession(null); }
-  function toggle(value: boolean) { if (!canDevelop) return; setRequested(value); setPreviewRole(null); setAdminSession(null); }
+  function setRole(value: Role) { if (!canDevelop) return; setApiPreviewRole(!enabled && value !== "superuser" ? value : null); setPreviewRole(value); setAdminSession(null); }
+  function toggle(value: boolean) { if (!canDevelop) return; setApiPreviewRole(!value && role !== "superuser" ? role : null); setRequested(value); setAdminSession(null); }
   function setAdministration(value: boolean) { setAdminSession(value && canAdminister ? { identity: user, role, enabled } : null); }
+  async function reload() { const raw = await apiFetch<{ revision: number }>("/developer/dataset", { cache: "no-store" });
+        const loaded = CopilotStateSchema.parse(raw);
+        revision.current = raw.revision; setState(loaded); setDatasetUser(user); }
+  useEffect(() => () => setApiPreviewRole(null), []);
   function update(fn: (next: CopilotState) => void) {
     if (!enabled || !canMutate) return false;
-    try { const next = structuredClone(state); fn(next); setState(next); setMessage(""); return true; }
+    if (saving.current) { setMessage("Дождитесь сохранения предыдущего изменения."); return false; }
+    try { const next = structuredClone(state); fn(next); setState(next); setMessage("");
+      saving.current = true;
+      void apiFetch("/developer/dataset", { method: "PUT", json: { users: next.users, vacancies: next.vacancies, candidates: next.candidates, prompts: next.prompts, revision: revision.current } }).then(() => { revision.current++; }).catch(async error => {
+        setMessage(error instanceof Error ? error.message : "Не удалось сохранить dev данные");
+        try { await reload(); } catch { setState(state); }
+      }).finally(() => { saving.current = false; });
+      return true; }
     catch (error) { setMessage(error instanceof Error ? error.message : "Ошибка операции"); return false; }
   }
-  return <Context.Provider value={{ ready, enabled, canDevelop, administration, canAdminister, setAdministration, canMutate, setEnabled: toggle, role, setRole, state: canDevelop ? state : freshState(), update, message }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ ready, enabled, canDevelop, devAvailable, permissions: canDevelop ? matrix[role] ?? [] : user?.permissions ?? [], administration, canAdminister, setAdministration, canMutate, setEnabled: toggle, role, setRole, reload, state: canDevelop ? state : freshState(), update, message }}>{children}</Context.Provider>;
 }
 export function useDemo() { const value = useContext(Context); if (!value) throw Error("DemoProvider required"); return value; }
 

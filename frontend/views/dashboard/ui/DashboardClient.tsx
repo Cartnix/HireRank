@@ -21,7 +21,7 @@ export function DashboardClient() {
       if (!cancelled) setResult({ endpoint, error: error instanceof Error ? error.message : "Не удалось загрузить аналитику" });
     });
     return () => { cancelled = true; };
-  }, [endpoint, user, demo.ready]);
+  }, [endpoint, user, demo.ready, demo.role]);
   if (result?.endpoint !== endpoint) return <p>Загрузка аналитики...</p>;
   if (result.error) return <p role="alert">{result.error}</p>;
   const data = result.data;

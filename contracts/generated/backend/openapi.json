@@ -2694,6 +2694,37 @@
         }
       }
     },
+    "/api/v1/developer/access": {
+      "get": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Developer Access",
+        "operationId": "developer-developer_access",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Developer-Developer Access"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
     "/api/v1/developer/dataset": {
       "get": {
         "tags": [
@@ -2711,6 +2742,148 @@
                   "additionalProperties": true,
                   "type": "object",
                   "title": "Response Developer-Read Dataset"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Write Dataset",
+        "operationId": "developer-write_dataset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatasetWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/developer/generate": {
+      "post": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Generate Data",
+        "operationId": "developer-generate_data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Developer-Generate Data"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/developer/import": {
+      "post": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Import Data",
+        "operationId": "developer-import_data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Developer-Import Data"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -3548,6 +3721,60 @@
         ],
         "title": "DashboardAnalytics"
       },
+      "DatasetWrite": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Revision"
+          },
+          "users": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "title": "Users"
+          },
+          "vacancies": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "maxItems": 2000,
+            "title": "Vacancies"
+          },
+          "candidates": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "maxItems": 10000,
+            "title": "Candidates"
+          },
+          "prompts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Prompts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision",
+          "users",
+          "vacancies",
+          "candidates",
+          "prompts"
+        ],
+        "title": "DatasetWrite"
+      },
       "Distribution": {
         "properties": {
           "stage": {
@@ -3583,6 +3810,31 @@
           "message"
         ],
         "title": "ErrorResponse"
+      },
+      "GenerateRequest": {
+        "properties": {
+          "candidates": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Candidates",
+            "default": 20
+          },
+          "vacancies": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Vacancies",
+            "default": 20
+          },
+          "clear_existing": {
+            "type": "boolean",
+            "title": "Clear Existing",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "GenerateRequest"
       },
       "HRDashboard": {
         "properties": {
@@ -3627,6 +3879,19 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "ImportRequest": {
+        "properties": {
+          "confirmation": {
+            "type": "string",
+            "title": "Confirmation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "confirmation"
+        ],
+        "title": "ImportRequest"
       },
       "Interview": {
         "properties": {

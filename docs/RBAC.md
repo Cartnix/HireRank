@@ -24,6 +24,9 @@ Stored in PostgreSQL tables `role`, `permission`, and `role_permission` (M2M). S
 | Permission | superuser | administrator | hr | manager | recruiter | candidate |
 |------------|:---------:|:-------------:|:--:|:-------:|:---------:|:---------:|
 | `developer.access` | yes | no | no | no | no | no |
+| Preview any matrix role (dev or real data) | yes | no | no | no | no | no |
+| Generate/clear dev ATS data | yes | no | no | no | no | no |
+| Import dev ATS data into real DB (explicit confirmation) | yes | no | no | no | no | no |
 | `admin.panel` | yes | yes | no | no | no | no |
 | `users.manage` | yes | yes | no | no | no | no |
 | `vacancy.create` | yes | yes | yes | no | no | no |
@@ -41,9 +44,15 @@ Stored in PostgreSQL tables `role`, `permission`, and `role_permission` (M2M). S
 
 ### Developer mode and administration controls
 
-`GET /developer/dataset` validates the active user in the primary database and returns the shared PostgreSQL development dataset only to `superuser`. All other roles receive 403. The endpoint is enabled only in local development; preview roles never change the authenticated identity. No dataset or preview session is persisted in browser storage. See [development database](DEV_DATABASE.md).
+`GET /developer/dataset` validates the active user in the primary database and returns the shared PostgreSQL development dataset only to `superuser`. All other roles receive 403. The endpoint is enabled only in local development; preview roles never change the authenticated identity. `GET /developer/access` returns the database permission matrix to the owner independently of dev database availability.
 
-The administration checkbox is available to administrators and superusers (including their developer previews), starts off, and resets when the identity, preview role or data mode changes. Without it, management buttons for vacancies, candidates and users are hidden; reads remain available. HR, manager, recruiter and candidate keep their existing matrix. This checkbox controls the interface; server authorization always uses the authenticated user and permissions independently.
+The sidebar exposes two independent controls: **role preview** and **Dev mode**. Real data is the default. In real-data previews, `X-Preview-Role` restricts the owner's requests to the selected role's database grants; server ABAC uses the owner's unchanged user ID and tenant (candidate “own” can therefore be empty when the owner has no linked profile). Non-owners sending this header receive 403. Auth and developer tools always use the actual session, without the preview header.
+
+**DEV settings** is visible only to the actual superuser, even when previewing another role. `POST /developer/generate` creates 20 candidates and 20 vacancies by default, with configurable limits (500/100), stages, assignments and interviews. Optional clearing affects dev candidates/vacancies and dependent records only, requires UI confirmation, and preserves dev user identities. `PUT /developer/dataset` persists editable candidates, vacancies, users and prompts in canonical dev records; a revision and transaction lock reject stale snapshots with 409. The remaining Copilot/MCP simulation state is temporary.
+
+`POST /developer/import` reads directly from dev PostgreSQL and copies vacancies, stages, candidates, applications, interviews and scorecards into the authenticated owner's real tenant in one transaction. A confirmation dialog requires `IMPORT TO REAL DATABASE`, also checked by the API. Existing real records are preserved; new IDs, TEST vacancy labels and synthetic candidate emails separate the imported batch. Dev accounts, credentials and candidate user links are not copied. The import is audited. Dev data endpoints remain local-only and require a separate enabled dev DB. No dataset or preview session is persisted in browser storage. See [development database](DEV_DATABASE.md).
+
+The administration checkbox is available to administrators and superusers (including owner role previews with either data source), starts off, and resets when the identity, preview role or data mode changes. Without it, management buttons for vacancies, candidates and users are hidden; reads remain available. HR, manager, recruiter and candidate keep their existing matrix. This checkbox controls the interface; server authorization also enforces the selected real-data preview permissions and tenant scope independently.
 
 Superuser permission loading includes every permission in the database, and server permission checks accept the active owner for future permissions as well. Tenant RLS still applies.
 

@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-09-30 — Superuser data tools, independent role previews and calendar month
+
+- [x] Add owner-only **DEV settings**, protected by the real superuser session on the server.
+- [x] Generate 20 candidates and 20 vacancies by default, with configurable counts, stages, assignments and interviews in the separate dev PostgreSQL database.
+- [x] Add optional clearing of existing dev ATS records with confirmation; preserve dev user identities and real application records.
+- [x] Persist dev candidate, vacancy, user and prompt edits; reject stale snapshots with a revision check and transaction lock.
+- [x] Import canonical ATS records directly from dev PostgreSQL into the owner's real tenant after explicit `IMPORT TO REAL DATABASE` confirmation; preserve links with new IDs, mark test batches and audit the import without copying dev credentials/accounts.
+- [x] Separate role preview from the Dev mode checkbox; use real data by default and load preview grants from the database matrix. Reject preview headers from ordinary users and preserve the owner's tenant/identity scope.
+- [x] Keep the administration checkbox for superuser/administrator views in both data modes; hide unavailable navigation sections.
+- [x] Fix full vacancy navigation from candidate panels without losing dev mode; display readable API validation errors instead of `[object Object]`.
+- [x] Synchronize an open vacancy with the selected candidate and open inspectors at their maximum 720 px width while retaining the list.
+- [x] Add month navigation and a 42-day calendar grid alongside week/day views.
+- [x] Refresh generated API contracts, RBAC matrix, dev database documentation and verification checklists.
+- [x] Pass 35 backend tests in two automatically cleaned temporary PostgreSQL databases and 11 frontend tests; pass TypeScript, changed-file ESLint, Ruff and whitespace checks.
+- [x] Verify the real owner UI through agent-browser: defaults, import confirmation/cancellation, independent role/data selection, hidden tabs, synchronized vacancy, full-card navigation, panel width, month grid and 390 px layout; no browser errors.
+
+Evidence: [administration checklist](docs/verification/DEV_MODE_ADMINISTRATION.md),
+[browser checklist](docs/verification/UX_PANELS.md), [dev database guide](docs/DEV_DATABASE.md).
+This supersedes temporary dev entity edits and universally visible navigation from
+previous entries. Copilot/MCP evaluation, feedback, memory and execution remain
+simulations; protected resume storage, manual pipeline/status APIs and full MVP
+acceptance remain open. Import was tested in temporary databases; the browser
+checks did not mutate working datasets.
+
 ## 2026-09-30 — Responsive inspectors and HR workspace UX
 
 - [x] Add a shared resizable inspector for demo candidate profiles, HR Copilot and vacancy details, with sticky positioning and independent content scrolling.

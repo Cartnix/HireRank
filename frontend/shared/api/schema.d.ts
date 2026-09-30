@@ -690,6 +690,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/developer/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Developer Access */
+        get: operations["developer-developer_access"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/developer/dataset": {
         parameters: {
             query?: never;
@@ -702,8 +719,43 @@ export interface paths {
          * @description One shared dataset. Identity/role is checked against the primary database.
          */
         get: operations["developer-read_dataset"];
-        put?: never;
+        /** Write Dataset */
+        put: operations["developer-write_dataset"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Data */
+        post: operations["developer-generate_data"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Data */
+        post: operations["developer-import_data"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1069,6 +1121,27 @@ export interface components {
             /** Upcoming Interviews */
             upcoming_interviews: components["schemas"]["ScheduledInterview"][];
         };
+        /** DatasetWrite */
+        DatasetWrite: {
+            /** Revision */
+            revision: number;
+            /** Users */
+            users: {
+                [key: string]: unknown;
+            }[];
+            /** Vacancies */
+            vacancies: {
+                [key: string]: unknown;
+            }[];
+            /** Candidates */
+            candidates: {
+                [key: string]: unknown;
+            }[];
+            /** Prompts */
+            prompts: {
+                [key: string]: unknown;
+            }[];
+        };
         /** Distribution */
         Distribution: {
             /** Stage */
@@ -1082,6 +1155,24 @@ export interface components {
             code: string;
             /** Message */
             message: string;
+        };
+        /** GenerateRequest */
+        GenerateRequest: {
+            /**
+             * Candidates
+             * @default 20
+             */
+            candidates: number;
+            /**
+             * Vacancies
+             * @default 20
+             */
+            vacancies: number;
+            /**
+             * Clear Existing
+             * @default false
+             */
+            clear_existing: boolean;
         };
         /** HRDashboard */
         HRDashboard: {
@@ -1115,6 +1206,11 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImportRequest */
+        ImportRequest: {
+            /** Confirmation */
+            confirmation: string;
         };
         /** Interview */
         Interview: {
@@ -3320,6 +3416,28 @@ export interface operations {
             };
         };
     };
+    "developer-developer_access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     "developer-read_dataset": {
         parameters: {
             query?: never;
@@ -3338,6 +3456,107 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    "developer-write_dataset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DatasetWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "developer-generate_data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "developer-import_data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

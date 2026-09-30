@@ -200,7 +200,7 @@
 }
 /* Inspectors share the viewport while the list remains available. */
 .inspector-workspace { display: flex; align-items: flex-start; gap: 1rem; min-width: 0; }
-.inspector-dock { position: sticky; top: 1rem; display: flex; gap: 1rem; max-width: 68%; overflow-x: auto; padding: 0 8px 8px; }
+.inspector-dock { position: sticky; top: 1rem; display: flex; gap: 1rem; max-width: calc(100% - 296px); overflow-x: auto; padding: 0 8px 8px; }
 .detail-panel { position: relative; display: flex; flex-direction: column; width: var(--panel-width); min-width: 300px; flex-shrink: 0; max-height: calc(100dvh - 2rem); border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: var(--card-foreground); box-shadow: 0 8px 24px #0000000a; }
 .panel-resizer { position: absolute; left: -8px; top: 0; bottom: 0; width: 16px; display: flex; align-items: center; justify-content: center; cursor: ew-resize; touch-action: none; color: var(--muted-foreground); z-index: 2; }
 .panel-resizer:hover, .panel-resizer:focus-visible { color: var(--brand-primary); background: color-mix(in srgb, var(--brand-primary) 12%, transparent); }

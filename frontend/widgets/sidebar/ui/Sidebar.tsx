@@ -2,6 +2,7 @@
 import { useState } from "react";
 
 import { useDemo } from "@/features/demo/DemoProvider";
+import { demoCan } from "@/features/demo/access";
 import { label } from "@/features/hr-copilot/ui/constants";
 import type { Role } from "@/features/hr-copilot/model/types";
 import { Avatar } from "@/shared/ui/Avatar";
@@ -50,10 +51,11 @@ export function Sidebar() {
 
         {demo.message && <p role="alert" className="mx-3 text-xs text-destructive">{demo.message}</p>}
         {demo.canDevelop && <div className="mx-3 my-3 space-y-2 rounded-lg border border-border p-3">
-          <label className="flex gap-2 text-xs"><input type="checkbox" checked={demo.enabled} onChange={e => { demo.setEnabled(e.target.checked); router.push("/dashboard"); }} /> Dev mode</label>
-          <p className="text-xs text-muted-foreground">{demo.enabled ? "Данные из dev БД · изменения до перезагрузки" : "Данные из API"}</p>
-          {demo.enabled && <label className="block text-xs">Роль в песочнице<select aria-label="Роль в песочнице" className="mt-2 w-full rounded border border-input bg-background p-2" value={demo.role} onChange={e => { demo.setRole(e.target.value as Role); router.push("/dashboard"); }}>{Object.entries(label).map(([role, name]) => <option key={role} value={role}>{name}</option>)}</select></label>}
+          <label className="flex gap-2 text-xs"><input type="checkbox" checked={demo.enabled} disabled={!demo.devAvailable} onChange={e => { demo.setEnabled(e.target.checked); router.push("/dashboard"); }} /> Dev mode</label>
+          <p className="text-xs text-muted-foreground">{demo.enabled ? "Данные из dev БД" : "Данные из API"}</p>
+          <label className="block text-xs">Просмотр от роли<select aria-label="Просмотр от роли" className="mt-2 w-full rounded border border-input bg-background p-2" value={demo.role} onChange={e => { demo.setRole(e.target.value as Role); router.push("/dashboard"); }}>{Object.entries(label).map(([role, name]) => <option key={role} value={role}>{name}</option>)}</select></label>
         </div>}
+        {demo.canDevelop && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/developer">DEV settings</Link>}
         {demo.canAdminister && <label className="mx-3 my-2 flex gap-2 rounded-lg border border-border p-3 text-xs"><input type="checkbox" checked={demo.administration} onChange={e => demo.setAdministration(e.target.checked)} /> Режим администрирования</label>}
         {demo.canAdminister && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/users">Пользователи</Link>}
         {(demo.enabled && ["administrator", "superuser"].includes(demo.role)) && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/audit">Журнал действий</Link>}
@@ -63,7 +65,7 @@ export function Sidebar() {
           Основное
         </div>
 
-        {navItems.map((item) => {
+        {navItems.filter(item => demoCan(demo.role, item.id) && (demo.enabled || !["agent", "copilot"].includes(item.id))).map((item) => {
           const Icon = item.icon;
           const isActive =
             item.href === "/dashboard"
@@ -98,7 +100,7 @@ export function Sidebar() {
           Прочее
         </div>
 
-        {secondaryNavItems.map((item) => {
+        {secondaryNavItems.filter(item => demo.enabled && demoCan(demo.role, item.id)).map((item) => {
           const Icon = item.icon;
           const isActive = pathname.startsWith(item.href);
 
@@ -136,7 +138,7 @@ export function Sidebar() {
                   .join(" ") || "HR"}
                 size={36}
               />
-              <div className="min-w-0"><div className="truncate text-sm font-semibold">{[user?.first_name, user?.last_name].filter(Boolean).join(" ") || "HR профиль"}</div><div className="mt-1 text-xs text-muted-foreground">{label[(demo.enabled ? demo.role : user?.role) as Role] ?? "Пользователь"}{demo.enabled ? " · Dev mode" : ""}</div></div>
+              <div className="min-w-0"><div className="truncate text-sm font-semibold">{[user?.first_name, user?.last_name].filter(Boolean).join(" ") || "HR профиль"}</div><div className="mt-1 text-xs text-muted-foreground">{label[demo.role] ?? "Пользователь"}{demo.enabled ? " · Dev mode" : ""}</div></div>
             </div>
           </button>
         </DropdownMenuTrigger>

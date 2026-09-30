@@ -16,7 +16,7 @@ export function UsersPanel() {
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<UserRow | "new" | null>(null);
   const [busy, setBusy] = useState(false);
-  const role = demo.enabled ? demo.role : user?.role;
+  const role = demo.role;
   const allowed = !!user && ["administrator", "superuser"].includes(role ?? "");
   const owner = role === "superuser";
   useEffect(() => {
@@ -32,7 +32,7 @@ export function UsersPanel() {
       if (!cancelled) setLive(rows);
     })().catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : "Не удалось загрузить пользователей"); });
     return () => { cancelled = true; };
-  }, [demo.enabled, allowed, user?.id, version]);
+  }, [demo.enabled, allowed, user?.id, version, role]);
   if (!allowed) return <p role="alert">Недостаточно прав для просмотра пользователей.</p>;
   const rows = demo.enabled ? demo.state.users : live;
   const canManage = (row?: UserRow) => demo.administration && (owner || row?.role !== "superuser");

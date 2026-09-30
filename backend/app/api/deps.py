@@ -19,7 +19,7 @@ from app.core.config import settings
 from app.core.context import set_tenant_id, set_user_id, set_user_role
 from app.core.db import async_session_maker
 from app.core.token_store import get_token_store
-from app.models import TokenPayload, User, role_str
+from app.models import TokenPayload, User, UserRole, role_str
 
 # OpenAPI: OAuth2 password flow (Swagger Authorize) + documented access cookie.
 # Runtime: Authorization Bearer wins when present (Swagger same-origin + cookies);
@@ -246,6 +246,23 @@ async def get_current_user(
 
     # JWT permissions claim — O(1) require_permission; no DB matrix lookup
     request.state.permissions = frozenset(token_data.permissions or [])
+
+    # Only an authenticated owner can preview another matrix role. Preserve
+    # actor/tenant; scope checks still apply to this identity, including own data.
+    preview = request.headers.get("X-Preview-Role")
+    if preview:
+        if not user.is_superuser:
+            raise HTTPException(status_code=403, detail="Role preview is owner-only")
+        try:
+            role = UserRole(preview)
+        except ValueError as error:
+            raise HTTPException(
+                status_code=400, detail="Unknown preview role"
+            ) from error
+        request.state.permissions = frozenset(
+            await crud.get_permissions_for_role(session=session, role_name=role.value)
+        )
+        user = user.model_copy(update={"role": role})
 
     # Future RLS: bind actor identity into the current transaction
     await set_user_gucs_async(

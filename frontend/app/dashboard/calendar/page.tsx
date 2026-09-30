@@ -24,7 +24,7 @@ export default function CalendarPage() {
       if (!cancelled) setResult({ endpoint, error: error instanceof Error ? error.message : "Не удалось загрузить встречи" });
     });
     return () => { cancelled = true; };
-  }, [endpoint, user, demo.ready]);
+  }, [endpoint, user, demo.ready, demo.role]);
   return <main className="px-6 md:px-10 lg:px-15 pb-12 space-y-6">
     <SectionTitle title="Календарь" subtitle="Расписание собеседований" />
     {result?.endpoint !== endpoint ? <p>Загрузка встреч...</p> : result.error ? <p role="alert">{result.error}</p> : <CalendarGrid meetings={result.meetings ?? []} />}

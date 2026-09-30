@@ -58,6 +58,31 @@ not declare resume storage, pipeline mutations or full MVP acceptance complete.
 Existing tokens must be refreshed or the user must sign in again after the new
 HR permission migration; permissions in an issued access JWT do not change in place.
 No API failure may enable a seed-data fallback. LLM/MCP/memory remain post-MVP.
+### Superuser data tools and role previews — completed (2026-09-30)
+
+Evidence: [administration checklist](verification/DEV_MODE_ADMINISTRATION.md),
+[browser checklist](verification/UX_PANELS.md), [RBAC matrix](RBAC.md),
+[dev database guide](DEV_DATABASE.md).
+
+- [x] Add owner-only DEV settings, with backend authorization independent of the role being previewed.
+- [x] Generate configurable dev ATS data (20 candidates / 20 vacancies by default), including stages, assignments and interviews.
+- [x] Confirm optional dev-only clearing; preserve dev identities and existing real records.
+- [x] Persist dev users, candidates, vacancies and prompts in PostgreSQL; reject concurrent stale snapshots.
+- [x] Copy canonical ATS data directly from dev into the real tenant in one transaction after explicit confirmation, with new linked IDs, test markers and import audit.
+- [x] Exclude dev accounts, credentials and candidate account links from imports; reject dev mutations in production.
+- [x] Separate role preview from data selection; default to real data and enforce the selected real-data matrix grants on the server without changing actor/tenant identity.
+- [x] Retain opt-in administration for owner/admin views in both modes; hide unavailable tabs and prevent enabling dev data before successful loading.
+- [x] Fix full-card navigation and readable validation errors; synchronize vacancy context with the selected candidate.
+- [x] Open inspectors at maximum width while preserving the list; add month selection/navigation to the calendar.
+- [x] Regenerate contracts and update matrices, changelog and verification checklists.
+- [x] Pass 35 backend tests in two temporary databases, 11 frontend tests, TypeScript, changed-file ESLint, Ruff and whitespace checks; verify owner UI and mobile layout in agent-browser.
+
+The role preview preserves the owner's user ID: candidate “own” records in real
+mode can be empty if the owner has no linked candidate profile. Copilot/MCP
+simulation results and memory remain temporary. Import provides ATS records for
+pre-release integration checks; production MCP execution and remaining M4/M5
+acceptance tasks stay open.
+
 ### Owner-only developer mode and administration — completed (2026-09-30)
 
 Evidence: [dev database guide](DEV_DATABASE.md), [dev database verification](verification/DEV_DATABASE.md),
@@ -71,7 +96,7 @@ This supersedes the unrestricted demo switch and earlier mocked-session browser 
 - [x] Hide unavailable vacancy/candidate/user create/edit/delete controls and close already exposed management forms/menus when administration is off.
 - [x] Provide owner/admin user administration through the API; prohibit administrator promotion to or modification of superuser.
 - [x] Fix consent/OAuth cascade on user deletion and add a database regression test.
-- [x] Load the shared preview records from PostgreSQL and keep test data out of browser storage; simulated edits last until reload.
+- [x] Load the shared preview records from PostgreSQL and keep test data out of browser storage; entity edits now persist through the owner data tools above, while Copilot/MCP simulation results remain temporary.
 - [x] Verify the real superuser session, protected data loading, same records across role previews, ordinary-role denials and empty localStorage.
 - [x] Verify repeatable database seeding, Alembic drift rejection, registration, legal consent, browser rendering and cleanup; run 45 backend and 6 frontend tests.
 - [x] Update generated API contracts, RBAC/product docs, changelog and database setup/verification checklists.
@@ -89,7 +114,7 @@ Frontend UX scope; server authorization and outstanding ATS/AI milestones remain
 - [x] Review vacancy context beside Copilot or a candidate without switching sections.
 - [x] Keep the vacancy list and details on the same screen; retain candidate navigation.
 - [x] Redesign vacancy/user cards and align CRUD controls; add avatars and a readable sidebar role/profile.
-- [x] Show all primary navigation sections for every role while retaining data/action access checks and explanatory restricted states.
+- [x] Hide navigation sections unavailable to the selected role/data source; retain server data/action checks.
 - [x] Replace “Soon” placeholders with Dev mode settings/support prototypes; label temporary settings and disconnected support delivery.
 - [x] Improve light/dark theme contrast and vacancy empty states.
 - [x] Verify desktop/mobile layouts, pointer/keyboard resizing, independent scrolling, all six role menus and both themes through agent-browser.
@@ -103,7 +128,7 @@ production settings persistence, support delivery, real CRUD acceptance or LLM/M
 Local frontend demo; these items do not cover the server stages of AI/MCP and MVP acceptance.
 
 - [x] Distribute the demo across existing role sections with the “Demo” prefix, without duplicates in Copilot.
-- [x] Move the role selection to the main menu and save it after a reboot.
+- [x] Move role selection to the main menu; the later owner tools separate it from dev data, with no browser-persisted preview session.
 - [x] Fix one organization and migrate the old local data of the second tenant.
 - [x] Leave only the settings for the instruction, allowed recommendations, and memory in Copilot.
 - [x] Add search, filters for skills/stages/vacancies, and sorting of candidates by score/name/date.
@@ -307,7 +332,7 @@ After the core web flow is proven:
 - [x] Seed canonical dev candidates from the original dashboard, applications, stages, interviews and human scorecards. No mock-data fallback on API errors.
 - [x] Publish `/dashboard/analytics` and superuser-only `/developer/analytics?role=…`; scope aggregates to tenant and candidate/manager visibility.
 - [x] Interview planning API: list, create, reschedule and delete; save validated human scorecards (1–5). Existing Interview/Scorecard tables are shared by dev and production and migrated through the same Alembic chain.
-- [x] Calendar reads canonical meetings with real dates, week/day navigation and multiple meetings per day.
+- [x] Calendar reads canonical meetings with real dates, month/week/day navigation and multiple meetings per day.
 - [ ] Calendar planning UI: CRUD controls, interviewer selection and feedback editing. API persistence is available; wire the full calendar workflow next.
 
 Metric definitions: pipeline counts each visible candidate once (active application stage or candidate status); sources use questionnaire.acquisition_source (falling back to questionnaire.source); daily history uses candidate.created_at (UTC, last 30 days); top candidates use the mean of stored human scorecards, not a fabricated AI score; average time to hire uses application.created_at → updated_at for hired applications and is unavailable until a hire exists. Upcoming interviews include active applications only. Development seed dates are relative to bootstrap time so example history and meetings remain visible.

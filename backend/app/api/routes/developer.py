@@ -2,12 +2,13 @@ from typing import Any
 
 from alembic.config import Config
 from alembic.script import ScriptDirectory
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.api.deps import get_current_active_superuser
+from app.api.deps import SessionDep, get_current_active_superuser
 from app.ats.analytics import build_analytics
 from app.dev.bootstrap import TENANT_ID
 from app.dev.database import dev_engine, require_dev_database
@@ -28,6 +29,124 @@ router = APIRouter(
     tags=["developer"],
     dependencies=[Depends(get_current_active_superuser)],
 )
+
+
+@router.get("/access")
+async def developer_access(session: SessionDep) -> dict:
+    from app.crud import get_permissions_for_role
+
+    return {
+        "permissions": {
+            role.value: await get_permissions_for_role(
+                session=session, role_name=role.value
+            )
+            for role in UserRole
+        }
+    }
+
+
+def check_dev_database() -> None:
+    try:
+        require_dev_database()
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+class GenerateRequest(BaseModel):
+    candidates: int = Field(default=20, ge=1, le=500)
+    vacancies: int = Field(default=20, ge=1, le=100)
+    clear_existing: bool = False
+
+
+class ImportRequest(BaseModel):
+    confirmation: str
+
+
+class DatasetWrite(BaseModel):
+    revision: int = Field(ge=0)
+    users: list[dict[str, Any]] = Field(max_length=1000)
+    vacancies: list[dict[str, Any]] = Field(max_length=2000)
+    candidates: list[dict[str, Any]] = Field(max_length=10000)
+    prompts: list[dict[str, Any]] = Field(max_length=100)
+
+
+@router.put("/dataset", status_code=204)
+async def write_dataset(body: DatasetWrite) -> None:
+    from app.dev.operations import save_dataset
+
+    check_dev_database()
+    engine = dev_engine()
+    try:
+        async with AsyncSession(engine) as session:
+            await ensure_dev_schema(session)
+            await session.execute(text("SET LOCAL row_security = off"))
+            # Serialize snapshots to prevent two browser sessions interleaving writes.
+            await session.execute(text("SELECT pg_advisory_xact_lock(5508400)"))
+            dataset = await session.get(DevelopmentDataset, 1)
+            if dataset is None or dataset.config.get("revision", 0) != body.revision:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Dev данные изменены в другом окне. Обновите страницу.",
+                )
+            try:
+                await save_dataset(session, body.model_dump())
+            except (ValueError, KeyError) as error:
+                raise HTTPException(status_code=400, detail=str(error)) from error
+    finally:
+        await engine.dispose()
+
+
+@router.post("/generate")
+async def generate_data(body: GenerateRequest) -> dict:
+    from app.dev.operations import generate
+
+    check_dev_database()
+    engine = dev_engine()
+    try:
+        async with AsyncSession(engine) as session:
+            await ensure_dev_schema(session)
+            await session.execute(text("SET LOCAL row_security = off"))
+            return await generate(
+                session, body.candidates, body.vacancies, body.clear_existing
+            )
+    finally:
+        await engine.dispose()
+
+
+@router.post("/import")
+async def import_data(
+    body: ImportRequest,
+    request: Request,
+    session: SessionDep,
+    actor: User = Depends(get_current_active_superuser),
+) -> dict:
+    from app.dev.operations import copy_to_live
+
+    if body.confirmation != "IMPORT TO REAL DATABASE":
+        raise HTTPException(
+            status_code=400, detail="Explicit live database confirmation required"
+        )
+    check_dev_database()
+    engine = dev_engine()
+    try:
+        async with AsyncSession(engine) as source:
+            await ensure_dev_schema(source)
+            await source.execute(text("SET LOCAL row_security = off"))
+            result = await copy_to_live(source, session, actor)
+            from app.audit.service import get_audit_service
+
+            await get_audit_service().log(
+                background_tasks=None,
+                action="developer.import",
+                entity_type="development_dataset",
+                tenant_id=actor.tenant_id,
+                user_id=actor.id,
+                payload={"detail": result, "path": request.url.path},
+                force_sync=True,
+            )
+            return result
+    finally:
+        await engine.dispose()
 
 
 async def ensure_dev_schema(session: AsyncSession) -> None:
@@ -115,6 +234,7 @@ async def read_dataset(response: Response) -> dict[str, Any]:
             }
             result.update(
                 version=1,
+                revision=fixture.get("revision", 0),
                 tenants=[{"id": str(tenant.id), "name": tenant.name}],
                 prompts=fixture["prompts"],
                 users=[
@@ -159,7 +279,9 @@ async def read_dataset(response: Response) -> dict[str, Any]:
                         "tenantId": str(c.tenant_id),
                         "email": c.email,
                         "createdAt": c.created_at.isoformat() if c.created_at else "",
-                        "status": "assigned" if c.status == "assigned" else "new",
+                        "status": c.questionnaire.get(
+                            "status", "assigned" if c.status == "assigned" else "new"
+                        ),
                         "vacancyId": aliases.get(
                             str(assigned[c.id]), str(assigned[c.id])
                         )

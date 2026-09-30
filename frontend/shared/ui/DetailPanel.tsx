@@ -5,7 +5,7 @@ import { X, GripVertical } from "lucide-react";
 
 /** Shared, independently scrollable inspector. Width is adjustable by pointer or keyboard. */
 export function DetailPanel({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  const [width, setWidth] = useState(360);
+  const [width, setWidth] = useState(720);
   const panelRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const panel = panelRef.current;
