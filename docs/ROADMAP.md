@@ -50,13 +50,35 @@ not declare resume storage, pipeline mutations or full MVP acceptance complete.
 - [ ] Add tenant-scoped manual candidate/application status and stage mutations with audit.
 - [ ] Expose application stage/state for pipeline rendering; distinguish application from HR assignment.
 - [ ] Add candidate-history/notes and notification list/read APIs before replacing their demo blocks.
-- [ ] Complete admin UI coverage and OAuth candidate-profile provisioning checks.
+- [x] Owner/admin user CRUD, protected owner role and opt-in administration UI; verify real sessions and server authorization.
+- [ ] Complete remaining admin UI coverage and OAuth candidate-profile provisioning checks.
 - [ ] Persist the currently demo vacancy conditions (location, employment, salary, experience, recruiter) through reviewed schema/migrations.
 - [ ] Prove complete M5 acceptance with storage, manual statuses and full access/submission audit.
 
 Existing tokens must be refreshed or the user must sign in again after the new
 HR permission migration; permissions in an issued access JWT do not change in place.
 No API failure may enable a seed-data fallback. LLM/MCP/memory remain post-MVP.
+### Owner-only developer mode and administration — completed (2026-09-30)
+
+Evidence: [real-session browser and regression checklist](verification/DEV_MODE_ADMINISTRATION.md),
+[ATS schema](ATS_SCHEMA.md), [permission matrix](RBAC.md).
+This supersedes the unrestricted demo switch and earlier mocked-session browser check below.
+
+- [x] Separate `superuser` from administrator; reserve developer access and previewing any role for the owner.
+- [x] Apply owner-role migration to local Compose and initialize the configured owner without promoting ordinary administrators.
+- [x] Enforce owner-only developer access on the server; reject localStorage spoofing and direct development URLs for other accounts.
+- [x] Add owner/admin administration controls, off by default, resetting on role/session/data-mode changes and reload.
+- [x] Hide unavailable vacancy/candidate/user create/edit/delete controls and close already exposed management forms/menus when administration is off.
+- [x] Provide owner/admin user CRUD through API and local test data; prohibit administrator promotion to or modification of superuser.
+- [x] Fix consent/OAuth cascade on user deletion and add a database regression test.
+- [x] Share vacancy views/forms between API and developer mode; keep demo IDs out of live API requests during reload.
+- [x] Verify all six local previews and real sessions for owner plus all five ordinary roles with agent-browser, including negative API checks with valid CSRF.
+- [x] Verify real/local CRUD, persistence, mobile 390px and cleanup; run 47 targeted backend and 12 frontend tests.
+- [x] Update generated contracts, ATS/RBAC documentation, changelog and acceptance checklists.
+
+These checks close this administration/dev-mode scope, not the remaining M4/M5
+resume storage, manual status, audit or missing read-API requirements.
+
 ### Role demo layout — completed (2026-09-30)
 
 Local frontend demo; these items do not cover the server stages of AI/MCP and MVP acceptance.
@@ -103,7 +125,7 @@ Not current work: LLM, MCP, n8n, Telegram, WhatsApp or Memory.
 - [x] Tenant scope is applied to ATS data.
 - [x] PostgreSQL RLS is enabled and tested.
 - [ ] Tenant/RBAC tests cover candidate, recruiter, manager, HR and admin access.
-- [ ] Candidate and HR access rules are documented.
+- [x] Candidate, HR, administrator and owner access rules are documented in ATS/RBAC matrices.
 
 ## Milestone 3 — Vacancy and candidate CRUD
 
@@ -127,7 +149,7 @@ Not current work: LLM, MCP, n8n, Telegram, WhatsApp or Memory.
 
 ## Milestone 5 — MVP acceptance
 
-- [ ] recruiter can create a vacancy.
+- [ ] Vacancy creation and the complete acceptance flow follow the permission matrix (superuser/administrator/HR write; recruiter reads and submits resumes).
 - [ ] Candidate or recruiter can submit a resume through the HTML form.
 - [ ] Candidate appears in the HR tenant pool.
 - [ ] HR can attach the candidate to a vacancy.

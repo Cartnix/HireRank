@@ -61,11 +61,15 @@ async def init_db(session: AsyncSession) -> None:
             )
         )
     ).first()
+    if user and not user.is_superuser:
+        user.role = UserRole.SUPERUSER
+        session.add(user)
+        await session.commit()
     if not user:
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,
             password=settings.FIRST_SUPERUSER_PASSWORD,
-            role=UserRole.ADMINISTRATOR,
+            role=UserRole.SUPERUSER,
             tenant_id=settings.TENANT_ID,
             first_name="Admin",
             last_name="User",

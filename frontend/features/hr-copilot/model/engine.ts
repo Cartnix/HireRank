@@ -264,7 +264,7 @@ export function addVacancy(
   actor: Role,
   input: Omit<Vacancy, "id" | "tenantId">,
 ): Vacancy {
-  if (actor !== "hr" && actor !== "administrator")
+  if (actor !== "hr" && actor !== "administrator" && actor !== "superuser")
     throw Error("Нет прав на создание вакансии");
   if (!state.tenants.some((x) => x.id === tenantId)) throw Error("Нет tenant");
 
@@ -280,7 +280,7 @@ export function removeVacancy(
   actor: Role,
   vacancyId: string,
 ): void {
-  if (actor !== "hr" && actor !== "administrator")
+  if (actor !== "hr" && actor !== "administrator" && actor !== "superuser")
     throw Error("Нет прав на удаление вакансии");
   const vacancy = state.vacancies.find(
     (item) => item.id === vacancyId && item.tenantId === tenantId,
@@ -305,7 +305,7 @@ export function confirmDecision(
   evaluationId: string,
   action: Action,
 ) {
-  if (role !== "hr") throw Error("Только HR подтверждает решение");
+  if (role !== "hr" && role !== "superuser") throw Error("Только HR подтверждает решение");
   const evaluation = state.evaluations.find(
     (x) => x.id === evaluationId && x.tenantId === tenantId,
   );
@@ -337,7 +337,7 @@ export function confirmDecision(
     evaluationId,
     tool,
     action,
-    approvedBy: "hr",
+    approvedBy: role,
     status: "success",
     createdAt: timestamp,
   });
@@ -349,7 +349,7 @@ export function confirmDecision(
   audit(
     state,
     tenantId,
-    "hr",
+    role,
     "mcp.executed",
     `${tool}; approval=${evaluationId}; run=${runId}`,
     candidate.id,
@@ -370,7 +370,7 @@ export function saveMemory(
   evaluationId: string,
   reason: string,
 ) {
-  if (role !== "hr" || !reason.trim())
+  if ((role !== "hr" && role !== "superuser") || !reason.trim())
     throw Error("Требуется проверенное обоснование HR");
   const evaluation = state.evaluations.find(
     (x) =>
@@ -403,7 +403,7 @@ export function saveMemory(
   audit(
     state,
     tenantId,
-    "hr",
+    role,
     "memory.confirmed",
     "Markdown записан после проверки HR",
     candidate.id,

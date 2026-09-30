@@ -19,6 +19,7 @@ export const label: Record<Role, string> = {
   manager: "Менеджер",
   candidate: "Кандидат",
   administrator: "Администратор",
+  superuser: "Суперюзер",
 };
 
 export const actionLabel: Record<Action, string> = {
@@ -64,4 +65,5 @@ export const allowedTabs: Record<Role, Tab[]> = {
   manager: [],
   candidate: ["intake"],
   administrator: ["audit"],
+  superuser: ["copilot", "intake", "memory", "audit"],
 };

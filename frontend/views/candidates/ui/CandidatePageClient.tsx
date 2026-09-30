@@ -36,7 +36,7 @@ function LiveCandidatesPageClient({
 
   async function submitIntake(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (saving) return;
+    if (saving || (!can("candidate.create") && user?.role !== "candidate")) return;
     const values = new FormData(event.currentTarget);
     const file = event.currentTarget.querySelector<HTMLInputElement>('input[name="resumeFile"]')?.files?.[0];
     if (file) { setFormMessage("Загрузка файлов ожидает backend. Введите текст резюме или ссылку; файл сейчас не будет сохранён."); return; }
@@ -174,8 +174,7 @@ function LiveCandidatesPageClient({
           title="Кандидаты"
           subtitle="Кандидатский пул компании и текущий этап рассмотрения."
         />
-        <MainButton
-          disabled={!can("candidate.create") && user?.role !== "candidate"}
+        {(can("candidate.create") || user?.role === "candidate") && <MainButton
           onClick={() => {
             setFormMessage("");
             setIsIntakeOpen(true);
@@ -184,7 +183,7 @@ function LiveCandidatesPageClient({
           className="h-10 gap-2 rounded-lg px-4"
         >
           <Plus size={15} />
-        </MainButton>
+        </MainButton>}
       </header>
 
       <section
@@ -241,7 +240,7 @@ function LiveCandidatesPageClient({
         jobById={jobById}
         onOpenCandidate={openCandidate}
       />
-      {isIntakeOpen && (
+      {isIntakeOpen && (can("candidate.create") || user?.role === "candidate") && (
         <div
           role="dialog"
           aria-modal="true"

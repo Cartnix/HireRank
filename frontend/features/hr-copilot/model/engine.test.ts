@@ -38,3 +38,15 @@ test("tenant and memory are isolated; memory is included only when HR enables it
   assert.equal(evaluate(state, candidate, vacancy, "hr").input.memory.length, 1);
   assert.throws(() => evaluate(state, candidate, { ...vacancy, tenantId: "another-tenant" }, "hr"));
 });
+
+
+test("superuser can confirm a draft and is recorded as the actual actor", () => {
+  const state = freshState();
+  const candidate = state.candidates[0];
+  const vacancy = state.vacancies.find(v => v.id === candidate.vacancyId)!;
+  const evaluation = evaluate(state, candidate, vacancy, "superuser");
+  const action = evaluation.output.recommendations[0].action;
+  confirmDecision(state, candidate.tenantId, "superuser", evaluation.id, action);
+  assert.equal(state.mcpRuns[0].approvedBy, "superuser");
+  assert.equal(state.audit.find(entry => entry.action === "mcp.executed")?.actor, "superuser");
+});

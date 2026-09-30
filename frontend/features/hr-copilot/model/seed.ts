@@ -3,6 +3,7 @@ import type { CopilotState } from "./types";
 const tenantId = "550e8400-e29b-41d4-a716-446655440000";
 export const initialCopilotState: CopilotState = {
   version: 1,
+  users: ["superuser", "administrator", "hr", "manager", "recruiter", "candidate"].map((role, i) => ({ id: `a0000000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`, tenant_id: tenantId, email: `${role}@example.com`, role: role as CopilotState["users"][number]["role"], is_active: true, first_name: role, last_name: null })),
   tenants: [{ id: tenantId, name: "HireRank · Demo Enterprise" }],
   vacancies: [
     { id: "v-design", tenantId, title: "Product Designer", department: "Продукт", location: "Астана · гибрид", description: "Исследования пользователей, прототипы и дизайн системы.", open: true },

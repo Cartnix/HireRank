@@ -1,3 +1,4 @@
+import { initialCopilotState } from "./seed";
 import { evaluate, freshState, parseSavedState } from "./engine";
 import type { CopilotState } from "./types";
 
@@ -13,6 +14,8 @@ export function loadCopilotState(): CopilotState {
   }
 
   const tenantId = "550e8400-e29b-41d4-a716-446655440000";
+  if (!state.users.length) state.users = structuredClone(initialCopilotState.users);
+  state.users = state.users.filter(user => user.tenant_id === tenantId);
   state.tenants = [{ id: tenantId, name: "HireRank · Demo Enterprise" }];
   for (const key of ["vacancies", "candidates", "prompts", "evaluations", "feedback", "notifications", "audit", "memory", "mcpRuns"] as const) {
     // Remove legacy second-tenant demo records when loading existing browser storage.

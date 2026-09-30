@@ -1275,6 +1275,7 @@
   "UserRole": {
     "type": "string",
     "enum": [
+      "superuser",
       "administrator",
       "hr",
       "manager",

@@ -6,13 +6,14 @@ Roles and permission matrix for the self-hosted (Core) ATS.
 
 | Role | Description |
 |------|-------------|
+| `superuser` | Application owner; all current and future permissions; exclusive developer mode and role preview |
 | `administrator` | Admin panel and user management; full vacancy CRUD; resume upload |
 | `hr` | Candidate intake; vacancy CRUD; resume upload |
 | `manager` | Read vacancies and scoped candidate records |
 | `recruiter` | Resume upload; read all enterprise vacancies |
 | `candidate` | Resume upload; read vacancies; own candidate profile |
 
-`administrator` is created via seed / admin tooling, not public registration.
+`superuser` is assigned only to the configured `FIRST_SUPERUSER` by initialization after migrations. Existing administrators remain administrators. Neither privileged role is available through public registration. Administrators cannot create, promote, edit, deactivate or delete a superuser. Only a superuser can grant that role. Management accounts cannot disable, demote or delete themselves.
 
 Registerable roles: `candidate`, `hr`, `manager`, `recruiter`.
 
@@ -20,21 +21,31 @@ Registerable roles: `candidate`, `hr`, `manager`, `recruiter`.
 
 Stored in PostgreSQL tables `role`, `permission`, and `role_permission` (M2M). Seeded by Alembic; admins can change grants without redeploying application code.
 
-| Permission | administrator | hr | manager | recruiter | candidate |
-|------------|:-------------:|:--:|:-------:|:---------:|:---------:|
-| `admin.panel` | yes | no | no | no | no |
-| `users.manage` | yes | no | no | no | no |
-| `vacancy.create` | yes | yes | no | no | no |
-| `vacancy.update` | yes | yes | no | no | no |
-| `vacancy.delete` | yes | yes | no | no | no |
-| `vacancy.read` | yes | yes | yes | yes | yes |
-| `resume.upload` | yes | yes | no | yes | yes |
-| `candidate.read` | yes (all) | yes (all) | scoped | no | own |
-| `candidate.create` | yes | yes | no | no | no |
-| `candidate.update` | yes | yes | no | no | own (ABAC) |
-| `candidate.delete` | yes | no | no | no | no |
-| `application.assign` | yes | yes | no | no | no |
-| `application.read` | yes | yes | yes | no | no |
+| Permission | superuser | administrator | hr | manager | recruiter | candidate |
+|------------|:---------:|:-------------:|:--:|:-------:|:---------:|:---------:|
+| `developer.access` | yes | no | no | no | no | no |
+| `admin.panel` | yes | yes | no | no | no | no |
+| `users.manage` | yes | yes | no | no | no | no |
+| `vacancy.create` | yes | yes | yes | no | no | no |
+| `vacancy.update` | yes | yes | yes | no | no | no |
+| `vacancy.delete` | yes | yes | yes | no | no | no |
+| `vacancy.read` | yes | yes | yes | yes | yes | yes |
+| `resume.upload` | yes | yes | yes | no | yes | yes |
+| `candidate.read` | yes | yes (all) | yes (all) | scoped | no | own |
+| `candidate.create` | yes | yes | yes | no | no | no |
+| `candidate.update` | yes | yes | yes | no | no | own (ABAC) |
+| `candidate.delete` | yes | yes | no | no | no | no |
+| `application.assign` | yes | yes | yes | no | no | no |
+| `application.read` | yes | yes | yes | yes | no | no |
+| `application.apply` | yes | no | no | no | no | own open vacancy |
+
+### Developer mode and administration controls
+
+`GET /users/me/developer-access` checks the active database user role and rejects every role except `superuser` with 403. The frontend waits for session loading and this endpoint before enabling developer data or restoring a saved preview role. Changing browser storage cannot authorize a non-owner. Preview roles affect only local test data and do not change the authenticated API identity. Development routes are gated by the preview role.
+
+The administration checkbox is available to administrators and superusers (including their developer previews), starts off, and resets when the identity, preview role or data mode changes. Without it, management buttons for vacancies, candidates and users are hidden; reads remain available. HR, manager, recruiter and candidate keep their existing matrix. This checkbox controls the interface; server authorization always uses the authenticated user and permissions independently.
+
+Superuser permission loading includes every permission in the database, and server permission checks accept the active owner for future permissions as well. Tenant RLS still applies.
 
 Manager scope and candidate “own” checks are enforced on domain endpoints
 (ABAC), not only by the static matrix. HR can attach candidates to vacancies in

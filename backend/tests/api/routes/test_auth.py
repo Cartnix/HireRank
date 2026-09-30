@@ -130,9 +130,7 @@ async def test_candidate_registration_creates_owned_candidate_profile(
     assert response.status_code == 201, response.text
     access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
     assert access
-    payload = jwt.decode(
-        access, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-    )
+    payload = jwt.decode(access, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
     candidate = (
         await db.exec(
             select(Candidate).where(Candidate.user_id == uuid.UUID(payload["sub"]))
@@ -171,6 +169,10 @@ async def test_rbac_permissions_matrix_from_db(db: AsyncSession) -> None:
     admin = set(
         await crud.get_permissions_for_role(session=db, role_name="administrator")
     )
+    owner = set(await crud.get_permissions_for_role(session=db, role_name="superuser"))
+    assert admin < owner
+    assert "developer.access" in owner
+    assert "developer.access" not in admin
     hr = set(await crud.get_permissions_for_role(session=db, role_name="hr"))
     manager = set(await crud.get_permissions_for_role(session=db, role_name="manager"))
     recruiter = set(
@@ -188,7 +190,7 @@ async def test_rbac_permissions_matrix_from_db(db: AsyncSession) -> None:
     assert "vacancy.delete" in hr
     assert "candidate.create" in hr
     assert "application.assign" in admin
-    assert "application.assign" not in hr
+    assert "application.assign" in hr  # c4d5e6f7a8b9 / UC-04
     assert "application.assign" not in manager
     assert "application.apply" in candidate
     assert "application.assign" not in candidate

@@ -104,6 +104,7 @@ async def to_public(session: AsyncSession, candidate: Candidate) -> CandidatePub
 def can_view_candidate(*, viewer: User, candidate: Candidate) -> bool:
     role = role_str(viewer.role)
     if role in {
+        UserRole.SUPERUSER.value,
         UserRole.ADMINISTRATOR.value,
         UserRole.HR.value,
         UserRole.RECRUITER.value,

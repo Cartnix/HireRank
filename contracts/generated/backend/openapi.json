@@ -1177,6 +1177,35 @@
         ]
       }
     },
+    "/api/v1/users/me/developer-access": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Developer Access",
+        "operationId": "users-developer_access",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/signup": {
       "post": {
         "tags": [
@@ -2426,7 +2455,15 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
       }
     }
   },
@@ -3708,6 +3745,7 @@
       "UserRole": {
         "type": "string",
         "enum": [
+          "superuser",
           "administrator",
           "hr",
           "manager",

@@ -6,6 +6,7 @@ export const RoleSchema = z.enum([
   "hr",
   "manager",
   "administrator",
+  "superuser",
 ]);
 export const StatusSchema = z.enum([
   "new",
@@ -16,6 +17,8 @@ export const StatusSchema = z.enum([
 ]);
 export const ActionSchema = z.enum(["review", "interview", "rejected"]);
 export const VacancySchema = z.object({
+  status: z.enum(["draft", "open", "closed"]).optional(),
+  stages: z.array(z.object({ id: z.string(), stage_name: z.string(), sort_order: z.number().int() })).optional(),
   id: z.string(),
   tenantId: z.string(),
   title: z.string().min(2),
@@ -130,11 +133,17 @@ export const McpRunSchema = z.object({
   evaluationId: z.string(),
   tool: z.string(),
   action: ActionSchema,
-  approvedBy: z.literal("hr"),
+  approvedBy: z.enum(["hr", "superuser"]),
   status: z.literal("success"),
   createdAt: z.string(),
 });
+export const DemoUserSchema = z.object({
+  id: z.string(), tenant_id: z.string(), email: z.string().email(),
+  role: RoleSchema, is_active: z.boolean(),
+  first_name: z.string().nullable(), last_name: z.string().nullable(),
+});
 export const CopilotStateSchema = z.object({
+  users: z.array(DemoUserSchema).default([]),
   version: z.literal(1),
   tenants: z.array(z.object({ id: z.string(), name: z.string() })),
   vacancies: z.array(VacancySchema),

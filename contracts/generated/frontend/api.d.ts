@@ -366,6 +366,23 @@ export interface paths {
         patch: operations["users-update_password_me"];
         trace?: never;
     };
+    "/api/v1/users/me/developer-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Developer Access */
+        get: operations["users-developer_access"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/signup": {
         parameters: {
             query?: never;
@@ -1195,7 +1212,7 @@ export interface components {
          * UserRole
          * @enum {string}
          */
-        UserRole: "administrator" | "hr" | "manager" | "recruiter" | "candidate";
+        UserRole: "superuser" | "administrator" | "hr" | "manager" | "recruiter" | "candidate";
         /** UserUpdate */
         UserUpdate: {
             /** Email */
@@ -2113,6 +2130,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "users-developer_access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
                 };
             };
         };

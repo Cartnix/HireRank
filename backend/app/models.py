@@ -32,6 +32,7 @@ def get_datetime_utc() -> datetime:
 
 
 class UserRole(StrEnum):
+    SUPERUSER = "superuser"
     ADMINISTRATOR = "administrator"
     HR = "hr"
     MANAGER = "manager"
@@ -276,8 +277,12 @@ class User(UserBase, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     tenant: Tenant | None = Relationship(back_populates="users")
-    oauth_identities: list["OAuthIdentity"] = Relationship(back_populates="user")
-    consents: list["UserConsent"] = Relationship(back_populates="user")
+    oauth_identities: list["OAuthIdentity"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"passive_deletes": "all"}
+    )
+    consents: list["UserConsent"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"passive_deletes": "all"}
+    )
     vacancies_created: list["Vacancy"] = Relationship(back_populates="creator")
     interviews_as_interviewer: list["Interview"] = Relationship(
         back_populates="interviewer"
@@ -289,7 +294,7 @@ class User(UserBase, table=True):
 
     @property
     def is_superuser(self) -> bool:
-        return role_str(self.role) == UserRole.ADMINISTRATOR.value
+        return role_str(self.role) == UserRole.SUPERUSER.value
 
 
 class UserConsent(SQLModel, table=True):

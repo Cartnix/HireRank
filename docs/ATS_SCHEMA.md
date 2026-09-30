@@ -130,3 +130,33 @@ the current MVP roadmap.
 | Extra: pagination + rate limit              | Lists `le=100`; dashboard rate-limited                                                        |
 | Extra: API stage check                      | `validate_stage_for_vacancy` (complements composite FK)                                       |
 | Reject                                      | Strip RLS from `candidate` (conflicts UC-07)                                                  |
+
+## Owner role and administration matrix
+
+`role.name = 'superuser'` identifies the application owner above `administrator`.
+The `user.role` foreign key references this role; public signup excludes both
+privileged roles. Migration `d5e6f7a8b9c0` creates the role and exclusive
+`developer.access` permission, with grants to every existing permission. The
+configured `FIRST_SUPERUSER` account is promoted during application initialization;
+other administrators are not promoted. See [the complete permission matrix](RBAC.md).
+
+| Operation | superuser | administrator | HR | manager | recruiter | candidate |
+| --- | --- | --- | --- | --- | --- | --- |
+| Developer test data / preview any role | yes | no | no | no | no | no |
+| User create / read / update / delete | all | below owner | no | no | no | own account |
+| Grant / edit / remove superuser | yes | no | no | no | no | no |
+| Vacancy create / update / status / delete | yes | yes | yes | no | no | no |
+| Candidate create / update | yes | yes | yes | no | intake only | own questionnaire |
+| Candidate delete | yes | yes | no | no | no | no |
+| Candidate read | all | all | all | assigned scope | no pool | own |
+| Assign candidate to vacancy | yes | yes | yes | no | no | no |
+| Apply to an open vacancy | yes | no | no | no | no | own |
+| Development audit | yes | preview only | no | no | no | no |
+
+The frontend administration checkbox reveals management controls for owner/admin;
+server RBAC and tenant RLS remain authoritative. No role-preview value is sent as
+an API credential. Demo user rows use the API field names (`id`, `tenant_id`,
+`email`, `role`, `is_active`, `first_name`, `last_name`). Vacancy lists, detail
+cards and create forms share production components. Copilot evaluations,
+recommendations, local resume files and memory remain frontend prototypes;
+internal demo models are adapted to shared display models, not sent to API writes.

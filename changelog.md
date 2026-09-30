@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-30 — Superuser developer access and administration controls
+
+- [x] Added the owner role `superuser` above administrator, with all current/future permissions and exclusive developer access. Public registration excludes privileged roles; administrators cannot grant or manage superuser accounts.
+- [x] Applied migration `d5e6f7a8b9c0` to the local Compose database and initialized the configured `FIRST_SUPERUSER`. Existing administrators were not promoted.
+- [x] Developer mode waits for the real session and protected `/users/me/developer-access` response; localStorage cannot authorize ordinary users. Reloading demo detail pages no longer sends demo IDs to the production API.
+- [x] Added the owner/admin administration checkbox, off by default. Role/identity/data-mode changes and reload reset it. Unavailable create/edit/delete controls are hidden, including open forms and the vacancy action menu.
+- [x] Added user CRUD in API mode and local previews. Fixed deletion after legal acceptance: consent/OAuth relationships use existing database cascades instead of ORM NULL updates.
+- [x] Vacancies in developer mode share the production list, detail and create form; local status edits and user edits persist. Owner Copilot actions are attributed to `superuser` in the local audit.
+- [x] Updated ATS/RBAC matrices and generated backend/frontend contracts.
+- [x] Verified with agent-browser using real owner/admin/HR/manager/recruiter/candidate sessions: owner 200, all other developer requests 403, administrator owner-management attempts 403, role scopes, CRUD, reload and mobile 390px.
+- [x] Removed five temporary real users and the temporary vacancy through the UI, restored demo storage, cleared temporary credentials and closed the browser.
+- [x] Regression validation: 47 targeted backend tests on an isolated test database, 12 frontend tests, TypeScript, ESLint, Ruff and whitespace checks.
+
+Evidence and acceptance checklist: [developer/administration verification](docs/verification/DEV_MODE_ADMINISTRATION.md).
+The earlier demo-layout check used a test session; this entry verifies real server authorization.
+The checkbox changes UI controls, not server grants. AI/MCP/memory remain frontend previews;
+full resume storage, manual application statuses and M4/M5 acceptance are not declared complete.
+
 ## 2026-09-30 — Demo layout by role
 
 - [x] The demo is distributed across the dashboard, candidates, and vacancies without duplication in Copilot.

@@ -64,7 +64,7 @@ async def build_dashboard(
     ).one()
     total_users = (await session.exec(select(func.count()).select_from(User))).one()
 
-    if role == UserRole.ADMINISTRATOR.value:
+    if role in {UserRole.SUPERUSER.value, UserRole.ADMINISTRATOR.value}:
         return AdminDashboard(
             total_candidates=int(total_candidates),
             unassigned_candidates=int(unassigned),

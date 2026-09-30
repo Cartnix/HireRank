@@ -53,19 +53,21 @@ export function Sidebar() {
           </div>
         </div>
 
-        <div className="mx-3 my-3 space-y-2 rounded-lg border border-border p-3">
+        {demo.canDevelop && <div className="mx-3 my-3 space-y-2 rounded-lg border border-border p-3">
           <label className="flex gap-2 text-xs"><input type="checkbox" checked={demo.enabled} onChange={e => { demo.setEnabled(e.target.checked); router.push("/dashboard"); }} /> Dev mode</label>
           <p className="text-xs text-muted-foreground">{demo.enabled ? "Песочница: тестовые данные и функции в разработке" : "Данные из API"}</p>
           {demo.enabled && <label className="block text-xs">Роль в песочнице<select aria-label="Роль в песочнице" className="mt-2 w-full rounded border border-input bg-background p-2" value={demo.role} onChange={e => { demo.setRole(e.target.value as Role); router.push("/dashboard"); }}>{Object.entries(label).map(([role, name]) => <option key={role} value={role}>{name}</option>)}</select></label>}
-        </div>
-        {(demo.enabled && demo.role === "administrator") && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/audit">Журнал действий</Link>}
+        </div>}
+        {demo.canAdminister && <label className="mx-3 my-2 flex gap-2 rounded-lg border border-border p-3 text-xs"><input type="checkbox" checked={demo.administration} onChange={e => demo.setAdministration(e.target.checked)} /> Режим администрирования</label>}
+        {demo.canAdminister && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/users">Пользователи</Link>}
+        {(demo.enabled && ["administrator", "superuser"].includes(demo.role)) && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/audit">Журнал действий</Link>}
         <div className="my-3 h-px bg-sidebar-border" />
 
         <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide/ text-muted-foreground/70">
           Основное
         </div>
 
-        {navItems.filter(item => demo.enabled ? (demoCan(demo.role, item.id) || (["calendar", "agent"].includes(item.id) && ["hr", "administrator"].includes(demo.role))) : ["dashboard", "jobs", "candidates"].includes(item.id)).map((item) => {
+        {navItems.filter(item => demo.enabled ? (demoCan(demo.role, item.id) || (["calendar", "agent"].includes(item.id) && ["hr", "administrator", "superuser"].includes(demo.role))) : ["dashboard", "jobs", "candidates"].includes(item.id)).map((item) => {
           const Icon = item.icon;
           const isActive =
             item.href === "/dashboard"

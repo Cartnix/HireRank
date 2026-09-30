@@ -566,7 +566,10 @@ async def forget_me(
     """
     GDPR Art.17 / RK §3.3 — revoke consents, anonymize auth identity, clear session.
     """
-    if role_str(current_user.role) == UserRole.ADMINISTRATOR.value:
+    if role_str(current_user.role) in {
+        UserRole.SUPERUSER.value,
+        UserRole.ADMINISTRATOR.value,
+    }:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrators cannot self-erase via forget-me",

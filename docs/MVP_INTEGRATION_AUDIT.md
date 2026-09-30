@@ -98,3 +98,22 @@ file storage, ручные статусы, полноценный consent/access
 read APIs остаются отдельными задачами. Дополнительно regression-тесты обнаружили
 отсутствующий HR grant `application.assign`; он восстановлен новой миграцией
 `c4d5e6f7a8b9`, без изменения ранее выпущенных миграций.
+
+
+## Developer access and administration follow-up (2026-09-30)
+
+The owner/admin work has now been verified against the running local Compose
+API/database with **real sessions** through agent-browser. This replaces the
+previous mocked-session evidence for developer access, without changing the
+historical audit findings above.
+
+- [x] Apply `d5e6f7a8b9c0` and initialize the configured owner.
+- [x] Separate owner-only developer access from administrator permissions.
+- [x] Reject ordinary role/localStorage spoofing with server 403s; prohibit admin owner edits, deletion, self-promotion and creation of a superuser.
+- [x] Verify administration off/on, role/data-mode/reload resets, user CRUD and shared vacancy views with real API persistence.
+- [x] Fix user deletion with consent/OAuth links, unavailable controls still shown as disabled, and demo IDs reaching the live API while authorization loads.
+- [x] Verify six developer previews, five ordinary real sessions, mobile 390px, final browser errors and cleanup of temporary records.
+- [x] Run 47 targeted backend and 12 frontend regression tests; refresh ATS/RBAC and generated contracts.
+- [ ] Full M4/M5 remains open for the storage, validation, status/audit and missing APIs listed above.
+
+Details and reproduction commands: [verification checklist](verification/DEV_MODE_ADMINISTRATION.md).

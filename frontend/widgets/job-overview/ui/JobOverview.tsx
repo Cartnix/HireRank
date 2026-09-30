@@ -26,7 +26,7 @@ export function JobOverview({
   onUpdateStages,
   onOpenCandidate,
   onDeleteJob,
-  canUpdate = true, canDelete = true, onUpdateJob,
+  canUpdate = false, canDelete = false, onUpdateJob,
 }: {
   canUpdate?: boolean; canDelete?: boolean;
   onUpdateJob?: (id: string, payload: import("@/shared/api/ats").VacancyUpdate) => Promise<void>;
@@ -56,6 +56,7 @@ export function JobOverview({
   }, [isMenuOpen]);
 
   const handleDelete = async () => {
+    if (!canDelete) return;
     if (!confirm(`Удалить вакансию «${job.title}»? Это действие необратимо.`)) {
       return;
     }
@@ -108,7 +109,7 @@ export function JobOverview({
           </div>
         </div>
 
-        <div ref={menuRef} className="relative">
+        {canDelete && <div ref={menuRef} className="relative">
           <GhostButton
             icon={<MoreHorizontal size={15} />}
             onClick={() => setIsMenuOpen((prev) => !prev)}
@@ -128,7 +129,7 @@ export function JobOverview({
               </button>
             </div>
           )}
-        </div>
+        </div>}
       </header>
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-border pb-5 text-sm">
@@ -231,7 +232,7 @@ export function JobOverview({
           </section>
         </Card>
 
-        {enabled && <aside>
+        {enabled && canUpdate && <aside>
           <StagesEditor
             demo
             stages={job.stages ?? []}

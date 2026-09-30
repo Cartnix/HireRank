@@ -19,7 +19,7 @@ from app.core.config import settings
 from app.core.context import set_tenant_id, set_user_id, set_user_role
 from app.core.db import async_session_maker
 from app.core.token_store import get_token_store
-from app.models import TokenPayload, User, UserRole, role_str
+from app.models import TokenPayload, User, role_str
 
 # OpenAPI: OAuth2 password flow (Swagger Authorize) + documented access cookie.
 # Runtime: Authorization Bearer wins when present (Swagger same-origin + cookies);
@@ -269,7 +269,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:
-    if role_str(current_user.role) != UserRole.ADMINISTRATOR.value:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=403, detail="The user doesn't have enough privileges"
         )
@@ -281,7 +281,9 @@ def require_permission(permission: str) -> Callable[..., User]:
         permissions: Collection[str] = getattr(
             request.state, "permissions", frozenset()
         )
-        if not has_permission(permissions, permission):
+        if not current_user.is_superuser and not has_permission(
+            permissions, permission
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",

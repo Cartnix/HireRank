@@ -15,6 +15,7 @@ function LiveJobsPageClient({ initialSelectedJobId = null }: { initialSelectedJo
   const [actionError, setActionError] = useState("");
   const selectedJob = jobs.find(j => j.id === initialSelectedJobId) ?? null;
   const runUpdate = async (id: string, payload: Parameters<typeof updateVacancy>[1]) => {
+    if (!can("vacancy.update")) return;
     setActionError("");
     try { await updateVacancy(id, payload); reload(); }
     catch (e) { setActionError(e instanceof Error ? e.message : "Не удалось изменить вакансию"); }
@@ -28,8 +29,8 @@ function LiveJobsPageClient({ initialSelectedJobId = null }: { initialSelectedJo
       onCreateJob={() => setIsCreateModalOpen(true)} canCreate={can("vacancy.create")} canUpdate={can("vacancy.update")} canDelete={can("vacancy.delete")}
       onUpdateJob={runUpdate} onUpdateStages={() => setActionError("Dev mode · редактирование этапов ожидает backend")}
       onOpenCandidate={id => router.push(`/dashboard/candidates/${id}`)}
-      onDeleteJob={async id => { await deleteVacancy(id); reload(); }} />
-    {isCreateModalOpen && <NewJobModal onClose={() => setIsCreateModalOpen(false)} createJob={createVacancy}
+      onDeleteJob={async id => { if (!can("vacancy.delete")) return; await deleteVacancy(id); reload(); }} />
+    {isCreateModalOpen && can("vacancy.create") && <NewJobModal onClose={() => setIsCreateModalOpen(false)} createJob={createVacancy}
       onCreate={(job: Job) => { setIsCreateModalOpen(false); reload(); router.push(`/dashboard/jobs/${job.id}`); }} />}
   </>;
 }

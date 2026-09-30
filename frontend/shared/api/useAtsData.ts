@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useOptionalDemo } from "@/features/demo/DemoProvider";
 import { useAuthSession } from "@/features/auth/AuthProvider";
 import type { Candidate } from "@/entities/candidate/model/types";
 import type { Job } from "@/entities/job/model/types";
@@ -7,12 +8,14 @@ import { candidateDetail, listCandidateViews, listVacancyViews, vacancyDetail } 
 
 export function useAtsData(candidateId?: string | null, vacancyId?: string | null) {
   const { user, isLoading: sessionLoading } = useAuthSession();
+  const demo = useOptionalDemo();
+  const canMutate = demo?.canMutate ?? !["superuser", "administrator"].includes(user?.role ?? "");
   const [data, setData] = useState<{ candidates: Candidate[]; jobs: Job[] }>({ candidates: [], jobs: [] });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState(0);
   const reload = useCallback(() => setVersion(v => v + 1), []);
-  const can = useCallback((permission: string) => user?.permissions?.includes(permission) ?? false, [user]);
+  const can = useCallback((permission: string) => (user?.role === "superuser" || (user?.permissions?.includes(permission) ?? false)) && (permission.endsWith(".read") || canMutate), [user, canMutate]);
   useEffect(() => {
     if (sessionLoading) return;
     let cancelled = false;

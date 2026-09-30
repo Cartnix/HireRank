@@ -345,7 +345,8 @@
               "recruiter",
               "hr",
               "manager",
-              "administrator"
+              "administrator",
+              "superuser"
             ]
           },
           "action": {
@@ -457,6 +458,61 @@
       "CopilotStateSchema": {
         "type": "object",
         "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "tenant_id": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "candidate",
+                    "recruiter",
+                    "hr",
+                    "manager",
+                    "administrator",
+                    "superuser"
+                  ]
+                },
+                "is_active": {
+                  "type": "boolean"
+                },
+                "first_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "last_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "tenant_id",
+                "email",
+                "role",
+                "is_active",
+                "first_name",
+                "last_name"
+              ],
+              "additionalProperties": false
+            },
+            "default": []
+          },
           "version": {
             "type": "number",
             "const": 1
@@ -485,6 +541,37 @@
             "items": {
               "type": "object",
               "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "open",
+                    "closed"
+                  ]
+                },
+                "stages": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "stage_name": {
+                        "type": "string"
+                      },
+                      "sort_order": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "stage_name",
+                      "sort_order"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
                 "id": {
                   "type": "string"
                 },
@@ -504,6 +591,48 @@
                 "description": {
                   "type": "string",
                   "minLength": 4
+                },
+                "requirements": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "employmentType": {
+                  "type": "string",
+                  "enum": [
+                    "full-time",
+                    "part-time",
+                    "internship"
+                  ]
+                },
+                "experience": {
+                  "type": "string"
+                },
+                "salaryMin": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "salaryMax": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "recruiter": {
+                  "type": "string"
                 },
                 "open": {
                   "type": "boolean"
@@ -887,14 +1016,7 @@
                   "type": "string"
                 },
                 "role": {
-                  "type": "string",
-                  "enum": [
-                    "candidate",
-                    "recruiter",
-                    "hr",
-                    "manager",
-                    "administrator"
-                  ]
+                  "$ref": "#/components/schemas/CopilotStateSchema/properties/users/items/properties/role"
                 },
                 "candidateId": {
                   "type": [
@@ -942,7 +1064,7 @@
                   ]
                 },
                 "actor": {
-                  "$ref": "#/components/schemas/CopilotStateSchema/properties/notifications/items/properties/role"
+                  "$ref": "#/components/schemas/CopilotStateSchema/properties/users/items/properties/role"
                 },
                 "action": {
                   "type": "string"
@@ -1026,7 +1148,10 @@
                 },
                 "approvedBy": {
                   "type": "string",
-                  "const": "hr"
+                  "enum": [
+                    "hr",
+                    "superuser"
+                  ]
                 },
                 "status": {
                   "type": "string",
@@ -1114,6 +1239,37 @@
               "vacancy": {
                 "type": "object",
                 "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "open",
+                      "closed"
+                    ]
+                  },
+                  "stages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "stage_name": {
+                          "type": "string"
+                        },
+                        "sort_order": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "stage_name",
+                        "sort_order"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
                   "id": {
                     "type": "string"
                   },
@@ -1133,6 +1289,48 @@
                   "description": {
                     "type": "string",
                     "minLength": 4
+                  },
+                  "requirements": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "employmentType": {
+                    "type": "string",
+                    "enum": [
+                      "full-time",
+                      "part-time",
+                      "internship"
+                    ]
+                  },
+                  "experience": {
+                    "type": "string"
+                  },
+                  "salaryMin": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "salaryMax": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "recruiter": {
+                    "type": "string"
                   },
                   "open": {
                     "type": "boolean"
@@ -1352,7 +1550,10 @@
           },
           "approvedBy": {
             "type": "string",
-            "const": "hr"
+            "enum": [
+              "hr",
+              "superuser"
+            ]
           },
           "status": {
             "type": "string",
@@ -1423,7 +1624,8 @@
               "recruiter",
               "hr",
               "manager",
-              "administrator"
+              "administrator",
+              "superuser"
             ]
           },
           "candidateId": {
@@ -1524,6 +1726,37 @@
       "VacancySchema": {
         "type": "object",
         "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "open",
+              "closed"
+            ]
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "stage_name": {
+                  "type": "string"
+                },
+                "sort_order": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "id",
+                "stage_name",
+                "sort_order"
+              ],
+              "additionalProperties": false
+            }
+          },
           "id": {
             "type": "string"
           },
@@ -1543,6 +1776,48 @@
           "description": {
             "type": "string",
             "minLength": 4
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "employmentType": {
+            "type": "string",
+            "enum": [
+              "full-time",
+              "part-time",
+              "internship"
+            ]
+          },
+          "experience": {
+            "type": "string"
+          },
+          "salaryMin": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "salaryMax": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recruiter": {
+            "type": "string"
           },
           "open": {
             "type": "boolean"

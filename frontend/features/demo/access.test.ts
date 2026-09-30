@@ -5,10 +5,10 @@ import { freshState } from "../hr-copilot/model/engine";
 import { loadCopilotState, COPILOT_STORAGE_KEY } from "../hr-copilot/model/storage";
 
 test("journal belongs only to admin and Copilot settings to HR/admin", () => {
-  for (const role of ["candidate", "recruiter", "hr", "manager", "administrator"] as const) {
-    assert.equal(demoCan(role, "audit"), role === "administrator");
-    assert.equal(demoCan(role, "copilot"), role === "hr" || role === "administrator");
-    assert.equal(demoCan(role, "agent"), false);
+  for (const role of ["candidate", "recruiter", "hr", "manager", "administrator", "superuser"] as const) {
+    assert.equal(demoCan(role, "audit"), (role === "administrator" || role === "superuser"));
+    assert.equal(demoCan(role, "copilot"), role === "hr" || (role === "administrator" || role === "superuser"));
+    assert.equal(demoCan(role, "agent"), ["hr", "administrator", "superuser"].includes(role));
   }
 });
 test("candidate identity, manager assignments and recruiter pool access are scoped", () => {
@@ -22,6 +22,8 @@ test("candidate identity, manager assignments and recruiter pool access are scop
   assert.equal(canReadDemoCandidate("manager", timur), false);
   assert.equal(canReadDemoCandidate("recruiter", aliya), false);
   assert.equal(canReadDemoCandidate("administrator", foreign), false);
+  assert.equal(canReadDemoCandidate("superuser", timur), true);
+  assert.equal(canReadDemoCandidate("superuser", foreign), false);
   aliya.vacancyId = null;
   assert.equal(canReadDemoCandidate("manager", aliya), false);
 });

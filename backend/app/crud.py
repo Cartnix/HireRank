@@ -120,6 +120,12 @@ async def get_permissions_for_role(
     *, session: AsyncSession, role_name: str
 ) -> list[str]:
     """Load permission names for a role slug from the M2M tables."""
+    if role_name == "superuser":
+        return list(
+            (
+                await session.exec(select(Permission.name).order_by(Permission.name))
+            ).all()
+        )
     statement = (
         select(Permission.name)
         .join(RolePermission, col(RolePermission.permission_id) == Permission.id)
