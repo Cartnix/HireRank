@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useDemo } from "@/features/demo/DemoProvider";
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
+import { useState } from "react";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
 
-import {
-  COPILOT_STATE_EVENT,
-  COPILOT_STORAGE_KEY,
-  loadCopilotState,
-  saveCopilotState,
-} from "@/features/hr-copilot/model/storage";
-import type { CopilotState, Notification } from "@/features/hr-copilot/model/types";
+import type { Notification } from "@/features/hr-copilot/model/types";
 
 function formatDate(value: string) {
   const [date = "", time = ""] = value.split("T");
@@ -17,28 +13,13 @@ function formatDate(value: string) {
 }
 
 export function DashboardNotifications() {
-  const [state, setState] = useState<CopilotState | null>(null);
+  const demo = useDemo();
+  const state = demo.enabled ? demo.state : null;
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    const syncState = () => setState(loadCopilotState());
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === null || event.key === COPILOT_STORAGE_KEY) syncState();
-    };
-    const frame = window.requestAnimationFrame(syncState);
-
-    window.addEventListener(COPILOT_STATE_EVENT, syncState);
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener(COPILOT_STATE_EVENT, syncState);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
 
   const tenantId = state?.tenants[0]?.id;
   const notifications = state?.notifications.filter(
-    (item) => item.tenantId === tenantId,
+    (item) => item.tenantId === tenantId && item.role === demo.role && (demo.role !== "manager" || state.candidates.some(c => c.id === item.candidateId && c.vacancyId === "v-design")),
   ) ?? [];
   const unreadCount = notifications.filter((item) => !item.read).length;
 
@@ -50,24 +31,23 @@ export function DashboardNotifications() {
     );
     if (!notification) return;
     notification.read = true;
-    saveCopilotState(next);
-    setState(next);
+    demo.update(value => Object.assign(value, next));
   };
 
   const markAllRead = () => {
     if (!state || !tenantId || !unreadCount) return;
     const next = structuredClone(state);
     next.notifications.forEach((item) => {
-      if (item.tenantId === tenantId) item.read = true;
+      if (notifications.some(n => n.id === item.id)) item.read = true;
     });
-    saveCopilotState(next);
-    setState(next);
+    demo.update(value => Object.assign(value, next));
   };
 
-  if (!state) return null;
+  if (!state || !demo.enabled) return null;
 
   return (
     <div className="fixed bottom-5 right-5 z-50">
+      <span className="absolute bottom-0 right-16 whitespace-nowrap"><DemoBadge label="Dev mode" /></span>
       <section
         id="dashboard-notifications-panel"
         role="dialog"
@@ -82,7 +62,7 @@ export function DashboardNotifications() {
       >
         <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Уведомления</h2>
+            <h2 className="text-sm font-semibold text-foreground">Уведомления</h2><DemoBadge />
             <p className="mt-0.5 text-xs text-muted-foreground">
               {unreadCount ? `${unreadCount} непрочитанных` : "Все просмотрены"}
             </p>

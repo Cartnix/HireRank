@@ -1,5 +1,2 @@
-export default function Page() {
-    return (
-        <h1>Support page</h1>
-    )
-}
+import { WorkspaceSupport } from "@/features/demo/WorkspacePreferences";
+export default function Page() { return <WorkspaceSupport />; }

@@ -15,10 +15,11 @@ export type Tab =
 
 export const label: Record<Role, string> = {
   hr: "HR",
-  recruiter: "рекрутер бухгалтерии",
+  recruiter: "Рекрутер / отдел кадров",
   manager: "Менеджер",
   candidate: "Кандидат",
   administrator: "Администратор",
+  superuser: "Суперюзер",
 };
 
 export const actionLabel: Record<Action, string> = {
@@ -59,10 +60,10 @@ export const allowedTabs: Record<Role, Tab[]> = {
     "copilot",
     "intake",
     "memory",
-    "audit",
   ],
   recruiter: ["intake"],
   manager: [],
   candidate: ["intake"],
   administrator: ["audit"],
+  superuser: ["copilot", "intake", "memory", "audit"],
 };

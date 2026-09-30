@@ -478,6 +478,70 @@
     "title": "ConsentPublic",
     "description": "Current consent state returned to the authenticated subject."
   },
+  "CopilotConfig": {
+    "properties": {
+      "text": {
+        "type": "string",
+        "maxLength": 20000,
+        "minLength": 12,
+        "title": "Text",
+        "default": "Сопоставляй опыт с вакансией. Указывай проверяемые основания. Решение подтверждает HR."
+      },
+      "greenFlags": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "title": "Greenflags"
+      },
+      "redFlags": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "title": "Redflags"
+      },
+      "useMemory": {
+        "type": "boolean",
+        "title": "Usememory",
+        "default": false
+      },
+      "memoryMarkdown": {
+        "type": "string",
+        "maxLength": 100000,
+        "title": "Memorymarkdown",
+        "default": ""
+      },
+      "allowedActions": {
+        "items": {
+          "type": "string",
+          "enum": [
+            "review",
+            "interview",
+            "rejected"
+          ]
+        },
+        "type": "array",
+        "maxItems": 3,
+        "minItems": 1,
+        "title": "Allowedactions",
+        "default": [
+          "review",
+          "interview"
+        ]
+      },
+      "version": {
+        "type": "integer",
+        "minimum": 1.0,
+        "title": "Version",
+        "default": 1
+      }
+    },
+    "type": "object",
+    "title": "CopilotConfig"
+  },
   "CreateCandidateRequest": {
     "properties": {
       "questionnaire": {
@@ -566,6 +630,231 @@
     ],
     "title": "CreateVacancyRequest"
   },
+  "DashboardAnalytics": {
+    "properties": {
+      "active_jobs": {
+        "type": "integer",
+        "title": "Active Jobs"
+      },
+      "total_candidates": {
+        "type": "integer",
+        "title": "Total Candidates"
+      },
+      "todays_interviews": {
+        "type": "integer",
+        "title": "Todays Interviews"
+      },
+      "avg_time_to_hire": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Avg Time To Hire"
+      },
+      "pipeline": {
+        "items": {
+          "$ref": "#/components/schemas/Distribution"
+        },
+        "type": "array",
+        "title": "Pipeline"
+      },
+      "sources": {
+        "items": {
+          "$ref": "#/components/schemas/Distribution"
+        },
+        "type": "array",
+        "title": "Sources"
+      },
+      "candidate_trend": {
+        "items": {
+          "$ref": "#/components/schemas/TrendPoint"
+        },
+        "type": "array",
+        "title": "Candidate Trend"
+      },
+      "vacancy_trend": {
+        "items": {
+          "$ref": "#/components/schemas/TrendPoint"
+        },
+        "type": "array",
+        "title": "Vacancy Trend"
+      },
+      "interview_trend": {
+        "items": {
+          "$ref": "#/components/schemas/TrendPoint"
+        },
+        "type": "array",
+        "title": "Interview Trend"
+      },
+      "hire_trend": {
+        "items": {
+          "$ref": "#/components/schemas/TrendPoint"
+        },
+        "type": "array",
+        "title": "Hire Trend"
+      },
+      "top_candidates": {
+        "items": {
+          "$ref": "#/components/schemas/RankedCandidate"
+        },
+        "type": "array",
+        "title": "Top Candidates"
+      },
+      "upcoming_interviews": {
+        "items": {
+          "$ref": "#/components/schemas/ScheduledInterview"
+        },
+        "type": "array",
+        "title": "Upcoming Interviews"
+      }
+    },
+    "type": "object",
+    "required": [
+      "active_jobs",
+      "total_candidates",
+      "todays_interviews",
+      "avg_time_to_hire",
+      "pipeline",
+      "sources",
+      "candidate_trend",
+      "vacancy_trend",
+      "interview_trend",
+      "hire_trend",
+      "top_candidates",
+      "upcoming_interviews"
+    ],
+    "title": "DashboardAnalytics"
+  },
+  "DatasetWrite": {
+    "properties": {
+      "revision": {
+        "type": "integer",
+        "minimum": 0.0,
+        "title": "Revision"
+      },
+      "users": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 1000,
+        "title": "Users"
+      },
+      "vacancies": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 2000,
+        "title": "Vacancies"
+      },
+      "candidates": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Candidates"
+      },
+      "prompts": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "title": "Prompts"
+      },
+      "evaluations": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Evaluations"
+      },
+      "feedback": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Feedback"
+      },
+      "notifications": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Notifications"
+      },
+      "audit": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 20000,
+        "title": "Audit"
+      },
+      "memory": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Memory"
+      },
+      "mcpRuns": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Mcpruns"
+      }
+    },
+    "type": "object",
+    "required": [
+      "revision",
+      "users",
+      "vacancies",
+      "candidates",
+      "prompts"
+    ],
+    "title": "DatasetWrite"
+  },
+  "Distribution": {
+    "properties": {
+      "stage": {
+        "type": "string",
+        "title": "Stage"
+      },
+      "count": {
+        "type": "integer",
+        "title": "Count"
+      }
+    },
+    "type": "object",
+    "required": [
+      "stage",
+      "count"
+    ],
+    "title": "Distribution"
+  },
   "ErrorResponse": {
     "properties": {
       "code": {
@@ -583,6 +872,31 @@
       "message"
     ],
     "title": "ErrorResponse"
+  },
+  "GenerateRequest": {
+    "properties": {
+      "candidates": {
+        "type": "integer",
+        "maximum": 500.0,
+        "minimum": 1.0,
+        "title": "Candidates",
+        "default": 20
+      },
+      "vacancies": {
+        "type": "integer",
+        "maximum": 100.0,
+        "minimum": 1.0,
+        "title": "Vacancies",
+        "default": 20
+      },
+      "clear_existing": {
+        "type": "boolean",
+        "title": "Clear Existing",
+        "default": false
+      }
+    },
+    "type": "object",
+    "title": "GenerateRequest"
   },
   "HRDashboard": {
     "properties": {
@@ -627,6 +941,94 @@
     },
     "type": "object",
     "title": "HTTPValidationError"
+  },
+  "ImportRequest": {
+    "properties": {
+      "confirmation": {
+        "type": "string",
+        "title": "Confirmation"
+      }
+    },
+    "type": "object",
+    "required": [
+      "confirmation"
+    ],
+    "title": "ImportRequest"
+  },
+  "Interview": {
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Id"
+      },
+      "tenant_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Tenant Id"
+      },
+      "application_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Application Id"
+      },
+      "interviewer_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Interviewer Id"
+      },
+      "scheduled_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Scheduled At"
+      },
+      "duration_minutes": {
+        "type": "integer",
+        "title": "Duration Minutes",
+        "default": 45
+      }
+    },
+    "type": "object",
+    "required": [
+      "tenant_id",
+      "application_id",
+      "interviewer_id",
+      "scheduled_at"
+    ],
+    "title": "Interview"
+  },
+  "InterviewInput": {
+    "properties": {
+      "application_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Application Id"
+      },
+      "interviewer_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Interviewer Id"
+      },
+      "scheduled_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Scheduled At"
+      },
+      "duration_minutes": {
+        "type": "integer",
+        "maximum": 480.0,
+        "minimum": 5.0,
+        "title": "Duration Minutes",
+        "default": 45
+      }
+    },
+    "type": "object",
+    "required": [
+      "application_id",
+      "interviewer_id",
+      "scheduled_at"
+    ],
+    "title": "InterviewInput"
   },
   "LoginRequest": {
     "properties": {
@@ -860,6 +1262,51 @@
     ],
     "title": "PrivateUserCreate"
   },
+  "RankedCandidate": {
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Id"
+      },
+      "email": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Email"
+      },
+      "name": {
+        "type": "string",
+        "title": "Name"
+      },
+      "position": {
+        "type": "string",
+        "title": "Position"
+      },
+      "stage": {
+        "type": "string",
+        "title": "Stage"
+      },
+      "rating": {
+        "type": "number",
+        "title": "Rating"
+      }
+    },
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "position",
+      "stage",
+      "rating"
+    ],
+    "title": "RankedCandidate"
+  },
   "RefreshRequest": {
     "properties": {
       "refresh_token": {
@@ -895,6 +1342,132 @@
     ],
     "title": "ResumeUrlResponse"
   },
+  "ScheduledInterview": {
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Id"
+      },
+      "candidate_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Candidate Id"
+      },
+      "candidate_name": {
+        "type": "string",
+        "title": "Candidate Name"
+      },
+      "position": {
+        "type": "string",
+        "title": "Position"
+      },
+      "stage": {
+        "type": "string",
+        "title": "Stage"
+      },
+      "scheduled_at": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Scheduled At"
+      },
+      "duration_minutes": {
+        "type": "integer",
+        "title": "Duration Minutes"
+      }
+    },
+    "type": "object",
+    "required": [
+      "id",
+      "candidate_id",
+      "candidate_name",
+      "position",
+      "stage",
+      "scheduled_at",
+      "duration_minutes"
+    ],
+    "title": "ScheduledInterview"
+  },
+  "Scorecard": {
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Id"
+      },
+      "tenant_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Tenant Id"
+      },
+      "interview_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Interview Id"
+      },
+      "rating": {
+        "type": "integer",
+        "title": "Rating"
+      },
+      "notes": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Notes"
+      },
+      "submitted_at": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Submitted At"
+      }
+    },
+    "type": "object",
+    "required": [
+      "tenant_id",
+      "interview_id",
+      "rating"
+    ],
+    "title": "Scorecard",
+    "description": "Human interview feedback only — not AI auto-scoring (UC-08 / PRODUCT)."
+  },
+  "ScorecardInput": {
+    "properties": {
+      "rating": {
+        "type": "integer",
+        "maximum": 5.0,
+        "minimum": 1.0,
+        "title": "Rating"
+      },
+      "notes": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Notes"
+      }
+    },
+    "type": "object",
+    "required": [
+      "rating"
+    ],
+    "title": "ScorecardInput"
+  },
   "TokenPair": {
     "properties": {
       "access_token": {
@@ -923,6 +1496,24 @@
     ],
     "title": "TokenPair",
     "description": "Legacy / Swagger form login response (Bearer tooling)."
+  },
+  "TrendPoint": {
+    "properties": {
+      "date": {
+        "type": "string",
+        "title": "Date"
+      },
+      "value": {
+        "type": "number",
+        "title": "Value"
+      }
+    },
+    "type": "object",
+    "required": [
+      "date",
+      "value"
+    ],
+    "title": "TrendPoint"
   },
   "UpdatePassword": {
     "properties": {
@@ -1141,6 +1732,13 @@
         ],
         "title": "Last Name"
       },
+      "permissions": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "title": "Permissions"
+      },
       "id": {
         "type": "string",
         "format": "uuid",
@@ -1268,6 +1866,7 @@
   "UserRole": {
     "type": "string",
     "enum": [
+      "superuser",
       "administrator",
       "hr",
       "manager",

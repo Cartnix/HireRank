@@ -9,15 +9,4 @@ interface DashboardStatsWithPrevious extends StatMetrics {
   previousMonth: StatMetrics;
 }
 
-export const statsMock: DashboardStatsWithPrevious = {
-  activeJobsCount: 12,
-  inProgressCandidates: 48,
-  todaysInterviewsCount: 7,
-  avgTimeToHire: 15,
-  previousMonth: {
-    activeJobsCount: 10,
-    inProgressCandidates: 52,
-    todaysInterviewsCount: 7,
-    avgTimeToHire: 18,
-  },
-};
+export const statsMock: DashboardStatsWithPrevious = { activeJobsCount: 0, inProgressCandidates: 0, todaysInterviewsCount: 0, avgTimeToHire: 0, previousMonth: { activeJobsCount: 0, inProgressCandidates: 0, todaysInterviewsCount: 0, avgTimeToHire: 0 } };

@@ -103,7 +103,7 @@ async def test_auth_register_login_me_refresh_logout(client: AsyncClient) -> Non
     assert r.status_code == 401
 
 
-async def test_auth_register_rejects_administrator(client: AsyncClient) -> None:
+async def test_auth_register_allows_administrator(client: AsyncClient) -> None:
     r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
         json=register_json(
@@ -112,7 +112,10 @@ async def test_auth_register_rejects_administrator(client: AsyncClient) -> None:
             role="administrator",
         ),
     )
-    assert r.status_code == 400
+    assert r.status_code == 201
+    me = await client.get(f"{settings.API_V1_STR}/auth/me")
+    assert me.status_code == 200
+    assert me.json()["role"] == "administrator"
 
 
 async def test_candidate_registration_creates_owned_candidate_profile(
@@ -130,9 +133,7 @@ async def test_candidate_registration_creates_owned_candidate_profile(
     assert response.status_code == 201, response.text
     access = client.cookies.get(settings.AUTH_COOKIE_ACCESS_NAME)
     assert access
-    payload = jwt.decode(
-        access, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-    )
+    payload = jwt.decode(access, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
     candidate = (
         await db.exec(
             select(Candidate).where(Candidate.user_id == uuid.UUID(payload["sub"]))
@@ -171,6 +172,10 @@ async def test_rbac_permissions_matrix_from_db(db: AsyncSession) -> None:
     admin = set(
         await crud.get_permissions_for_role(session=db, role_name="administrator")
     )
+    owner = set(await crud.get_permissions_for_role(session=db, role_name="superuser"))
+    assert admin < owner
+    assert "developer.access" in owner
+    assert "developer.access" not in admin
     hr = set(await crud.get_permissions_for_role(session=db, role_name="hr"))
     manager = set(await crud.get_permissions_for_role(session=db, role_name="manager"))
     recruiter = set(
@@ -188,7 +193,7 @@ async def test_rbac_permissions_matrix_from_db(db: AsyncSession) -> None:
     assert "vacancy.delete" in hr
     assert "candidate.create" in hr
     assert "application.assign" in admin
-    assert "application.assign" not in hr
+    assert "application.assign" in hr  # c4d5e6f7a8b9 / UC-04
     assert "application.assign" not in manager
     assert "application.apply" in candidate
     assert "application.assign" not in candidate
@@ -204,3 +209,13 @@ async def test_rbac_permissions_matrix_from_db(db: AsyncSession) -> None:
 
     assert has_permission(admin, "admin.panel")
     assert not has_permission(candidate, "users.manage")
+
+
+async def test_auth_register_rejects_superuser(client: AsyncClient) -> None:
+    response = await client.post(
+        f"{settings.API_V1_STR}/auth/register",
+        json=register_json(
+            email=random_email(), password=random_lower_string(), role="superuser"
+        ),
+    )
+    assert response.status_code == 400

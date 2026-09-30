@@ -32,6 +32,7 @@ def get_datetime_utc() -> datetime:
 
 
 class UserRole(StrEnum):
+    SUPERUSER = "superuser"
     ADMINISTRATOR = "administrator"
     HR = "hr"
     MANAGER = "manager"
@@ -52,6 +53,7 @@ REGISTERABLE_ROLES: frozenset[UserRole] = frozenset(
         UserRole.HR,
         UserRole.MANAGER,
         UserRole.RECRUITER,
+        UserRole.ADMINISTRATOR,
         UserRole.CANDIDATE,
     }
 )
@@ -276,8 +278,12 @@ class User(UserBase, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     tenant: Tenant | None = Relationship(back_populates="users")
-    oauth_identities: list["OAuthIdentity"] = Relationship(back_populates="user")
-    consents: list["UserConsent"] = Relationship(back_populates="user")
+    oauth_identities: list["OAuthIdentity"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"passive_deletes": "all"}
+    )
+    consents: list["UserConsent"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"passive_deletes": "all"}
+    )
     vacancies_created: list["Vacancy"] = Relationship(back_populates="creator")
     interviews_as_interviewer: list["Interview"] = Relationship(
         back_populates="interviewer"
@@ -289,7 +295,7 @@ class User(UserBase, table=True):
 
     @property
     def is_superuser(self) -> bool:
-        return role_str(self.role) == UserRole.ADMINISTRATOR.value
+        return role_str(self.role) == UserRole.SUPERUSER.value
 
 
 class UserConsent(SQLModel, table=True):
@@ -343,6 +349,7 @@ class OAuthIdentity(SQLModel, table=True):
 
 
 class UserPublic(UserBase):
+    permissions: list[str] = Field(default_factory=list)
     id: uuid.UUID
     tenant_id: uuid.UUID
     created_at: datetime | None = None
@@ -696,3 +703,17 @@ class NewPassword(SQLModel):
 class ErrorResponse(SQLModel):
     code: str
     message: str
+
+
+class DevelopmentDataset(SQLModel, table=True):
+    """Preview configuration; canonical entities use the ordinary ATS tables."""
+
+    __tablename__ = "development_dataset"
+    id: int = Field(default=1, primary_key=True)
+    config: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))
+
+
+class CopilotSettings(SQLModel, table=True):
+    __tablename__ = "copilot_settings"
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", primary_key=True)
+    config: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))

@@ -1,6 +1,9 @@
 "use client";
+import Link from "next/link";
+import { useDemo } from "@/features/demo/DemoProvider";
+import { DemoCandidates } from "@/features/demo/DemoCandidates";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, Clock3, Plus, Users, UserX } from "lucide-react";
 import { CandidateProfile } from "@/widgets/candidate-profile";
@@ -10,20 +13,12 @@ import { CandidatesTable } from "@/widgets/candidate-table/ui/CandidatesTable";
 import type { Job } from "@/entities/job";
 import { useCandidatesPage } from "@/features/candidate-page";
 import { IntakeTab } from "@/features/hr-copilot/ui/tabs/IntakeTab";
-import { intake } from "@/features/hr-copilot/model/engine";
-import {
-  toDashboardCandidate,
-  toDashboardJob,
-} from "@/features/hr-copilot/model/dashboardAdapters";
-import {
-  loadCopilotState,
-  saveCopilotState,
-} from "@/features/hr-copilot/model/storage";
-import type { CopilotState } from "@/features/hr-copilot/model/types";
+import { useAtsData } from "@/shared/api/useAtsData";
+import { assignCandidate, createCandidate, deleteCandidate, updateQuestionnaire } from "@/shared/api/ats";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 
-export function CandidatesPageClient({
+function LiveCandidatesPageClient({
   currentUserName,
   initialSelectedCandidateId = null,
 }: {
@@ -31,98 +26,37 @@ export function CandidatesPageClient({
   initialSelectedCandidateId?: string | null;
 }) {
   const router = useRouter();
-  const [copilotState, setCopilotState] = useState<CopilotState | null>(null);
+  const { candidates, jobs, user, can, loading, error, reload } = useAtsData(initialSelectedCandidateId);
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [formMessage, setFormMessage] = useState("");
+  const [skillFilter, setSkillFilter] = useState("");
+  const [sortOrder, setSortOrder] = useState("default");
+  const [saving, setSaving] = useState(false);
+  const jobById = useMemo(() => Object.fromEntries(jobs.map(job => [job.id, job])) as Record<string, Job>, [jobs]);
+  const vacancies = jobs.map(job => ({ id: job.id, title: job.title, open: job.status === "open" }));
 
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setCopilotState(loadCopilotState());
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  const tenantId = copilotState?.tenants[0]?.id ?? "";
-  const vacancies = useMemo(
-    () =>
-      copilotState?.vacancies.filter(
-        (vacancy) => vacancy.tenantId === tenantId,
-      ) ?? [],
-    [copilotState, tenantId],
-  );
-  const jobById = useMemo(
-    () =>
-      Object.fromEntries(
-        vacancies.map((vacancy) => [vacancy.id, toDashboardJob(vacancy)]),
-      ) as Record<string, Job>,
-    [vacancies],
-  );
-  const candidates = useMemo(
-    () =>
-      copilotState?.candidates
-        .filter((candidate) => candidate.tenantId === tenantId)
-        .map((candidate) =>
-          toDashboardCandidate(
-            candidate,
-            vacancies.find(
-              (vacancy) =>
-                vacancy.id ===
-                (candidate.vacancyId ?? candidate.requestedVacancyId),
-            ),
-          ),
-        ) ?? [],
-    [copilotState, tenantId, vacancies],
-  );
-
-  function submitIntake(event: FormEvent<HTMLFormElement>) {
+  async function submitIntake(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!copilotState || !tenantId) return;
-
-    const form = event.currentTarget;
-    const values = new FormData(form);
-    const file = form.querySelector<HTMLInputElement>(
-      'input[name="resumeFile"]',
-    )?.files?.[0];
+    if (saving || (!can("candidate.create") && user?.role !== "candidate")) return;
+    const values = new FormData(event.currentTarget);
+    const file = event.currentTarget.querySelector<HTMLInputElement>('input[name="resumeFile"]')?.files?.[0];
+    if (file) { setFormMessage("Загрузка файлов ожидает backend. Введите текст резюме или ссылку; файл сейчас не будет сохранён."); return; }
     const resumeText = String(values.get("resumeText") ?? "").trim();
-    const resumeRef =
-      file?.name ||
-      String(values.get("resumeUrl") ?? "").trim() ||
-      (resumeText ? "Текст в HTML форме" : "");
-
-    if (!resumeRef) {
-      setFormMessage("Добавьте файл, ссылку или текст резюме");
-      return;
-    }
-    if (file && !/\.(pdf|docx?|html?|txt)$/i.test(file.name)) {
-      setFormMessage("Доступны PDF, DOC, DOCX, HTML и TXT");
-      return;
-    }
-
-    const next = structuredClone(copilotState);
+    const resumeUrl = String(values.get("resumeUrl") ?? "").trim();
+    if (!resumeText && !resumeUrl) { setFormMessage("Введите текст резюме или ссылку"); return; }
+    if (values.get("processingConsent") !== "on") { setFormMessage("Подтвердите согласие на обработку данных"); return; }
+    setSaving(true); setFormMessage("");
     try {
-      const created = intake(next, tenantId, "hr", {
-        name: String(values.get("name") ?? "").trim(),
-        email: String(values.get("email") ?? "")
-          .trim()
-          .toLowerCase(),
-        phone: String(values.get("phone") ?? "").trim(),
-        experience: String(values.get("experience") ?? "").trim(),
-        skills: String(values.get("skills") ?? "").trim(),
-        resumeRef,
-        resumeText,
-        requestedVacancyId: String(values.get("vacancyId") ?? "") || null,
-      });
-      saveCopilotState(next);
-      setCopilotState(next);
-      setIsIntakeOpen(false);
-      router.push(`/dashboard/candidates/${created.id}`);
-    } catch (error) {
-      setFormMessage(
-        error instanceof Error
-          ? error.message
-          : "Не удалось добавить кандидата",
-      );
-    }
+      const questionnaire = { name: String(values.get("name") ?? "").trim(), email: String(values.get("email") ?? "").trim(), location: String(values.get("location") ?? "").trim(), phone: String(values.get("phone") ?? "").trim(), experience: String(values.get("experience") ?? "").trim(), skills: String(values.get("skills") ?? "").trim(), resume_text: resumeText, resume_reference: resumeUrl || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true };
+      let created;
+      if (user?.role === "candidate") {
+        const own = candidates.find(candidate => candidate.user_id === user.id);
+        if (!own) throw Error("Профиль кандидата не найден. Обратитесь к администратору.");
+        created = await updateQuestionnaire(own.id, { ...own.questionnaire, ...questionnaire });
+      } else created = await createCandidate({ questionnaire, email: questionnaire.email, resume_url: resumeUrl || null });
+      setIsIntakeOpen(false); reload(); router.push(`/dashboard/candidates/${created.id}`);
+    } catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось сохранить анкету"); }
+    finally { setSaving(false); }
   }
 
   const {
@@ -142,15 +76,58 @@ export function CandidatesPageClient({
   } = useCandidatesPage(
     candidates,
     jobById,
-    currentUserName,
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.email || currentUserName,
     initialSelectedCandidateId,
   );
 
-  if (!copilotState) return <div>Loading...</div>;
+  const skills = [...new Set(candidates.flatMap(candidate => (candidate.skills ?? String((candidate.questionnaire as unknown as Record<string, unknown>).skills ?? "").split(/[,;]/)).map(skill => skill.trim()).filter(Boolean)))].sort();
+  const displayedCandidates = filteredCandidates.filter(candidate => !skillFilter || (candidate.skills ?? String((candidate.questionnaire as unknown as Record<string, unknown>).skills ?? "").split(/[,;]/)).some(skill => skill.trim().toLowerCase() === skillFilter.toLowerCase())).sort((a, b) => sortOrder === "name" ? (a.name ?? a.email).localeCompare(b.name ?? b.email, "ru") : sortOrder === "score" ? (b.ai_score ?? 0) - (a.ai_score ?? 0) : 0);
 
-  if (selectedCandidate && selectedJob) {
+  if (loading) return <div>Загрузка кандидатов...</div>;
+  if (error) return <div role="alert">{error}<button onClick={reload} className="ml-3 text-brand-primary">Повторить</button></div>;
+  if (!can("candidate.read")) return <p role="alert">Нет доступа к кандидатскому пулу</p>;
+  if (initialSelectedCandidateId && !selectedCandidate) return <p role="alert">Кандидат не найден</p>;
+
+  if (selectedCandidate) {
     return (
-      <main className="w-full p-6">
+      <div className="grid gap-5 p-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+        <section aria-label="Выбор кандидата" className="space-y-2">{displayedCandidates.map(candidate => <button key={candidate.id} onClick={() => openCandidate(candidate.id)} aria-pressed={candidate.id === selectedCandidate.id} className={`w-full rounded-xl border p-3 text-left ${candidate.id === selectedCandidate.id ? "border-brand-primary bg-brand-primary/5" : "border-border"}`}><strong className="block">{candidate.name || candidate.email}</strong><span className="text-xs text-muted-foreground">{jobById[candidate.assigned_vacancy_id ?? ""]?.title || "Без назначения"}</span></button>)}</section>
+      <main className="min-w-0" key={selectedCandidate.id}>
+        {formMessage && <p role="alert" className="text-danger">{formMessage}</p>}
+        {can("application.assign") && <form className="mb-4 flex flex-wrap gap-3" onSubmit={async event => {
+          event.preventDefault(); if (saving) return;
+          const vacancyId = String(new FormData(event.currentTarget).get("vacancyId") ?? "");
+          if (!vacancyId || !confirm("Подтвердить назначение кандидата на выбранную вакансию?")) return;
+          setSaving(true); setFormMessage("");
+          try { await assignCandidate(selectedCandidate.id, vacancyId); reload(); }
+          catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось назначить кандидата"); }
+          finally { setSaving(false); }
+        }}>
+          <select name="vacancyId" required aria-label="Вакансия для назначения" className="rounded-lg border border-input bg-background px-3 py-2"><option value="">Выберите открытую вакансию</option>{jobs.filter(j => j.status === "open").map(j => <option key={j.id} value={j.id}>{j.title}</option>)}</select>
+          <button disabled={saving} className="text-brand-primary">Назначить</button>
+        </form>}
+        {(can("candidate.update") || user?.role === "candidate") && <details className="mb-4"><summary className="cursor-pointer text-sm">Редактировать анкету</summary>
+          <IntakeTab mvp busy={saving} initialValues={selectedCandidate.questionnaire as unknown as Record<string, unknown>} vacancies={vacancies} submitIntake={async event => {
+            event.preventDefault(); if (saving) return;
+            const values = new FormData(event.currentTarget);
+            if (values.get("processingConsent") !== "on") return;
+            setSaving(true); setFormMessage("");
+            try {
+              const questionnaire = { ...selectedCandidate.questionnaire, name: String(values.get("name") ?? ""), email: String(values.get("email") ?? ""), location: String(values.get("location") ?? "").trim(), phone: String(values.get("phone") ?? ""), experience: String(values.get("experience") ?? ""), skills: String(values.get("skills") ?? ""), resume_text: String(values.get("resumeText") ?? ""), resume_reference: String(values.get("resumeUrl") ?? "") || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true };
+              if (!questionnaire.resume_text.trim() && !questionnaire.resume_reference) throw Error("Введите текст резюме или ссылку");
+              await updateQuestionnaire(selectedCandidate.id, questionnaire); reload();
+            } catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось обновить анкету"); }
+            finally { setSaving(false); }
+          }} />
+        </details>}
+        {can("candidate.delete") && <button disabled={saving} className="mb-4 text-danger" onClick={async () => {
+          if (!confirm("Удалить кандидата?")) return;
+          setSaving(true); setFormMessage("");
+          try { await deleteCandidate(selectedCandidate.id); router.push("/dashboard/candidates"); reload(); }
+          catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось удалить кандидата"); }
+          finally { setSaving(false); }
+        }}>Удалить кандидата</button>}
+        {(user?.role === "hr" || user?.role === "administrator" || user?.role === "superuser") && <a href="#candidate-copilot" className="mb-4 inline-block rounded-lg border border-border px-4 py-2 text-sm text-brand-primary">HR Copilot · {selectedCandidate.name}</a>}
         <CandidateProfile
           candidate={selectedCandidate}
           job={selectedJob}
@@ -160,7 +137,8 @@ export function CandidatesPageClient({
           addNote={addNote}
           onBack={back}
         />
-      </main>
+        <div className="mt-5 grid gap-5 lg:grid-cols-2"><section aria-label="Вакансия кандидата" className="rounded-xl border border-border p-5"><h2 className="font-semibold">{selectedJob?.title || "Кандидат пока не назначен"}</h2>{selectedJob && <><p className="mt-3 whitespace-pre-wrap text-sm">{selectedJob.description}</p><ul className="mt-3 list-disc pl-5 text-sm">{selectedJob.requirements?.map(item => <li key={item}>{item}</li>)}</ul><Link href={`/dashboard/jobs/${selectedJob.id}`} className="mt-4 inline-block text-brand-primary">Полная вакансия</Link></>}</section>{["hr", "administrator", "superuser"].includes(user?.role ?? "") && <section id="candidate-copilot" aria-label="HR Copilot" className="scroll-mt-5 rounded-xl border border-border p-5"><h2 className="font-semibold">HR Copilot · {selectedCandidate.name}</h2><p className="mt-3 text-sm">{selectedJob ? `Контекст: ${selectedJob.title}` : "Назначьте кандидата на вакансию для анализа."}</p><p className="mt-3 text-sm text-muted-foreground">AI-анализ в рабочей среде ещё не подключён. Для тестового анализа включите Dev mode.</p><Link href="/dashboard/copilot" className="mt-4 inline-block text-brand-primary">Настройки HR Copilot</Link></section>}</div>
+      </main></div>
     );
   }
 
@@ -201,7 +179,7 @@ export function CandidatesPageClient({
           title="Кандидаты"
           subtitle="Кандидатский пул компании и текущий этап рассмотрения."
         />
-        <MainButton
+        {(can("candidate.create") || user?.role === "candidate") && <MainButton
           onClick={() => {
             setFormMessage("");
             setIsIntakeOpen(true);
@@ -210,14 +188,14 @@ export function CandidatesPageClient({
           className="h-10 gap-2 rounded-lg px-4"
         >
           <Plus size={15} />
-        </MainButton>
+        </MainButton>}
       </header>
 
       <section
         aria-label="Сводка по кандидатам"
         className="grid grid-cols-2 divide-x divide-y divide-border border-y border-border sm:grid-cols-4 sm:divide-y-0"
       >
-        {candidateStats.map(({ label, value, icon: Icon, color }) => (
+        {candidateStats.filter(item => item.label !== "Отклонены").map(({ label, value, icon: Icon, color }) => (
           <div
             key={label}
             className="flex min-w-0 items-center gap-3 px-3 py-4 first:pl-0 sm:px-5 sm:first:pl-0"
@@ -252,18 +230,22 @@ export function CandidatesPageClient({
         <div className="shrink-0 border-t border-border pt-3 text-xs text-muted-foreground lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
           Найдено{" "}
           <span className="font-semibold text-foreground">
-            {filteredCandidates.length}
+            {displayedCandidates.length}
           </span>{" "}
           из {candidates.length}
         </div>
       </section>
 
+      <div className="flex flex-wrap gap-3">
+        <label className="text-xs">Навык<select className="ml-2 rounded-lg border border-input bg-background px-3 py-2" value={skillFilter} onChange={event => setSkillFilter(event.target.value)}><option value="">Все навыки</option>{skills.map(skill => <option key={skill}>{skill}</option>)}</select></label>
+        <label className="text-xs">Сортировка<select className="ml-2 rounded-lg border border-input bg-background px-3 py-2" value={sortOrder} onChange={event => setSortOrder(event.target.value)}><option value="default">По умолчанию</option><option value="name">По имени</option></select></label>
+      </div>
       <CandidatesTable
-        candidates={filteredCandidates}
+        candidates={displayedCandidates}
         jobById={jobById}
         onOpenCandidate={openCandidate}
       />
-      {isIntakeOpen && (
+      {isIntakeOpen && (can("candidate.create") || user?.role === "candidate") && (
         <div
           role="dialog"
           aria-modal="true"
@@ -288,10 +270,12 @@ export function CandidatesPageClient({
                 {formMessage}
               </p>
             )}
-            <IntakeTab vacancies={vacancies} submitIntake={submitIntake} />
+            <IntakeTab mvp busy={saving} vacancies={vacancies} submitIntake={submitIntake} />
           </div>
         </div>
       )}
     </div>
   );
 }
+
+export function CandidatesPageClient(props: { currentUserName: string; initialSelectedCandidateId?: string | null }) { const demo = useDemo(); return demo.enabled ? <DemoCandidates key={demo.role} initialId={props.initialSelectedCandidateId} /> : <LiveCandidatesPageClient {...props} />; }

@@ -53,7 +53,7 @@ export function toDashboardCandidate(
     resume_url: /^https?:\/\//i.test(candidate.resumeRef)
       ? candidate.resumeRef
       : null,
-    assigned_vacancy_id: candidate.vacancyId ?? candidate.requestedVacancyId,
+    assigned_vacancy_id: candidate.vacancyId,
     created_at: candidate.createdAt,
     updated_at: candidate.createdAt,
     name: candidate.name,
@@ -61,7 +61,7 @@ export function toDashboardCandidate(
     skills: candidate.skills.split(/[,;]+/).map((skill) => skill.trim()).filter(Boolean),
     stage: candidateStages[candidate.status],
     resumeFileName: candidate.resumeRef,
-    location: vacancy?.location,
+    location: candidate.location,
   };
 }
 
@@ -70,7 +70,8 @@ export function toDashboardJob(vacancy: Vacancy): DashboardJob {
     id: vacancy.id,
     title: vacancy.title,
     department: vacancy.department,
-    status: vacancy.open ? "Открыта" : "Закрыта",
+    stages: vacancy.stages,
+    status: vacancy.status ?? (vacancy.open ? "open" : "closed"),
     description: vacancy.description,
     requirements: vacancy.requirements ?? [],
     location: vacancy.location,

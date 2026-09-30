@@ -95,6 +95,8 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
+    DEV_DATABASE_ENABLED: bool = False
+    POSTGRES_DEV_DB: str = "hirerank_dev"
     SQLALCHEMY_ECHO: bool = False
     SQLALCHEMY_POOL_MODE: Literal["queue", "null"] = "queue"
     SQLALCHEMY_POOL_SIZE: int = 20

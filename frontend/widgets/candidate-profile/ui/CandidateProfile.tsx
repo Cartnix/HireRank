@@ -1,5 +1,7 @@
 "use client";
 
+import { useDemo } from "@/features/demo/DemoProvider";
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { useState } from "react";
 import { ChevronLeft, Mail, Phone, MapPin, FileText, Paperclip } from "lucide-react";
 import { Candidate, StageBadge } from "@/entities/candidate";
@@ -27,7 +29,7 @@ export function CandidateProfile({
   onBack,
 }: {
   candidate: Candidate;
-  job: Job;
+  job: Job | null;
   notes: Note[];
   noteDraft: string;
   setNoteDraft: (v: string) => void;
@@ -35,6 +37,7 @@ export function CandidateProfile({
   onBack: () => void;
 }) {
   const [tab, setTab] = useState<"profile" | "history" | "files" | "notes">("profile");
+  const { enabled } = useDemo();
   const q = candidate.questionnaire;
   const displayName = candidate.name ?? [q.first_name, q.surname].filter(Boolean).join(" ");
 
@@ -44,7 +47,7 @@ export function CandidateProfile({
         <ChevronLeft size={15} /> Все кандидаты
       </button>
 
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <Card className="h-fit p-6">
           <div className="mb-4 flex flex-col items-center text-center">
             <Avatar name={displayName} size={64} />
@@ -89,9 +92,9 @@ export function CandidateProfile({
           </div>
         </Card>
 
-        <div className="col-span-2">
+        <div className="min-w-0 xl:col-span-2">
           <div className="mb-4 inline-flex rounded-[10px] border border-border bg-background p-1">
-            {tabs.map((item) => {
+            {tabs.filter(item => enabled || item.key === "profile").map((item) => {
               const active = tab === item.key;
               return (
                 <button
@@ -107,7 +110,7 @@ export function CandidateProfile({
             })}
           </div>
 
-          {tab === "profile" && (
+          {(tab === "profile" || !enabled) && (
             <Card className="p-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-3">
@@ -142,7 +145,9 @@ export function CandidateProfile({
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[10px] border border-border bg-muted/30 p-4">
+              <div className="mt-5 space-y-3 border-t border-border pt-4 text-sm"><h3 className="font-semibold">Опыт</h3><p className="whitespace-pre-wrap">{String((q as unknown as Record<string, unknown>).experience ?? "Не указан")}</p><h3 className="font-semibold">Резюме</h3><p className="whitespace-pre-wrap break-words">{String((q as unknown as Record<string, unknown>).resume_text ?? "Не добавлено")}</p></div>
+              {enabled && <div className="mt-5 rounded-[10px] border border-border bg-muted/30 p-4">
+                <DemoBadge />
                 <div className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">AI Match по вакансиям</div>
                 {candidate.ai_rankings && candidate.ai_rankings.length > 0 ? (
                   <div className="space-y-2">
@@ -156,12 +161,12 @@ export function CandidateProfile({
                 ) : (
                   <div className="text-[13px] text-muted-foreground">Пока нет оценок совместимости.</div>
                 )}
-              </div>
+              </div>}
             </Card>
           )}
 
           {tab === "history" && (
-            <Card className="p-6">
+            <Card className="p-6"><DemoBadge />
               <div className="space-y-4">
                 {(candidate.history ?? []).map((h, idx) => (
                   <div key={idx} className="flex gap-3">
@@ -180,24 +185,24 @@ export function CandidateProfile({
           )}
 
           {tab === "files" && (
-            <Card className="p-6">
+            <Card className="p-6"><DemoBadge label="Dev mode · защищённое хранилище не подключено" />
               <div className="flex items-center justify-between rounded-[10px] border border-border px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-danger/10 text-danger">
                     <FileText size={16} />
                   </div>
                   <div>
-                    <div className="text-[13px] font-medium">{candidate.resumeFileName ?? "Резюме"}</div>
-                    <div className="text-[12px] text-muted-foreground">Резюме · загружено {candidate.appliedDate ?? candidate.created_at.slice(0, 10)}</div>
+                    <div className="text-[13px] font-medium">{candidate.resumeFileName ?? "Резюме (файл не загружен)"}</div>
+                    <div className="text-[12px] text-muted-foreground">Резюме · запись от {candidate.appliedDate ?? candidate.created_at.slice(0, 10)}</div>
                   </div>
                 </div>
-                <GhostButton icon={<Paperclip size={13} />}>Открыть</GhostButton>
+                <GhostButton disabled icon={<Paperclip size={13} />}>Открыть</GhostButton>
               </div>
             </Card>
           )}
 
           {tab === "notes" && (
-            <Card className="p-6">
+            <Card className="p-6"><DemoBadge label="Dev mode · заметки не сохраняются на сервере" />
               <div className="mb-4 space-y-3">
                 {notes.length === 0 && <div className="text-[13px] text-muted-foreground">Заметок пока нет.</div>}
                 {notes.map((n) => (

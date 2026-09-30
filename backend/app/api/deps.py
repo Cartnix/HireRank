@@ -247,6 +247,23 @@ async def get_current_user(
     # JWT permissions claim — O(1) require_permission; no DB matrix lookup
     request.state.permissions = frozenset(token_data.permissions or [])
 
+    # Only an authenticated owner can preview another matrix role. Preserve
+    # actor/tenant; scope checks still apply to this identity, including own data.
+    preview = request.headers.get("X-Preview-Role")
+    if preview:
+        if not user.is_superuser:
+            raise HTTPException(status_code=403, detail="Role preview is owner-only")
+        try:
+            role = UserRole(preview)
+        except ValueError as error:
+            raise HTTPException(
+                status_code=400, detail="Unknown preview role"
+            ) from error
+        request.state.permissions = frozenset(
+            await crud.get_permissions_for_role(session=session, role_name=role.value)
+        )
+        user = user.model_copy(update={"role": role})
+
     # Future RLS: bind actor identity into the current transaction
     await set_user_gucs_async(
         session,
@@ -269,7 +286,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:
-    if role_str(current_user.role) != UserRole.ADMINISTRATOR.value:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=403, detail="The user doesn't have enough privileges"
         )
@@ -281,7 +298,9 @@ def require_permission(permission: str) -> Callable[..., User]:
         permissions: Collection[str] = getattr(
             request.state, "permissions", frozenset()
         )
-        if not has_permission(permissions, permission):
+        if not current_user.is_superuser and not has_permission(
+            permissions, permission
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",

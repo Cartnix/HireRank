@@ -104,6 +104,7 @@ async def to_public(session: AsyncSession, candidate: Candidate) -> CandidatePub
 def can_view_candidate(*, viewer: User, candidate: Candidate) -> bool:
     role = role_str(viewer.role)
     if role in {
+        UserRole.SUPERUSER.value,
         UserRole.ADMINISTRATOR.value,
         UserRole.HR.value,
         UserRole.RECRUITER.value,
@@ -275,6 +276,10 @@ async def assign_candidate(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Vacancy not found"
         )
+    if vacancy.status != "open":
+        raise HTTPException(
+            status_code=409, detail="Candidates can be assigned only to open vacancies"
+        )
     stage = await vacancy_svc.first_stage(session=session, vacancy_id=vacancy.id)
     if stage is None:
         raise HTTPException(
@@ -350,6 +355,10 @@ async def apply_to_vacancy(
             detail="Applications are accepted only for open vacancies",
         )
 
+    if vacancy.status != "open":
+        raise HTTPException(
+            status_code=409, detail="Candidates can be assigned only to open vacancies"
+        )
     stage = await vacancy_svc.first_stage(session=session, vacancy_id=vacancy.id)
     if stage is None:
         raise HTTPException(

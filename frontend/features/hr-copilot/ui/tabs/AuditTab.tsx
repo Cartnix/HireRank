@@ -11,7 +11,7 @@ export function AuditTab({
 }: {
   tenantId: string;
   state: CopilotState;
-  onResetDemo: () => void;
+  onResetDemo?: () => void;
 }) {
   return (
     <Section title="Журнал действий" description="Видны только события текущего tenant; роли и вызовы MCP различаются.">
@@ -24,9 +24,9 @@ export function AuditTab({
               <div className="mt-1 text-muted-foreground">{x.detail}</div>
             </div>
           ))}
-        <button onClick={onResetDemo} className={`${secondary} inline-flex items-center gap-2`}>
+        {onResetDemo && <button onClick={onResetDemo} className={`${secondary} inline-flex items-center gap-2`}>
           <RotateCcw size={14} /> Сбросить демо
-        </button>
+        </button>}
       </div>
     </Section>
   );

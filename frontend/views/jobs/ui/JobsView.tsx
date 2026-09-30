@@ -11,6 +11,7 @@ import {
 import { Job, Stage } from "@/entities/job";
 import { Candidate } from "@/entities/candidate";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
+import { DetailPanel } from "@/shared/ui/DetailPanel";
 import { JobOverview } from "@/widgets/job-overview/ui/JobOverview";
 import { JobsTable } from "@/widgets/job-table/ui/JobsTable";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
@@ -25,7 +26,10 @@ export const JobsView = ({
   onUpdateStages,
   onOpenCandidate,
   onDeleteJob,
+  canCreate = false, canUpdate = false, canDelete = false, onUpdateJob,
 }: {
+  canCreate?: boolean; canUpdate?: boolean; canDelete?: boolean;
+  onUpdateJob?: (id: string, payload: import("@/shared/api/ats").VacancyUpdate) => Promise<void>;
   jobs: Job[];
   candidates: Candidate[];
   selectedJob: Job | null;
@@ -40,21 +44,6 @@ export const JobsView = ({
   const [statusFilter, setStatusFilter] = useState<"all" | "open" | "closed">(
     "all",
   );
-
-  if (selectedJob) {
-    return (
-      <JobOverview
-        job={selectedJob}
-        candidates={candidates.filter(
-          (c) => c.assigned_vacancy_id === selectedJob.id,
-        )}
-        onBack={onBack}
-        onUpdateStages={onUpdateStages}
-        onOpenCandidate={onOpenCandidate}
-        onDeleteJob={onDeleteJob}
-      />
-    );
-  }
 
   const openJobs = jobs.filter(
     (job) => job.status === "open" || job.status === "Открыта",
@@ -77,13 +66,13 @@ export const JobsView = ({
           title="Вакансии"
           subtitle="Управляйте позициями и отслеживайте поток кандидатов."
         />
-        <MainButton
+        {canCreate && <MainButton
           onClick={onCreateJob}
           title="Создать вакансию"
           className="h-10 gap-2 rounded-lg px-4"
         >
           <Plus size={15} />
-        </MainButton>
+        </MainButton>}
       </header>
 
       <section
@@ -181,11 +170,25 @@ export const JobsView = ({
         </div>
       </section>
 
+      <div className="inspector-workspace"><div className="min-w-0 flex-1">
       <JobsTable
         jobs={filteredJobs}
         candidates={candidates}
         onOpenJob={onOpenJob}
       />
+      </div>{selectedJob && <div className="inspector-dock"><DetailPanel title="Детали вакансии" onClose={onBack}>
+      <JobOverview
+        canUpdate={canUpdate} canDelete={canDelete} onUpdateJob={onUpdateJob}
+        job={selectedJob}
+        candidates={candidates.filter(
+          (c) => c.assigned_vacancy_id === selectedJob.id,
+        )}
+        onBack={onBack}
+        onUpdateStages={onUpdateStages}
+        onOpenCandidate={onOpenCandidate}
+        onDeleteJob={onDeleteJob}
+      />
+      </DetailPanel></div>}</div>
     </div>
   );
 };

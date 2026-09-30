@@ -35,3 +35,40 @@ test("apiFetch sends the CSRF cookie as a mutation header", async () => {
     "csrf value",
   );
 });
+test("apiFetch displays validation errors without object coercion", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ detail: [{ loc: ["path", "id"], msg: "Invalid UUID" }] }), { status: 422, headers: { "content-type": "application/json" } });
+  try { await assert.rejects(apiFetch("/vacancies/demo"), /path.id: Invalid UUID/); }
+  finally { globalThis.fetch = originalFetch; }
+});
+
+test("role preview is excluded from auth and developer requests", async () => {
+  const { setApiPreviewRole } = await import("./client");
+  const originalFetch = globalThis.fetch;
+  const captured: (string | null)[] = [];
+  globalThis.fetch = async (_path, init) => { captured.push(new Headers(init?.headers).get("X-Preview-Role")); return new Response("{}", { headers: { "content-type": "application/json" } }); };
+  try {
+    setApiPreviewRole("manager");
+    await apiFetch("/vacancies/"); await apiFetch("/auth/me"); await apiFetch("/developer/access");
+    assert.deepEqual(captured, ["manager", null, null]);
+  } finally { setApiPreviewRole(null); globalThis.fetch = originalFetch; }
+});
+
+test("dev mode blocks live ATS calls while allowing the isolated dataset", async () => {
+  const { setApiDevelopmentMode } = await import("./client");
+  const originalFetch = globalThis.fetch;
+  let requests = 0;
+  globalThis.fetch = async () => { requests++; return new Response("{}", { headers: { "content-type": "application/json" } }); };
+  try {
+    setApiDevelopmentMode(true);
+    for (const path of ["/users/test", "/vacancies/", "/candidates/test/questionnaire", "/interviews/", "/copilot/settings"]) {
+      await assert.rejects(apiFetch(path, { method: "DELETE" }), /Dev mode/);
+    }
+    assert.equal(requests, 0);
+    await apiFetch("/developer/dataset");
+    assert.equal(requests, 1);
+    setApiDevelopmentMode(false);
+    await apiFetch("/candidates/");
+    assert.equal(requests, 2);
+  } finally { setApiDevelopmentMode(false); globalThis.fetch = originalFetch; }
+});

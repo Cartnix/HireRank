@@ -19,6 +19,7 @@ REQUIRED_TENANT_TABLES = (
     "application",
     "interview",
     "scorecard",
+    "copilot_settings",
 )
 
 
