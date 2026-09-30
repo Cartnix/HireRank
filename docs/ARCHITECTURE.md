@@ -2,7 +2,7 @@
 
 Behavioral SoT: [use-cases/](use-cases/) (MVP: UC-01 through UC-07).
 **Compliance (strict):** [ATS_COMPLIANCE_RK.md](laws/ATS_COMPLIANCE_RK.md) (RK — primary), [GDPR.md](laws/GDPR.md) (EU / West).
-Vision: [PASSPORT.md](PASSPORT.md). Post-MVP LLM flow: [UC-08](use-cases/UC-08-automation-hitl-loop.md).
+Vision: [PRODUCT.md](PRODUCT.md). Post-MVP LLM flow: [UC-08](use-cases/UC-08-automation-hitl-loop.md).
 ATS tables + RLS map: [ATS_SCHEMA.md](ATS_SCHEMA.md).
 
 ## Planes

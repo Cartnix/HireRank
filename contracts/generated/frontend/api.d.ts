@@ -603,6 +603,217 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboard/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Analytics */
+        get: operations["Dashboard-get_analytics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboard/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Schedule */
+        get: operations["Dashboard-get_schedule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Interviews */
+        get: operations["Interviews-list_interviews"];
+        put?: never;
+        /** Create Interview */
+        post: operations["Interviews-create_interview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/{interview_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Interview */
+        put: operations["Interviews-update_interview"];
+        post?: never;
+        /** Delete Interview */
+        delete: operations["Interviews-delete_interview"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/{interview_id}/scorecards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Scorecard */
+        post: operations["Interviews-create_scorecard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Developer Access */
+        get: operations["developer-developer_access"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/dataset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Dataset
+         * @description One shared dataset. Identity/role is checked against the primary database.
+         */
+        get: operations["developer-read_dataset"];
+        /** Write Dataset */
+        put: operations["developer-write_dataset"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Data */
+        post: operations["developer-generate_data"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Data */
+        post: operations["developer-import_data"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Analytics */
+        get: operations["developer-read_analytics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Schedule */
+        get: operations["developer-read_schedule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/copilot/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Settings */
+        get: operations["Copilot-read_settings"];
+        /** Write Settings */
+        put: operations["Copilot-write_settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/private/users/": {
         parameters: {
             query?: never;
@@ -877,6 +1088,41 @@ export interface components {
              */
             cross_border_countries: string[];
         };
+        /** CopilotConfig */
+        CopilotConfig: {
+            /**
+             * Text
+             * @default Сопоставляй опыт с вакансией. Указывай проверяемые основания. Решение подтверждает HR.
+             */
+            text: string;
+            /** Greenflags */
+            greenFlags?: string[];
+            /** Redflags */
+            redFlags?: string[];
+            /**
+             * Usememory
+             * @default false
+             */
+            useMemory: boolean;
+            /**
+             * Memorymarkdown
+             * @default
+             */
+            memoryMarkdown: string;
+            /**
+             * Allowedactions
+             * @default [
+             *       "review",
+             *       "interview"
+             *     ]
+             */
+            allowedActions: ("review" | "interview" | "rejected")[];
+            /**
+             * Version
+             * @default 1
+             */
+            version: number;
+        };
         /** CreateCandidateRequest */
         CreateCandidateRequest: {
             /** Questionnaire */
@@ -901,12 +1147,109 @@ export interface components {
             /** Requirements */
             requirements?: string[];
         };
+        /** DashboardAnalytics */
+        DashboardAnalytics: {
+            /** Active Jobs */
+            active_jobs: number;
+            /** Total Candidates */
+            total_candidates: number;
+            /** Todays Interviews */
+            todays_interviews: number;
+            /** Avg Time To Hire */
+            avg_time_to_hire: number | null;
+            /** Pipeline */
+            pipeline: components["schemas"]["Distribution"][];
+            /** Sources */
+            sources: components["schemas"]["Distribution"][];
+            /** Candidate Trend */
+            candidate_trend: components["schemas"]["TrendPoint"][];
+            /** Vacancy Trend */
+            vacancy_trend: components["schemas"]["TrendPoint"][];
+            /** Interview Trend */
+            interview_trend: components["schemas"]["TrendPoint"][];
+            /** Hire Trend */
+            hire_trend: components["schemas"]["TrendPoint"][];
+            /** Top Candidates */
+            top_candidates: components["schemas"]["RankedCandidate"][];
+            /** Upcoming Interviews */
+            upcoming_interviews: components["schemas"]["ScheduledInterview"][];
+        };
+        /** DatasetWrite */
+        DatasetWrite: {
+            /** Revision */
+            revision: number;
+            /** Users */
+            users: {
+                [key: string]: unknown;
+            }[];
+            /** Vacancies */
+            vacancies: {
+                [key: string]: unknown;
+            }[];
+            /** Candidates */
+            candidates: {
+                [key: string]: unknown;
+            }[];
+            /** Prompts */
+            prompts: {
+                [key: string]: unknown;
+            }[];
+            /** Evaluations */
+            evaluations?: {
+                [key: string]: unknown;
+            }[];
+            /** Feedback */
+            feedback?: {
+                [key: string]: unknown;
+            }[];
+            /** Notifications */
+            notifications?: {
+                [key: string]: unknown;
+            }[];
+            /** Audit */
+            audit?: {
+                [key: string]: unknown;
+            }[];
+            /** Memory */
+            memory?: {
+                [key: string]: unknown;
+            }[];
+            /** Mcpruns */
+            mcpRuns?: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** Distribution */
+        Distribution: {
+            /** Stage */
+            stage: string;
+            /** Count */
+            count: number;
+        };
         /** ErrorResponse */
         ErrorResponse: {
             /** Code */
             code: string;
             /** Message */
             message: string;
+        };
+        /** GenerateRequest */
+        GenerateRequest: {
+            /**
+             * Candidates
+             * @default 20
+             */
+            candidates: number;
+            /**
+             * Vacancies
+             * @default 20
+             */
+            vacancies: number;
+            /**
+             * Clear Existing
+             * @default false
+             */
+            clear_existing: boolean;
         };
         /** HRDashboard */
         HRDashboard: {
@@ -940,6 +1283,67 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImportRequest */
+        ImportRequest: {
+            /** Confirmation */
+            confirmation: string;
+        };
+        /** Interview */
+        Interview: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /**
+             * Interviewer Id
+             * Format: uuid
+             */
+            interviewer_id: string;
+            /**
+             * Scheduled At
+             * Format: date-time
+             */
+            scheduled_at: string;
+            /**
+             * Duration Minutes
+             * @default 45
+             */
+            duration_minutes: number;
+        };
+        /** InterviewInput */
+        InterviewInput: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /**
+             * Interviewer Id
+             * Format: uuid
+             */
+            interviewer_id: string;
+            /**
+             * Scheduled At
+             * Format: date-time
+             */
+            scheduled_at: string;
+            /**
+             * Duration Minutes
+             * @default 45
+             */
+            duration_minutes: number;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -1043,6 +1447,24 @@ export interface components {
             /** @default candidate */
             role: components["schemas"]["UserRole"];
         };
+        /** RankedCandidate */
+        RankedCandidate: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Email */
+            email?: string | null;
+            /** Name */
+            name: string;
+            /** Position */
+            position: string;
+            /** Stage */
+            stage: string;
+            /** Rating */
+            rating: number;
+        };
         /** RefreshRequest */
         RefreshRequest: {
             /** Refresh Token */
@@ -1057,6 +1479,66 @@ export interface components {
              * @default 900
              */
             expires_in: number;
+        };
+        /** ScheduledInterview */
+        ScheduledInterview: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Candidate Name */
+            candidate_name: string;
+            /** Position */
+            position: string;
+            /** Stage */
+            stage: string;
+            /**
+             * Scheduled At
+             * Format: date-time
+             */
+            scheduled_at: string;
+            /** Duration Minutes */
+            duration_minutes: number;
+        };
+        /**
+         * Scorecard
+         * @description Human interview feedback only — not AI auto-scoring (UC-08 / PRODUCT).
+         */
+        Scorecard: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+            /**
+             * Interview Id
+             * Format: uuid
+             */
+            interview_id: string;
+            /** Rating */
+            rating: number;
+            /** Notes */
+            notes?: string | null;
+            /** Submitted At */
+            submitted_at?: string | null;
+        };
+        /** ScorecardInput */
+        ScorecardInput: {
+            /** Rating */
+            rating: number;
+            /** Notes */
+            notes?: string | null;
         };
         /**
          * TokenPair
@@ -1074,6 +1556,13 @@ export interface components {
             token_type: string;
             /** Expires In */
             expires_in: number;
+        };
+        /** TrendPoint */
+        TrendPoint: {
+            /** Date */
+            date: string;
+            /** Value */
+            value: number;
         };
         /** UpdatePassword */
         UpdatePassword: {
@@ -1141,6 +1630,8 @@ export interface components {
             first_name?: string | null;
             /** Last Name */
             last_name?: string | null;
+            /** Permissions */
+            permissions?: string[];
             /**
              * Id
              * Format: uuid
@@ -1193,7 +1684,7 @@ export interface components {
          * UserRole
          * @enum {string}
          */
-        UserRole: "administrator" | "hr" | "manager" | "recruiter" | "candidate";
+        UserRole: "superuser" | "administrator" | "hr" | "manager" | "recruiter" | "candidate";
         /** UserUpdate */
         UserUpdate: {
             /** Email */
@@ -2806,6 +3297,458 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminDashboard"] | components["schemas"]["HRDashboard"] | components["schemas"]["ManagerDashboard"] | components["schemas"]["CandidateDashboard"];
+                };
+            };
+        };
+    };
+    "Dashboard-get_analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardAnalytics"];
+                };
+            };
+        };
+    };
+    "Dashboard-get_schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduledInterview"][];
+                };
+            };
+        };
+    };
+    "Interviews-list_interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"][];
+                };
+            };
+        };
+    };
+    "Interviews-create_interview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "Interviews-update_interview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "Interviews-delete_interview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "Interviews-create_scorecard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScorecardInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scorecard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "developer-developer_access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    "developer-read_dataset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    "developer-write_dataset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DatasetWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "developer-generate_data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "developer-import_data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "developer-read_analytics": {
+        parameters: {
+            query?: {
+                role?: components["schemas"]["UserRole"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardAnalytics"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "developer-read_schedule": {
+        parameters: {
+            query?: {
+                role?: components["schemas"]["UserRole"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduledInterview"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "Copilot-read_settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotConfig"];
+                };
+            };
+        };
+    };
+    "Copilot-write_settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopilotConfig"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotConfig"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -10,6 +10,7 @@ from fastapi import HTTPException, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app import crud
 from app.core.config import settings
 from app.models import (
     ConsentGrant,
@@ -177,6 +178,9 @@ async def build_user_public(session: AsyncSession, user: User) -> UserPublic:
     consent_refresh = await account_consent_refresh_required(session, user_id=user.id)
     legal_required = legal_acceptance_required(user)
     return UserPublic(
+        permissions=await crud.get_permissions_for_role(
+            session=session, role_name=str(user.role)
+        ),
         id=user.id,
         email=user.email,
         is_active=user.is_active,

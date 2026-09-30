@@ -1,13 +1,11 @@
+import { AnalyticsOverview } from "./AnalyticsOverview";
+import type { DashboardAnalytics } from "@/widgets/dashboard-stats/model/analytics";
 import type { Candidate } from "@/entities/candidate";
 import type { Job } from "@/entities/job";
 import type { Interview } from "@/entities/interview";
 import { StatsWidgets } from "@/widgets/dashboard-stats";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 import { CurrentDateInfo } from "@/app/dashboard/page";
-import { HiringVelocityCard } from "@/widgets/candidates-grow/ui/CandidateVelocityChart";
-import { HiringFunnelCard } from "@/widgets/candidate-funnel";
-import { UpcomingInterviewsCard } from "@/widgets/upcoming-interviews/ui/UpcomingInterviewsCard";
-import { TopCandidatesCard } from "@/widgets/top-candidate";
 
 export type DashboardStats = {
   activeJobsCount: number;
@@ -17,20 +15,17 @@ export type DashboardStats = {
 };
 
 export type DashboardPageViewProps = DashboardStats & {
-  currentDate: CurrentDateInfo;
-  previousMonth: DashboardStats;
-  pipelineCounts: { stage: string; count: number }[];
-  maxPipeline: number;
-  todaysInterviews: Interview[];
-  candidateById: Record<string, Candidate>;
-  jobById: Record<string, Job>;
+  analytics?: DashboardAnalytics;
+  candidateLink?: (id: string) => string;
+  live?: boolean; candidateLabel?: string; demoActiveJobs?: boolean; demoCandidates?: boolean;
+  currentDate?: CurrentDateInfo;
+  previousMonth?: DashboardStats;
+  pipelineCounts?: { stage: string; count: number }[];
+  maxPipeline?: number;
+  todaysInterviews?: Interview[];
+  candidateById?: Record<string, Candidate>;
+  jobById?: Record<string, Job>;
 };
-
-interface StatsWidgetsProps {
-  stats: DashboardStats;
-  previousMonth: DashboardStats;
-  className?: string;
-}
 
 export function DashboardPageView(props: DashboardPageViewProps) {
   return (
@@ -42,28 +37,12 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         inProgressCandidates={props.inProgressCandidates}
         todaysInterviewsCount={props.todaysInterviewsCount}
         avgTimeToHire={props.avgTimeToHire}
-        previousMonth={props.previousMonth}
+        previousMonth={props.live ? undefined : props.previousMonth}
+        analytics={props.analytics} live={props.live} candidateLabel={props.candidateLabel} demoActiveJobs={props.demoActiveJobs} demoCandidates={props.demoCandidates}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-        <div className="lg:col-span-7 xl:col-span-8">
-          <HiringVelocityCard />
-        </div>
+      {props.analytics && <AnalyticsOverview data={props.analytics} candidateLink={props.candidateLink} />}
 
-        <div className="lg:col-span-5 xl:col-span-4">
-          <HiringFunnelCard />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-        <div className="lg:col-span-7 xl:col-span-8">
-          <TopCandidatesCard />
-        </div>
-
-        <div className="lg:col-span-5 xl:col-span-4">
-          <UpcomingInterviewsCard />
-        </div>
-      </div>
     </div>
   );
 }

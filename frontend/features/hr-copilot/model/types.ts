@@ -6,6 +6,7 @@ export const RoleSchema = z.enum([
   "hr",
   "manager",
   "administrator",
+  "superuser",
 ]);
 export const StatusSchema = z.enum([
   "new",
@@ -16,6 +17,8 @@ export const StatusSchema = z.enum([
 ]);
 export const ActionSchema = z.enum(["review", "interview", "rejected"]);
 export const VacancySchema = z.object({
+  status: z.enum(["draft", "open", "closed"]).optional(),
+  stages: z.array(z.object({ id: z.string(), stage_name: z.string(), sort_order: z.number().int() })).optional(),
   id: z.string(),
   tenantId: z.string(),
   title: z.string().min(2),
@@ -36,6 +39,7 @@ export const CandidateSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   phone: z.string(),
+  location: z.string().max(255).optional(),
   experience: z.string().min(10),
   skills: z.string(),
   resumeRef: z.string(),
@@ -44,12 +48,16 @@ export const CandidateSchema = z.object({
   vacancyId: z.string().nullable(),
   requestedVacancyId: z.string().nullable(),
   source: z.enum(["candidate", "recruiter", "hr"]),
+  acquisition_source: z.string().optional(),
   createdAt: z.string(),
 });
 export const PromptSchema = z.object({
   tenantId: z.string(),
   text: z.string().min(12),
   useMemory: z.boolean(),
+  greenFlags: z.array(z.string()).default([]),
+  redFlags: z.array(z.string()).default([]),
+  memoryMarkdown: z.string().max(100000).default(""),
   allowedActions: z.array(ActionSchema).min(1).max(3),
   version: z.number().int(),
 });
@@ -130,11 +138,17 @@ export const McpRunSchema = z.object({
   evaluationId: z.string(),
   tool: z.string(),
   action: ActionSchema,
-  approvedBy: z.literal("hr"),
+  approvedBy: z.enum(["hr", "superuser"]),
   status: z.literal("success"),
   createdAt: z.string(),
 });
+export const DemoUserSchema = z.object({
+  id: z.string(), tenant_id: z.string(), email: z.string().email(),
+  role: RoleSchema, is_active: z.boolean(),
+  first_name: z.string().nullable(), last_name: z.string().nullable(),
+});
 export const CopilotStateSchema = z.object({
+  users: z.array(DemoUserSchema).default([]),
   version: z.literal(1),
   tenants: z.array(z.object({ id: z.string(), name: z.string() })),
   vacancies: z.array(VacancySchema),

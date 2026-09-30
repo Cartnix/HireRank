@@ -1,42 +1,10 @@
-import { apiFetch } from "@/shared/api/client";
-import { Candidate } from "./types";
-
-interface Pagination {
-  page: number;
-  page_size: number;
-  total: number;
-  total_pages: number;
-}
-
-interface CandidatesResponse {
-  items: Candidate[];
-  pagination: Pagination;
-}
-
+import type { Candidate } from "./types";
+import { candidateDetail, listCandidateViews } from "@/shared/api/ats";
 export function getCandidateFullName(candidate: Candidate): string {
-  const { surname, first_name, patronymic } = candidate.questionnaire;
-  return [surname, first_name, patronymic].filter(Boolean).join(" ");
+  return candidate.name || [candidate.questionnaire.surname, candidate.questionnaire.first_name, candidate.questionnaire.patronymic].filter(Boolean).join(" ");
 }
-
-export async function getCandidates(
-  headers?: HeadersInit,
-): Promise<CandidatesResponse> {
-  return apiFetch<CandidatesResponse>("/candidates/", {
-    method: "GET",
-    headers,
-  });
+export async function getCandidates(headers?: HeadersInit) {
+  const items = await listCandidateViews(headers);
+  return { items, pagination: { page: 1, page_size: items.length, total: items.length, total_pages: items.length ? 1 : 0 } };
 }
-
-export async function getCandidateById(
-  id: string,
-  headers?: HeadersInit,
-): Promise<Candidate | null> {
-  try {
-    return await apiFetch<Candidate>(`/candidates/${id}`, {
-      method: "GET",
-      headers,
-    });
-  } catch (err) {
-    throw err;
-  }
-}
+export const getCandidateById = candidateDetail;

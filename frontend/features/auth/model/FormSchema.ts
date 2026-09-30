@@ -47,7 +47,7 @@ export const RegisterFormValues = z
     email: emailSchema,
     password: passwordSchema,
     repeatPassword: passwordSchema,
-    role: z.enum(["candidate", "hr", "manager", "recruiter"]),
+    role: z.enum(["candidate", "hr", "manager", "recruiter", "administrator"]),
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     ...registerConsentFields,

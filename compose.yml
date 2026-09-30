@@ -290,6 +290,8 @@ services:
       - POSTGRES_SERVER=db
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_DEV_DB=${POSTGRES_DEV_DB:-hirerank_dev}
+      - DEV_DATABASE_ENABLED=${DEV_DATABASE_ENABLED:-false}
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - SENTRY_DSN=${SENTRY_DSN}
@@ -330,6 +332,8 @@ services:
       - POSTGRES_SERVER=db
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_DEV_DB=${POSTGRES_DEV_DB:-hirerank_dev}
+      - DEV_DATABASE_ENABLED=${DEV_DATABASE_ENABLED:-false}
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - SENTRY_DSN=${SENTRY_DSN}

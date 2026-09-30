@@ -1,3 +1,2 @@
-export default function Page() {
-  return <h1>Settings Page</h1>;
-}
+import { WorkspacePreferences } from "@/features/demo/WorkspacePreferences";
+export default function Page() { return <WorkspacePreferences />; }

@@ -1,5 +1,6 @@
 "use client";
 
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Stage } from "@/entities/job";
@@ -9,7 +10,9 @@ import { GhostButton } from "@/shared/ui/buttons/GhostButton";
 export function StagesEditor({
   stages,
   onChange,
+  demo = false,
 }: {
+  demo?: boolean;
   stages: Stage[];
   onChange: (stages: Stage[]) => void;
 }) {
@@ -17,6 +20,7 @@ export function StagesEditor({
 
   return (
     <Card className="h-fit p-6">
+      {demo && <DemoBadge label="Dev mode · редактирование не сохраняется" />}
       <div className="mb-1 text-[15px] font-semibold">Этапы отбора</div>
       <div className="mb-4 text-[12.5px] text-foreground-secondary">Настройте порядок этапов воронки для этой вакансии.</div>
       <div className="space-y-2">
@@ -27,6 +31,8 @@ export function StagesEditor({
             </span>
             <span className="text-[13px] font-medium">{s.stage_name}</span>
             <button
+              disabled={demo}
+              aria-label="Удалить этап"
               onClick={() => onChange(stages.filter((st) => st.id !== s.id))}
               className="ml-auto text-muted-foreground hover:text-danger"
             >
@@ -37,12 +43,13 @@ export function StagesEditor({
       </div>
       <div className="mt-3 flex gap-2">
         <input
+          disabled={demo}
           value={newStage}
           onChange={(e) => setNewStage(e.target.value)}
           placeholder="Новый этап"
           className="w-full rounded-[10px] border border-border bg-background px-3 py-1.5 text-[13px] outline-none focus:border-brand-primary"
         />
-        <GhostButton
+        <GhostButton disabled={demo}
           onClick={() => {
             if (newStage.trim() === "") return;
             const nextStage: Stage = {

@@ -12,7 +12,6 @@ export function StageFilter({
     { value: "Все", label: "Все" },
     { value: "unassigned", label: "Без назначения" },
     { value: "assigned", label: "В работе" },
-    { value: "rejected", label: "Отклонённые" },
   ];
 
   return (

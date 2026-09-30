@@ -1,0 +1,46 @@
+"use client";
+import { useCallback, useEffect, useState } from "react";
+import { useOptionalDemo } from "@/features/demo/DemoProvider";
+import { useAuthSession } from "@/features/auth/AuthProvider";
+import type { Candidate } from "@/entities/candidate/model/types";
+import type { Job } from "@/entities/job/model/types";
+import { candidateDetail, listCandidateViews, listVacancyViews, vacancyDetail } from "./ats";
+
+export function useAtsData(candidateId?: string | null, vacancyId?: string | null) {
+  const { user, isLoading: sessionLoading } = useAuthSession();
+  const demo = useOptionalDemo();
+  const role = demo?.role ?? user?.role;
+  const permissions = demo?.permissions ?? user?.permissions;
+  const effectiveUser = user ? { ...user, role: role ?? user.role, permissions } : null;
+  const canMutate = demo?.canMutate ?? !["superuser", "administrator"].includes(user?.role ?? "");
+  const [data, setData] = useState<{ candidates: Candidate[]; jobs: Job[] }>({ candidates: [], jobs: [] });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [version, setVersion] = useState(0);
+  const reload = useCallback(() => setVersion(v => v + 1), []);
+  const can = useCallback((permission: string) => (role === "superuser" || (permissions?.includes(permission) ?? false)) && (permission.endsWith(".read") || canMutate), [role, permissions, canMutate]);
+  useEffect(() => {
+    if (sessionLoading) return;
+    let cancelled = false;
+    async function load() {
+      setLoading(true); setError("");
+      if (!user) { setError("Войдите в аккаунт для доступа к ATS"); setLoading(false); return; }
+      try {
+        const [candidates, jobs, candidate, vacancy] = await Promise.all([
+          permissions?.includes("candidate.read") ? listCandidateViews() : Promise.resolve([]),
+          listVacancyViews(),
+          candidateId ? candidateDetail(candidateId) : Promise.resolve(null),
+          vacancyId ? vacancyDetail(vacancyId) : Promise.resolve(null),
+        ]);
+        if (cancelled) return;
+        if (candidate && !candidates.some(c => c.id === candidate.id)) candidates.push(candidate);
+        if (vacancy && !jobs.some(j => j.id === vacancy.id)) jobs.push(vacancy);
+        setData({ candidates, jobs });
+      } catch (e) { if (!cancelled) setError(e instanceof Error ? e.message : "Не удалось загрузить ATS"); }
+      finally { if (!cancelled) setLoading(false); }
+    }
+    void load();
+    return () => { cancelled = true; };
+  }, [user, sessionLoading, candidateId, vacancyId, version, role, permissions]);
+  return { ...data, user: effectiveUser, can, loading: loading || sessionLoading, error, reload };
+}

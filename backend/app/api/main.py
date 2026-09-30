@@ -3,7 +3,10 @@ from fastapi import APIRouter
 from app.api.routes import (
     auth,
     candidates,
+    copilot,
     dashboard,
+    developer,
+    interviews,
     login,
     private,
     users,
@@ -20,6 +23,9 @@ api_router.include_router(utils.router)
 api_router.include_router(vacancies.router)
 api_router.include_router(candidates.router)
 api_router.include_router(dashboard.router)
+api_router.include_router(interviews.router)
+api_router.include_router(developer.router)
+api_router.include_router(copilot.router)
 
 
 if settings.ENVIRONMENT == "local":

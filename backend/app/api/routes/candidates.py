@@ -26,7 +26,7 @@ router = APIRouter(prefix="/candidates", tags=["Candidates"])
 
 def _require_candidate_update(request: Request, current_user: CurrentUser) -> None:
     role = role_str(current_user.role)
-    if role == UserRole.CANDIDATE.value:
+    if current_user.is_superuser or role == UserRole.CANDIDATE.value:
         return
     perms = getattr(request.state, "permissions", None) or []
     if not has_permission(perms, "candidate.update"):

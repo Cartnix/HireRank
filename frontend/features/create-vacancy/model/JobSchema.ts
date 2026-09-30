@@ -38,8 +38,8 @@ export const jobFormSchema = z
       .array(z.string().trim().min(1, "Требование не может быть пустым"))
       .min(1, "Укажите хотя бы одно требование"),
 
-    location: z.enum(LOCATIONS).optional(),
-    employmentType: z.enum(EMPLOYMENT_TYPES).optional(),
+    location: z.enum(LOCATIONS).or(z.literal("")).optional(),
+    employmentType: z.enum(EMPLOYMENT_TYPES).or(z.literal("")).optional(),
     salaryMin: z.number().int().positive().nullable().optional(),
     salaryMax: z.number().int().positive().nullable().optional(),
     recruiter: z.string().trim().optional(),

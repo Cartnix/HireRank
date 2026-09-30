@@ -1,3 +1,4 @@
+import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { BrainCircuit } from "lucide-react";
 
 import type { Role, CopilotState } from "../model/types";
@@ -21,7 +22,7 @@ export function CopilotHeader({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-bold text-brand-primary">
-            <BrainCircuit size={14} /> AI Agent · HITL + MCP
+            <BrainCircuit size={14} /> AI Agent · HITL + MCP <DemoBadge label="Dev mode · локальные данные" />
           </div>
           <h1 className="mt-3 text-3xl font-bold tracking-tight">
             HireRank HR Copilot
@@ -65,9 +66,8 @@ export function CopilotHeader({
         </div>
       </header>
       <div className="rounded-xl border border-brand-primary/20 bg-brand-primary/5 px-4 py-3 text-xs text-foreground-secondary">
-        Интерактивное frontend демо. Сессия, JSON и mock MCP сохраняются только
-        в браузере; роли и tenant здесь демонстрационные. Реальные резюме не
-        загружайте.
+        Единые тестовые данные загружены из dev БД. Изменения в предпросмотре
+        действуют до перезагрузки страницы.
       </div>
     </>
   );

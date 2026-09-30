@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Candidate, CandidateStatus } from "@/entities/candidate";
 import { Job } from "@/entities/job";
 import { Note } from "@/entities/note";
 
 function getCandidateFullName(candidate: Candidate): string {
   const { surname, first_name, patronymic } = candidate.questionnaire;
-  return [surname, first_name, patronymic].filter(Boolean).join(" ");
+  return candidate.name || [surname, first_name, patronymic].filter(Boolean).join(" ");
 }
 
 export function useCandidatesPage(
@@ -16,7 +16,6 @@ export function useCandidatesPage(
   initialSelectedCandidateId: string | null = null,
 ) {
   const router = useRouter();
-  const pathname = usePathname();
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilterState] = useState<CandidateStatus | "Все">(
     "Все",
@@ -26,17 +25,11 @@ export function useCandidatesPage(
     setStageFilterState(v as CandidateStatus | "Все");
   };
 
-  const [selectedId, setSelectedId] = useState<string | null>(
-    initialSelectedCandidateId,
-  );
+  const selectedId = initialSelectedCandidateId;
   const [noteDraft, setNoteDraft] = useState("");
   const [notesByCandidate, setNotesByCandidate] = useState<
     Record<string, Note[]>
   >({});
-
-  useEffect(() => {
-    setSelectedId(initialSelectedCandidateId);
-  }, [initialSelectedCandidateId]);
 
   const filteredCandidates = useMemo(() => {
     return candidates.filter(
@@ -57,11 +50,9 @@ export function useCandidatesPage(
   const notes = selectedId ? (notesByCandidate[selectedId] ?? []) : [];
 
   const openCandidate = (id: string) => {
-    setSelectedId(id);
-    router.push(`${pathname}/${id}`);
+    router.push(`/dashboard/candidates/${id}`);
   };
   const back = () => {
-    setSelectedId(null);
     router.push("/dashboard/candidates");
   };
 

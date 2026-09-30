@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app import crud
 from app.core.config import settings
 from app.core.security import verify_password
-from app.models import User, UserCreate
+from app.models import OAuthIdentity, User, UserConsent, UserCreate
 from tests.utils.consent import register_json
 from tests.utils.user import create_random_user
 from tests.utils.utils import random_email, random_lower_string
@@ -23,7 +23,7 @@ async def test_get_users_superuser_me(
     current_user = r.json()
     assert current_user
     assert current_user["is_active"] is True
-    assert current_user["role"] == "administrator"
+    assert current_user["role"] == "superuser"
     assert current_user["email"] == settings.FIRST_SUPERUSER
     assert current_user["tenant_id"] == str(settings.TENANT_ID)
 
@@ -533,3 +533,34 @@ async def test_delete_user_without_privileges(
     )
     assert r.status_code == 403
     assert r.json()["detail"] == "Insufficient permissions"
+
+
+async def test_delete_user_cascades_consent_and_oauth_identity(
+    client: AsyncClient, superuser_token_headers: dict[str, str], db: AsyncSession
+) -> None:
+    """Accepted consent and OAuth links must not turn user deletion into a 500."""
+    user = await create_random_user(db)
+    consent = UserConsent(
+        user_id=user.id,
+        tenant_id=user.tenant_id,
+        purpose="account_processing",
+        granted=True,
+    )
+    identity = OAuthIdentity(
+        user_id=user.id,
+        provider="google",
+        provider_subject=str(uuid.uuid4()),
+    )
+    db.add(consent)
+    db.add(identity)
+    await db.commit()
+    user_id, consent_id, identity_id = user.id, consent.id, identity.id
+
+    response = await client.delete(
+        f"{settings.API_V1_STR}/users/{user_id}", headers=superuser_token_headers
+    )
+    assert response.status_code == 200
+    db.expire_all()
+    assert await db.get(User, user_id) is None
+    assert await db.get(UserConsent, consent_id) is None
+    assert await db.get(OAuthIdentity, identity_id) is None

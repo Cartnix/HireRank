@@ -19,11 +19,7 @@ export const AuthModal = () => {
     emailHint,
     onEmailBlur,
     switchTo,
-    consentAccount,
-    crossBorder,
-    getValues,
     consentReady,
-    control,
   } = useAuthModalState();
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -50,17 +46,15 @@ export const AuthModal = () => {
         </h2>
         <p className="text-foreground-secondary mt-2">
           {isRegister
-            ? "Согласия разделены и выключены по умолчанию (закон РК о ПД §1.4)"
+            ? "Для регистрации подтвердите согласие на обработку персональных данных"
             : "Войдите через Google, LinkedIn или email"}
         </p>
       </div>
 
       {isRegister && (
         <ConsentFieldset
-          control={control}
           register={register}
           errors={errors}
-          crossBorder={crossBorder}
         />
       )}
 
@@ -89,7 +83,7 @@ export const AuthModal = () => {
 
       {!isRegister && (
         <p className="text-xs text-foreground-secondary text-center leading-relaxed -mt-2">
-          Нажимая кнопку «Войти», вы подтверждаете согласие с <LegalLinks />.
+          Нажимая кнопку «Войти», вы даёте согласие на сбор и обработку персональных данных согласно <LegalLinks />.
           Обрабатываются email, технические данные сессии (IP, cookie) и факт
           входа.
         </p>

@@ -1,40 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useAuthSession } from "@/features/auth/AuthProvider";
 import { useAuth } from "@/features/auth/useAuth";
-import { loadCopilotState } from "@/features/hr-copilot/model/storage";
-import type { CopilotState } from "@/features/hr-copilot/model/types";
-import { toDashboardJob } from "@/features/hr-copilot/model/dashboardAdapters";
+import { useAtsData } from "@/shared/api/useAtsData";
+import { applyToVacancy } from "@/shared/api/vacancies";
+import { updateQuestionnaire } from "@/shared/api/ats";
+import { IntakeTab } from "@/features/hr-copilot/ui/tabs/IntakeTab";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 
 export const CareerView = ({ vacancyId }: { vacancyId?: string }) => {
   const router = useRouter();
   const { signOut } = useAuth();
 
-  const [copilotState, setCopilotState] = useState<CopilotState | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setCopilotState(loadCopilotState());
-      setLoading(false);
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  const tenantId = copilotState?.tenants[0]?.id ?? "";
-  const vacancies = copilotState
-    ? copilotState.vacancies
-        .filter((vacancy) => vacancy.tenantId === tenantId && vacancy.open)
-        .map(toDashboardJob)
-    : [];
+  const { jobs, candidates, user, loading, error, reload } = useAtsData(null, vacancyId);
+  const { clearSession } = useAuthSession();
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [showIntake, setShowIntake] = useState(false);
+  const ownCandidate = candidates.find(candidate => candidate.user_id === user?.id);
+  const vacancies = jobs.filter(job => job.status === "open");
 
   const handleSignOut = async () => {
     const error = await signOut();
     if (!error) {
-      router.push("/auth");
+      clearSession(); router.push("/auth");
     }
   };
 
@@ -50,9 +42,28 @@ export const CareerView = ({ vacancyId }: { vacancyId?: string }) => {
     );
   }
 
+  if (error) return <p role="alert">{error}<button onClick={reload}>Повторить</button></p>;
+
   return (
     <div className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-5xl flex-col gap-8">
+        {message && <p role="status">{message}</p>}
+        {user?.role === "candidate" && <>
+          {ownCandidate && <button onClick={() => router.push(`/dashboard/candidates/${ownCandidate.id}`)} className="text-left text-brand-primary">Мой профиль · {ownCandidate.stage}</button>}
+          <button onClick={() => setShowIntake(v => !v)} className="text-left text-brand-primary">Заполнить своё резюме</button>
+          {showIntake && <IntakeTab mvp busy={busy} initialValues={ownCandidate?.questionnaire as unknown as Record<string, unknown> | undefined} vacancies={vacancies.map(j => ({ id: j.id, title: j.title, open: true }))} submitIntake={async event => {
+            event.preventDefault(); if (busy) return;
+            const values = new FormData(event.currentTarget); const own = candidates.find(c => c.user_id === user.id);
+            if (!own) { setMessage("Профиль кандидата не найден. Обратитесь к администратору."); return; }
+            const resumeText = String(values.get("resumeText") ?? "").trim(); const reference = String(values.get("resumeUrl") ?? "").trim();
+            if (!resumeText && !reference) { setMessage("Введите текст резюме или ссылку"); return; }
+            if (values.get("processingConsent") !== "on") { setMessage("Подтвердите согласие на обработку данных"); return; }
+            setBusy(true); setMessage("");
+            try { await updateQuestionnaire(own.id, { ...own.questionnaire, name: String(values.get("name") ?? ""), email: String(values.get("email") ?? ""), phone: String(values.get("phone") ?? ""), experience: String(values.get("experience") ?? ""), skills: String(values.get("skills") ?? ""), resume_text: resumeText, resume_reference: reference || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true }); setMessage("Анкета сохранена"); setShowIntake(false); reload(); }
+            catch (e) { setMessage(e instanceof Error ? e.message : "Не удалось сохранить анкету"); }
+            finally { setBusy(false); }
+          }} />}
+        </>}
         <header className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-background-elevated/70 p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-primary">
@@ -138,6 +149,12 @@ export const CareerView = ({ vacancyId }: { vacancyId?: string }) => {
 
                 <aside className="h-fit rounded-xl border border-border bg-background p-4">
                   <h3 className="mb-3 mt-0 text-sm font-semibold">Условия</h3>
+                  {user?.role === "candidate" && <MainButton disabled={busy} title={busy ? "Отправляем..." : "Откликнуться"} onClick={async () => {
+                    if (busy) return; setBusy(true); setMessage("");
+                    try { await applyToVacancy(selectedVacancy.id); setMessage("Отклик сохранён. Назначение подтверждает HR."); reload(); }
+                    catch (e) { setMessage(e instanceof Error ? e.message : "Не удалось отправить отклик"); }
+                    finally { setBusy(false); }
+                  }} />}
                   <dl className="space-y-3 text-sm">
                     <div>
                       <dt className="text-xs text-muted-foreground">Формат работы</dt>

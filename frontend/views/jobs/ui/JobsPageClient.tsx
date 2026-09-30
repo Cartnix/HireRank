@@ -1,152 +1,106 @@
 "use client";
-
-import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import type { CreateVacancyPayload, Job, Stage } from "@/entities/job";
+import { useDemo } from "@/features/demo/DemoProvider";
+import { DemoJobs } from "@/features/demo/DemoSections";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  createVacancy,
+  deleteVacancy,
+  updateVacancy,
+  type Job,
+} from "@/entities/job";
 import { JobsView } from "@/views/jobs";
 import { NewJobModal } from "@/features/create-vacancy";
-import { addVacancy, removeVacancy } from "@/features/hr-copilot/model/engine";
-import {
-  toDashboardCandidate,
-  toDashboardJob,
-} from "@/features/hr-copilot/model/dashboardAdapters";
-import {
-  loadCopilotState,
-  saveCopilotState,
-} from "@/features/hr-copilot/model/storage";
-import type { CopilotState } from "@/features/hr-copilot/model/types";
+import { useAtsData } from "@/shared/api/useAtsData";
 
-type Props = {
-  initialSelectedJobId?: string | null;
-};
-
-export function JobsPageClient({
+function LiveJobsPageClient({
   initialSelectedJobId = null,
-}: Props) {
+}: {
+  initialSelectedJobId?: string | null;
+}) {
   const router = useRouter();
-  const pathname = usePathname();
-
-  const [copilotState, setCopilotState] = useState<CopilotState | null>(null);
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(
+  const { jobs, candidates, can, loading, error, reload } = useAtsData(
+    null,
     initialSelectedJobId,
   );
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setCopilotState(loadCopilotState());
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  const tenantId = copilotState?.tenants[0]?.id ?? "";
-  const jobs = useMemo(
-    () =>
-      copilotState?.vacancies
-        .filter((vacancy) => vacancy.tenantId === tenantId)
-        .map(toDashboardJob) ?? [],
-    [copilotState, tenantId],
-  );
-  const candidates = useMemo(() => {
-    const vacanciesById = new Map(
-      copilotState?.vacancies.map((vacancy) => [vacancy.id, vacancy]) ?? [],
-    );
+  const [actionError, setActionError] = useState("");
+  const selectedJob = jobs.find((j) => j.id === initialSelectedJobId) ?? null;
+  const runUpdate = async (
+    id: string,
+    payload: Parameters<typeof updateVacancy>[1],
+  ) => {
+    if (!can("vacancy.update")) return;
+    setActionError("");
+    try {
+      await updateVacancy(id, payload);
+      reload();
+    } catch (e) {
+      setActionError(
+        e instanceof Error ? e.message : "Не удалось изменить вакансию",
+      );
+    }
+  };
+  if (loading) return <div>Загрузка вакансий...</div>;
+  if (error)
     return (
-      copilotState?.candidates
-        .filter((candidate) => candidate.tenantId === tenantId)
-        .map((candidate) =>
-          toDashboardCandidate(
-            candidate,
-            vacanciesById.get(candidate.vacancyId ?? candidate.requestedVacancyId ?? ""),
-          ),
-        ) ?? []
+      <div role="alert">
+        {error}
+        <button onClick={reload} className="ml-3 text-brand-primary">
+          Повторить
+        </button>
+      </div>
     );
-  }, [copilotState, tenantId]);
-
-  const jobById = useMemo(() => {
-    const map: Record<string, Job> = {};
-    jobs.forEach((job) => {
-      map[job.id] = job;
-    });
-    return map;
-  }, [jobs]);
-
-  const selectedJob = selectedJobId ? (jobById[selectedJobId] ?? null) : null;
-
-  const handleOpenJob = (id: string) => {
-    setSelectedJobId(id);
-    router.push(`${pathname === "/dashboard/jobs" ? pathname : "/dashboard/jobs"}/${id}`);
-  };
-
-  const handleBack = () => {
-    setSelectedJobId(null);
-    router.push("/dashboard/jobs");
-  };
-
-  const handleOpenCandidate = (id: string) => {
-    router.push(`/dashboard/candidates/${id}`);
-  };
-
-  const handleUpdateStages = (stages: Stage[]) => {
-    void stages;
-  };
-
-  const handleDeleteJob = async (id: string) => {
-    if (!copilotState) throw Error("Данные Copilot ещё загружаются");
-    const next = structuredClone(copilotState);
-    removeVacancy(next, tenantId, "hr", id);
-    saveCopilotState(next);
-    setCopilotState(next);
-  };
-
-  const handleJobCreated = (job: Job) => {
-    setSelectedJobId(job.id);
-    setIsCreateModalOpen(false);
-  };
-
-  const createCopilotVacancy = async (payload: CreateVacancyPayload) => {
-    if (!copilotState || !tenantId) throw Error("Данные Copilot ещё загружаются");
-    const next = structuredClone(copilotState);
-    const vacancy = addVacancy(next, tenantId, "hr", {
-      title: payload.title,
-      department: payload.department,
-      location: payload.location ?? "",
-      description: payload.description,
-      requirements: payload.requirements,
-      employmentType: payload.employmentType,
-      experience: payload.experience,
-      salaryMin: payload.salaryMin,
-      salaryMax: payload.salaryMax,
-      recruiter: payload.recruiter,
-      open: payload.status === "open",
-    });
-    saveCopilotState(next);
-    setCopilotState(next);
-    return toDashboardJob(vacancy);
-  };
-
-  if (!copilotState) return <div>Loading...</div>;
-
   return (
     <>
+      {actionError && (
+        <p role="alert" className="text-danger">
+          {actionError}
+        </p>
+      )}
       <JobsView
         jobs={jobs}
         candidates={candidates}
         selectedJob={selectedJob}
-        onOpenJob={handleOpenJob}
-        onBack={handleBack}
+        onOpenJob={(id) => router.push(`/dashboard/jobs/${id}`)}
+        onBack={() => router.push("/dashboard/jobs")}
         onCreateJob={() => setIsCreateModalOpen(true)}
-        onUpdateStages={handleUpdateStages}
-        onOpenCandidate={handleOpenCandidate}
-        onDeleteJob={handleDeleteJob}
+        canCreate={can("vacancy.create")}
+        canUpdate={can("vacancy.update")}
+        canDelete={can("vacancy.delete")}
+        onUpdateJob={runUpdate}
+        onUpdateStages={() =>
+          setActionError("Dev mode · редактирование этапов ожидает backend")
+        }
+        onOpenCandidate={(id) => router.push(`/dashboard/candidates/${id}`)}
+        onDeleteJob={async (id) => {
+          if (!can("vacancy.delete")) return;
+          await deleteVacancy(id);
+          reload();
+        }}
       />
-      {isCreateModalOpen && (
+      {isCreateModalOpen && can("vacancy.create") && (
         <NewJobModal
           onClose={() => setIsCreateModalOpen(false)}
-          onCreate={handleJobCreated}
-          createJob={createCopilotVacancy}
+          createJob={createVacancy}
+          onCreate={(job: Job) => {
+            setIsCreateModalOpen(false);
+            reload();
+            router.push(`/dashboard/jobs/${job.id}`);
+          }}
         />
       )}
     </>
+  );
+}
+
+export function JobsPageClient(props: {
+  initialSelectedJobId?: string | null;
+}) {
+  const demo = useDemo();
+  return demo.enabled ? (
+    <DemoJobs key={demo.role} initialId={props.initialSelectedJobId} />
+  ) : (
+    <LiveJobsPageClient {...props} />
   );
 }

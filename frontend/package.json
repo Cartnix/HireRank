@@ -14,13 +14,13 @@
     "contracts:export:backend": "docker compose run --rm --no-deps -v \"$PWD/../contracts:/app/contracts\" backend python -m scripts.export_contracts",
     "contracts:export:frontend": "tsx scripts/export-contracts.ts",
     "contracts:export": "npm run contracts:export:backend && npm run contracts:export:frontend && npm run generate:api-types",
-    "contracts:check": "npm run contracts:export && git -C .. diff --exit-code -- contracts/generated frontend/shared/api/schema.d.ts"
+    "contracts:check": "npm run contracts:export && git -C .. diff --exit-code -- contracts/generated frontend/shared/api/schema.d.ts",
+    "test:ats": "tsx --test shared/api/ats.test.ts shared/api/client.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "cn": "^0.4.0",
     "framer-motion": "^12.43.0",
     "lucide-react": "^1.21.0",
     "motion": "^12.40.0",

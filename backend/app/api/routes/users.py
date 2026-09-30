@@ -54,7 +54,13 @@ async def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> An
     dependencies=[Depends(require_permission("users.manage"))],
     response_model=UserPublic,
 )
-async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
+async def create_user(
+    *, session: SessionDep, user_in: UserCreate, current_user: CurrentUser
+) -> Any:
+    if user_in.role == UserRole.SUPERUSER and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403, detail="Only the owner can grant superuser"
+        )
     user = await crud.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(
@@ -129,7 +135,10 @@ def read_user_me(current_user: CurrentUser) -> Any:
 
 @router.delete("/me", response_model=Message)
 async def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
-    if role_str(current_user.role) == UserRole.ADMINISTRATOR.value:
+    if role_str(current_user.role) in {
+        UserRole.SUPERUSER.value,
+        UserRole.ADMINISTRATOR.value,
+    }:
         raise HTTPException(
             status_code=403,
             detail="Administrators are not allowed to delete themselves",
@@ -147,6 +156,7 @@ async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
         UserRole.HR,
         UserRole.MANAGER,
         UserRole.RECRUITER,
+        UserRole.ADMINISTRATOR,
     ):
         raise HTTPException(status_code=400, detail="Role is not allowed")
     user = await crud.get_user_by_email(session=session, email=user_in.email)
@@ -179,7 +189,10 @@ async def read_user_by_id(
     user = await session.get(User, user_id)
     if user == current_user:
         return user
-    if role_str(current_user.role) != UserRole.ADMINISTRATOR.value:
+    if role_str(current_user.role) not in {
+        UserRole.SUPERUSER.value,
+        UserRole.ADMINISTRATOR.value,
+    }:
         raise HTTPException(
             status_code=403,
             detail="The user doesn't have enough privileges",
@@ -199,12 +212,27 @@ async def update_user(
     session: SessionDep,
     user_id: uuid.UUID,
     user_in: UserUpdate,
+    current_user: CurrentUser,
 ) -> Any:
     db_user = await session.get(User, user_id)
     if not db_user:
         raise HTTPException(
             status_code=404,
             detail="The user with this id does not exist in the system",
+        )
+    if not current_user.is_superuser and (
+        db_user.is_superuser or user_in.role == UserRole.SUPERUSER
+    ):
+        raise HTTPException(
+            status_code=403, detail="Only the owner can manage superusers"
+        )
+    if db_user.id == current_user.id and (
+        user_in.is_active is False
+        or (user_in.role is not None and user_in.role != db_user.role)
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot disable or demote your own management account",
         )
     if user_in.email:
         existing_user = await crud.get_user_by_email(
@@ -229,6 +257,10 @@ async def delete_user(
     user = await session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if user.is_superuser and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403, detail="Only the owner can manage superusers"
+        )
     if user == current_user:
         raise HTTPException(
             status_code=403,

@@ -10,6 +10,7 @@ import {
 } from "react";
 import * as authApi from "@/shared/api/auth";
 import type { UserPublic } from "@/shared/api/auth";
+import { useAuthStore } from "@/shared/api/auth-store";
 import { ApiError } from "@/shared/api/client";
 
 type AuthContextValue = {
@@ -33,26 +34,28 @@ async function loadSession(): Promise<UserPublic | null> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserPublic | null>(null);
+  const user = useAuthStore(state => state.user);
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshSession = useCallback(async (): Promise<UserPublic | null> => {
     setIsLoading(true);
     const current = await loadSession();
-    setUser(current);
+    if (current) useAuthStore.getState().setUser(current);
+    else useAuthStore.getState().clear();
     setIsLoading(false);
     return current;
   }, []);
 
   const clearSession = useCallback(() => {
-    setUser(null);
+    useAuthStore.getState().clear();
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     void loadSession().then((current) => {
       if (cancelled) return;
-      setUser(current);
+      if (current) useAuthStore.getState().setUser(current);
+      else useAuthStore.getState().clear();
       setIsLoading(false);
     });
     return () => {

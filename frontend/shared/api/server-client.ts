@@ -9,7 +9,7 @@ async function refreshAndGetCookie(): Promise<string | null> {
 
   const res = await fetch(`${getApiV1Url()}/auth/refresh`, {
     method: "POST",
-    headers: { Cookie: cookieStore.toString() },
+    headers: { Cookie: cookieStore.toString(), "X-CSRF-Token": cookieStore.get("csrf_token")?.value ?? "" },
   });
   if (!res.ok) return null;
 
@@ -50,6 +50,7 @@ export async function serverApiFetch<T = unknown>(
 
   const res = await fetch(`${getApiV1Url()}${path}`, {
     ...rest,
+    cache: "no-store",
     headers,
     body: json !== undefined ? JSON.stringify(json) : rest.body,
   });
@@ -61,7 +62,7 @@ export async function serverApiFetch<T = unknown>(
       retryHeaders.set("Cookie", freshCookie);
       return serverApiFetch<T>(path, { ...options, headers: retryHeaders }, true);
     }
-    redirect("/login");
+    redirect("/auth");
   }
 
   if (res.status === 204) return undefined as T;

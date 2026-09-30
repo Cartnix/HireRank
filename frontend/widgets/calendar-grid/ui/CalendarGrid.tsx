@@ -1,130 +1,63 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Candidate } from "@/entities/candidate";
-import { interviews } from "@/entities/interview";
 import { Card } from "@/shared/ui/card";
-import { dayFull, weekDays } from "@/shared/lib/constants";
 import { Segmented } from "@/shared/ui/Segmanted";
+import type { components } from "@/shared/api/schema";
 
-const interviewerColors: Record<string, string> = {
-  "Анна Петрова":
-    "bg-brand-primary/15 text-brand-primary border-brand-primary/30",
-  "Игорь Соколов": "bg-success/15 text-success border-success/30",
-  "Мария Ким": "bg-warning/15 text-warning border-warning/30",
-  "Дмитрий Волков": "bg-danger/10 text-danger border-danger/30",
-};
+type Meeting = components["schemas"]["ScheduledInterview"];
+const formatDay = (date: Date) => date.toLocaleDateString("ru-RU", { weekday: "short", day: "numeric", month: "short" });
 
-export function CalendarGrid({
-  candidateById = {},
-}: {
-  candidateById?: Record<string, Candidate>;
-}) {
-  const [mode, setMode] = useState<"week" | "day">("week");
-  const [dayIdx, setDayIdx] = useState(0);
-  const hours = Array.from({ length: 9 }).map((_, i) => 9 + i);
-
-  const daysToShow = mode === "week" ? [0, 1, 2, 3, 4] : [dayIdx];
-
-  return (
-    <div>
-      <div className="mb-6 flex items-center justify-end gap-3">
-        {mode === "day" && (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setDayIdx((d) => Math.max(0, d - 1))}
-              className="rounded-full p-1.5 hover:bg-muted"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <div className="w-24 text-center text-[13px] font-medium">
-              {dayFull[dayIdx]}
-            </div>
-            <button
-              onClick={() => setDayIdx((d) => Math.min(4, d + 1))}
-              className="rounded-full p-1.5 hover:bg-muted"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
-        <Segmented<"week" | "day">
-          value={mode}
-          onChange={setMode}
-          options={[
-            { value: "week", label: "Неделя" },
-            { value: "day", label: "День" },
-          ]}
-        />
+export function CalendarGrid({ meetings }: { meetings: Meeting[] }) {
+  const [mode, setMode] = useState<"week" | "day" | "month">("week");
+  const [offset, setOffset] = useState(0);
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() + offset);
+  const anchor = new Date(start);
+  if (mode === "month") {
+    start.setDate(1);
+    start.setDate(start.getDate() - (start.getDay() + 6) % 7);
+  }
+  const days = Array.from({ length: mode === "month" ? 42 : mode === "week" ? 7 : 1 }, (_, index) => {
+    const day = new Date(start);
+    day.setDate(day.getDate() + index);
+    return day;
+  });
+  function move(direction: number) {
+    if (mode === "month") {
+      const target = new Date(anchor.getFullYear(), anchor.getMonth() + direction, 1);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      setOffset(Math.round((target.getTime() - today.getTime()) / 86400000));
+    } else setOffset(value => value + direction * (mode === "week" ? 7 : 1));
+  }
+  return <div className="space-y-5">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <button aria-label="Предыдущий период" onClick={() => move(-1)} className="p-2"><ChevronLeft size={18} /></button>
+        <span>{mode === "month" ? anchor.toLocaleDateString("ru-RU", { month: "long", year: "numeric" }) : formatDay(days[0])}{mode === "week" ? ` — ${formatDay(days[6])}` : ""}</span>
+        <button aria-label="Следующий период" onClick={() => move(1)} className="p-2"><ChevronRight size={18} /></button>
+        <button onClick={() => setOffset(0)} className="text-sm text-cyan-main">Сегодня</button>
       </div>
-
-      <Card className="overflow-hidden">
-        <div className="mb-3 flex items-center gap-4 border-b border-border px-5 py-3 text-[12.5px]">
-          <span className="text-muted-foreground">Рекрутеры:</span>
-          {Object.keys(interviewerColors).map((name) => (
-            <span key={name} className="flex items-center gap-1.5">
-              <span
-                className={`h-2.5 w-2.5 rounded-full border ${interviewerColors[name]}`}
-              />
-              {name}
-            </span>
-          ))}
-        </div>
-
-        <div
-          className="grid w-full"
-          style={{
-            gridTemplateColumns: `56px repeat(${daysToShow.length}, 1fr)`,
-          }}
-        >
-          <div />
-          {daysToShow.map((d) => (
-            <div
-              key={d}
-              className="border-b border-l border-border px-3 py-2 text-center text-[12.5px] font-semibold"
-            >
-              {weekDays[d]}
-            </div>
-          ))}
-
-          {hours.map((h) => (
-            <Fragment key={`h-${h}`}>
-              <div className="border-b border-border px-2 py-4 text-right text-[11.5px] text-muted-foreground">
-                {h}:00
-              </div>
-              {daysToShow.map((d) => {
-                const iv = interviews.find(
-                  (i) => i.day === d && Math.floor(i.startHour) === h,
-                );
-                const candidate = iv
-                  ? candidateById[iv.candidateId]
-                  : undefined;
-
-                return (
-                  <div
-                    key={`${d}-${h}`}
-                    className="relative min-h-13 border-b border-l border-border px-1.5 py-1.5"
-                  >
-                    {iv && (
-                      <div
-                        className={`rounded-lg border px-2 py-1.5 text-[11.5px] leading-tight ${interviewerColors[iv.interviewer]}`}
-                      >
-                        <div className="font-semibold">
-                          {candidate?.name ?? "Неизвестный кандидат"}
-                        </div>
-                        <div className="opacity-80">
-                          {iv.type} · {iv.duration * 60} мин
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </Fragment>
-          ))}
-        </div>
-      </Card>
+      <Segmented<"week" | "day" | "month"> value={mode} onChange={setMode} options={[{ value: "week", label: "Неделя" }, { value: "day", label: "День" }, { value: "month", label: "Месяц" }]} />
     </div>
-  );
+    <Card className="overflow-x-auto">
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${mode === "month" ? 7 : days.length}, minmax(${mode === "month" ? 110 : 160}px, 1fr))` }}>
+        {days.map(day => {
+          const next = new Date(day); next.setDate(next.getDate() + 1);
+          const events = meetings.filter(meeting => { const at = new Date(meeting.scheduled_at); return at >= day && at < next; });
+          return <section key={day.toISOString()} className={`${mode === "month" ? "min-h-32 border-b" : "min-h-64"} ${mode === "month" && day.getMonth() !== anchor.getMonth() ? "opacity-50" : ""} border-r border-border p-3 space-y-3`}>
+            <h3 className="text-sm font-semibold border-b border-border pb-3">{formatDay(day)}</h3>
+            {events.length ? events.map(meeting => <div key={meeting.id} className="rounded-lg border border-cyan-main/30 bg-cyan-main/10 p-3 text-sm space-y-1">
+              <p className="font-semibold">{meeting.candidate_name}</p>
+              <p className="text-xs">{meeting.position}</p>
+              <p>{new Date(meeting.scheduled_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })} · {meeting.duration_minutes} мин</p>
+              <p className="text-xs text-muted-foreground">{meeting.stage}</p>
+            </div>) : <p className="text-xs text-muted-foreground">Нет встреч</p>}
+          </section>;
+        })}
+      </div>
+    </Card>
+  </div>;
 }
