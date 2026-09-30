@@ -1,12 +1,11 @@
-import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import { Card } from "@/shared/ui/card";
-import { upcomingInterviews } from "../model/upcomingInterviews.mock";
-import { Calendar, Clock, Video } from "lucide-react";
+import type { Interview } from "../model/upcomingInterviews.mock";
+import { Calendar, Clock } from "lucide-react";
 
-export function UpcomingInterviewsCard() {
+export function UpcomingInterviewsCard({ interviews, todayCount }: { interviews: Interview[]; todayCount: number }) {
   return (
     <Card className="p-6 bg-card border border-border rounded-2xl flex flex-col justify-between h-full">
-      <DemoBadge />
+      {!interviews.length && <p className="text-sm text-muted-foreground">Нет запланированных встреч</p>}
       {/* Шапка карточки */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -14,14 +13,14 @@ export function UpcomingInterviewsCard() {
             Ближайшие собеседования
           </h3>
           <p className="text-sm text-foreground-secondary mt-0.5 mb-0">
-            Запланированные встречи на сегодня
+            Ближайшие запланированные встречи
           </p>
         </div>
       </div>
 
       {/* Список собеседований */}
       <div className="space-y-4 my-auto">
-        {upcomingInterviews.map((interview) => (
+        {interviews.map((interview) => (
           <div
             key={interview.id}
             className="flex items-center justify-between p-3.5 rounded-xl bg-secondary/40 border border-border/50 hover:border-border transition-all"
@@ -55,12 +54,7 @@ export function UpcomingInterviewsCard() {
                 </span>
               </div>
 
-              <button
-                title="Подключиться к звонку"
-                className="p-2 rounded-lg bg-brand-primary/10 text-brand-primary hover:bg-brand-primary hover:text-brand-primary-foreground transition-all"
-              >
-                <Video className="w-4 h-4" />
-              </button>
+
             </div>
           </div>
         ))}
@@ -71,7 +65,7 @@ export function UpcomingInterviewsCard() {
         <div className="flex items-center gap-1.5">
           <Calendar className="w-4 h-4 text-cyan-main" />
           <span>
-            Всего на сегодня: <strong>3 собеседования</strong>
+            Всего на сегодня: <strong>{todayCount} собеседований</strong>
           </span>
         </div>
         <span className="text-success font-medium">Система готова</span>

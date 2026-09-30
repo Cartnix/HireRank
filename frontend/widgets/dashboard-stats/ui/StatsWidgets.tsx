@@ -9,6 +9,7 @@ import { Briefcase, Users, CalendarDays, Clock } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
 
 interface StatsWidgetsProps extends DashboardStats {
+  analytics?: import("../model/analytics").DashboardAnalytics;
   previousMonth?: DashboardStats;
   live?: boolean; candidateLabel?: string; demoActiveJobs?: boolean; demoCandidates?: boolean;
 }
@@ -63,6 +64,7 @@ function MiniAreaChart({ data, strokeColor }: { data: number[]; strokeColor: str
 }
 
 export function StatsWidgets({
+  analytics,
   activeJobsCount,
   inProgressCandidates,
   todaysInterviewsCount,
@@ -129,6 +131,7 @@ export function StatsWidgets({
             Активные вакансии
           </div>
         </div>
+        {analytics && <MiniAreaChart data={analytics.vacancy_trend.map(point => point.value)} strokeColor="#22d3ee" />}
         {!live && <MiniAreaChart
           data={getTrendData(activeJobsCount, activeJobsDelta)}
           strokeColor="#22d3ee"
@@ -144,6 +147,7 @@ export function StatsWidgets({
             {candidateLabel}
           </div>
         </div>
+        {analytics && <MiniAreaChart data={analytics.candidate_trend.map(point => point.value)} strokeColor="#a78bfa" />}
         {!live && <MiniAreaChart
           data={getTrendData(inProgressCandidates, candidatesDelta)}
           strokeColor="#a78bfa"
@@ -153,12 +157,13 @@ export function StatsWidgets({
       <Card icon={CalendarDays} badge={interviewsBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
-            {live ? "—" : todaysInterviewsCount}
+            {analytics ? analytics.todays_interviews : live ? "—" : todaysInterviewsCount}
           </div>
           <div className="text-sm text-foreground-secondary font-medium">
             Назначено собеседований
           </div>
         </div>
+        {analytics && <MiniAreaChart data={analytics.interview_trend.map(point => point.value)} strokeColor="#facc15" />}
         {!live && <MiniAreaChart
           data={getTrendData(todaysInterviewsCount, interviewsDelta)}
           strokeColor="#facc15"
@@ -168,12 +173,13 @@ export function StatsWidgets({
       <Card icon={Clock} badge={timeToHireBadge} className="p-7 pb-4">
         <div className="pl-2.5 space-y-1.5">
           <div className="text-[32px] font-bold leading-none tracking-tight">
-            {live ? "—" : `${avgTimeToHire} дн.`}
+            {analytics ? analytics.avg_time_to_hire === null ? "—" : `${analytics.avg_time_to_hire} дн.` : live ? "—" : `${avgTimeToHire} дн.`}
           </div>
           <div className="text-sm text-foreground-secondary font-medium">
             Среднее время для найма
           </div>
         </div>
+        {analytics && <MiniAreaChart data={analytics.hire_trend.map(point => point.value)} strokeColor="#34d399" />}
         {!live && <MiniAreaChart
           data={getTrendData(avgTimeToHire, timeToHireDelta)}
           strokeColor="#34d399"

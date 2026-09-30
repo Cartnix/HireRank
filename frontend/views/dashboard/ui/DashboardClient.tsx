@@ -1,32 +1,36 @@
 "use client";
+
 import { useDemo } from "@/features/demo/DemoProvider";
-import { DemoDashboard } from "@/features/demo/DemoSections";
-import { useEffect, useState } from "react";
 import { useAuthSession } from "@/features/auth/AuthProvider";
+import { useEffect, useState } from "react";
 import { apiFetch } from "@/shared/api/client";
-import type { DashboardDTO } from "@/shared/api/ats";
+import type { DashboardAnalytics } from "@/widgets/dashboard-stats/model/analytics";
 import { DashboardPageView } from "./DashboardView";
 
-
-function LiveDashboardClient() {
+export function DashboardClient() {
+  const demo = useDemo();
   const { user } = useAuthSession();
-  const [dashboard, setDashboard] = useState<DashboardDTO | null>(null);
-  const [error, setError] = useState("");
+  const endpoint = demo.enabled ? `/developer/analytics?role=${demo.role}` : "/dashboard/analytics";
+  const [result, setResult] = useState<{ endpoint: string; data?: DashboardAnalytics; error?: string } | null>(null);
   useEffect(() => {
     let cancelled = false;
-    if (!user) return;
-    void apiFetch<DashboardDTO>("/dashboard").then(value => { if (!cancelled) setDashboard(value); }).catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : "Не удалось загрузить сводку"); });
+    if (!user || !demo.ready) return;
+    void apiFetch<DashboardAnalytics>(endpoint, { cache: "no-store" }).then(data => {
+      if (!cancelled) setResult({ endpoint, data });
+    }).catch(error => {
+      if (!cancelled) setResult({ endpoint, error: error instanceof Error ? error.message : "Не удалось загрузить аналитику" });
+    });
     return () => { cancelled = true; };
-  }, [user]);
-  if (error) return <p role="alert">{error}</p>;
-  if (!dashboard) return <p>Загрузка сводки...</p>;
-  const candidateCount = "total_candidates" in dashboard ? dashboard.total_candidates : "assigned_candidates" in dashboard ? dashboard.assigned_candidates : undefined;
-  return <DashboardPageView live
-    todaysInterviewsCount={0} avgTimeToHire={0}
-    activeJobsCount={"open_vacancies" in dashboard ? dashboard.open_vacancies : 0}
-    inProgressCandidates={candidateCount ?? 0}
-    candidateLabel={dashboard.role === "manager" ? "Назначенные кандидаты" : "Всего кандидатов"}
-    demoActiveJobs={!("open_vacancies" in dashboard)} demoCandidates={candidateCount === undefined} />;
+  }, [endpoint, user, demo.ready]);
+  if (result?.endpoint !== endpoint) return <p>Загрузка аналитики...</p>;
+  if (result.error) return <p role="alert">{result.error}</p>;
+  const data = result.data;
+  if (!data) return <p>Загрузка аналитики...</p>;
+  const candidateLink = (id: string) => {
+    const candidate = demo.enabled ? demo.state.candidates.find(c => c.email === data.top_candidates.find(top => top.id === id)?.email) : undefined;
+    return `/dashboard/candidates/${candidate?.id ?? id}`;
+  };
+  return <DashboardPageView live analytics={data} candidateLink={candidateLink} activeJobsCount={data.active_jobs}
+    inProgressCandidates={data.total_candidates} todaysInterviewsCount={data.todays_interviews}
+    avgTimeToHire={data.avg_time_to_hire ?? 0} />;
 }
-
-export function DashboardClient() { const demo = useDemo(); return demo.enabled ? <DemoDashboard /> : <LiveDashboardClient />; }

@@ -47,6 +47,7 @@ export const CandidateSchema = z.object({
   vacancyId: z.string().nullable(),
   requestedVacancyId: z.string().nullable(),
   source: z.enum(["candidate", "recruiter", "hr"]),
+  acquisition_source: z.string().optional(),
   createdAt: z.string(),
 });
 export const PromptSchema = z.object({

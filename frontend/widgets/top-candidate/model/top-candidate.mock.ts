@@ -3,7 +3,7 @@ export interface TopCandidate {
   name: string;
   position: string;
   stage: string;
-  aiScore: number;
+  rating: number;
   initials: string;
   stageColorClass: string;
 }

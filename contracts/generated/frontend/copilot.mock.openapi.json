@@ -433,6 +433,9 @@
               "hr"
             ]
           },
+          "acquisition_source": {
+            "type": "string"
+          },
           "createdAt": {
             "type": "string"
           }
@@ -714,6 +717,9 @@
                     "recruiter",
                     "hr"
                   ]
+                },
+                "acquisition_source": {
+                  "type": "string"
                 },
                 "createdAt": {
                   "type": "string"

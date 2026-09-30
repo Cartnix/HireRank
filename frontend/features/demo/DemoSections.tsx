@@ -4,7 +4,6 @@ import { JobsView } from "@/views/jobs";
 import { NewJobModal } from "@/features/create-vacancy";
 import { toDashboardJob, toDashboardCandidate } from "@/features/hr-copilot/model/dashboardAdapters";
 import { useState, type FormEvent } from "react";
-import { DashboardPageView } from "@/views/dashboard/ui/DashboardView";
 import { useAuthSession } from "@/features/auth/AuthProvider";
 import { canReadDemoCandidate } from "./access";
 import { useDemo, DEMO_TENANT } from "./DemoProvider";
@@ -62,9 +61,4 @@ export function DemoAudit() {
   const demo = useDemo();
   if (!demo.enabled || !["administrator", "superuser"].includes(demo.role)) return <p role="alert">Журнал действий доступен только администратору.</p>;
   return <div className="space-y-4"><h1 className="text-2xl font-semibold">Dev mode · Журнал действий</h1><AuditTab state={demo.state} tenantId={DEMO_TENANT}  /></div>;
-}
-export function DemoDashboard() {
-  const { state, role } = useDemo();
-  const candidates = state.candidates.filter(c => canReadDemoCandidate(role, c));
-  return <DashboardPageView live todaysInterviewsCount={0} avgTimeToHire={0} demoActiveJobs demoCandidates activeJobsCount={state.vacancies.filter(v => v.tenantId === DEMO_TENANT && v.open).length} inProgressCandidates={candidates.length} candidateLabel={role === "manager" ? "Назначенные кандидаты" : role === "candidate" ? "Моя анкета" : "Кандидаты"} />;
 }

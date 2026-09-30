@@ -2388,6 +2388,312 @@
         ]
       }
     },
+    "/api/v1/dashboard/analytics": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get Analytics",
+        "operationId": "Dashboard-get_analytics",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardAnalytics"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/dashboard/schedule": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get Schedule",
+        "operationId": "Dashboard-get_schedule",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduledInterview"
+                  },
+                  "type": "array",
+                  "title": "Response Dashboard-Get Schedule"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/interviews/": {
+      "get": {
+        "tags": [
+          "Interviews"
+        ],
+        "summary": "List Interviews",
+        "operationId": "Interviews-list_interviews",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Interview"
+                  },
+                  "type": "array",
+                  "title": "Response Interviews-List Interviews"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Interviews"
+        ],
+        "summary": "Create Interview",
+        "operationId": "Interviews-create_interview",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/interviews/{interview_id}": {
+      "put": {
+        "tags": [
+          "Interviews"
+        ],
+        "summary": "Update Interview",
+        "operationId": "Interviews-update_interview",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "interview_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Interview Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Interviews"
+        ],
+        "summary": "Delete Interview",
+        "operationId": "Interviews-delete_interview",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "interview_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Interview Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interviews/{interview_id}/scorecards": {
+      "post": {
+        "tags": [
+          "Interviews"
+        ],
+        "summary": "Create Scorecard",
+        "operationId": "Interviews-create_scorecard",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "interview_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Interview Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScorecardInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scorecard"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/developer/dataset": {
       "get": {
         "tags": [
@@ -2418,6 +2724,110 @@
             "APIKeyCookie": []
           }
         ]
+      }
+    },
+    "/api/v1/developer/analytics": {
+      "get": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Read Analytics",
+        "operationId": "developer-read_analytics",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/UserRole",
+              "default": "superuser"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardAnalytics"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/schedule": {
+      "get": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Read Schedule",
+        "operationId": "developer-read_schedule",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/UserRole",
+              "default": "superuser"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduledInterview"
+                  },
+                  "title": "Response Developer-Read Schedule"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/private/users/": {
@@ -3039,6 +3449,123 @@
         ],
         "title": "CreateVacancyRequest"
       },
+      "DashboardAnalytics": {
+        "properties": {
+          "active_jobs": {
+            "type": "integer",
+            "title": "Active Jobs"
+          },
+          "total_candidates": {
+            "type": "integer",
+            "title": "Total Candidates"
+          },
+          "todays_interviews": {
+            "type": "integer",
+            "title": "Todays Interviews"
+          },
+          "avg_time_to_hire": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Time To Hire"
+          },
+          "pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/Distribution"
+            },
+            "type": "array",
+            "title": "Pipeline"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Distribution"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "candidate_trend": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "type": "array",
+            "title": "Candidate Trend"
+          },
+          "vacancy_trend": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "type": "array",
+            "title": "Vacancy Trend"
+          },
+          "interview_trend": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "type": "array",
+            "title": "Interview Trend"
+          },
+          "hire_trend": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "type": "array",
+            "title": "Hire Trend"
+          },
+          "top_candidates": {
+            "items": {
+              "$ref": "#/components/schemas/RankedCandidate"
+            },
+            "type": "array",
+            "title": "Top Candidates"
+          },
+          "upcoming_interviews": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduledInterview"
+            },
+            "type": "array",
+            "title": "Upcoming Interviews"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_jobs",
+          "total_candidates",
+          "todays_interviews",
+          "avg_time_to_hire",
+          "pipeline",
+          "sources",
+          "candidate_trend",
+          "vacancy_trend",
+          "interview_trend",
+          "hire_trend",
+          "top_candidates",
+          "upcoming_interviews"
+        ],
+        "title": "DashboardAnalytics"
+      },
+      "Distribution": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stage",
+          "count"
+        ],
+        "title": "Distribution"
+      },
       "ErrorResponse": {
         "properties": {
           "code": {
@@ -3100,6 +3627,81 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "Interview": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          },
+          "interviewer_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Interviewer Id"
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled At"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes",
+            "default": 45
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenant_id",
+          "application_id",
+          "interviewer_id",
+          "scheduled_at"
+        ],
+        "title": "Interview"
+      },
+      "InterviewInput": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          },
+          "interviewer_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Interviewer Id"
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled At"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "maximum": 480.0,
+            "minimum": 5.0,
+            "title": "Duration Minutes",
+            "default": 45
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id",
+          "interviewer_id",
+          "scheduled_at"
+        ],
+        "title": "InterviewInput"
       },
       "LoginRequest": {
         "properties": {
@@ -3333,6 +3935,51 @@
         ],
         "title": "PrivateUserCreate"
       },
+      "RankedCandidate": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "position": {
+            "type": "string",
+            "title": "Position"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "rating": {
+            "type": "number",
+            "title": "Rating"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "position",
+          "stage",
+          "rating"
+        ],
+        "title": "RankedCandidate"
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -3368,6 +4015,132 @@
         ],
         "title": "ResumeUrlResponse"
       },
+      "ScheduledInterview": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "candidate_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Candidate Id"
+          },
+          "candidate_name": {
+            "type": "string",
+            "title": "Candidate Name"
+          },
+          "position": {
+            "type": "string",
+            "title": "Position"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled At"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "candidate_id",
+          "candidate_name",
+          "position",
+          "stage",
+          "scheduled_at",
+          "duration_minutes"
+        ],
+        "title": "ScheduledInterview"
+      },
+      "Scorecard": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "interview_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Interview Id"
+          },
+          "rating": {
+            "type": "integer",
+            "title": "Rating"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenant_id",
+          "interview_id",
+          "rating"
+        ],
+        "title": "Scorecard",
+        "description": "Human interview feedback only — not AI auto-scoring (UC-08 / PRODUCT)."
+      },
+      "ScorecardInput": {
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Rating"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rating"
+        ],
+        "title": "ScorecardInput"
+      },
       "TokenPair": {
         "properties": {
           "access_token": {
@@ -3396,6 +4169,24 @@
         ],
         "title": "TokenPair",
         "description": "Legacy / Swagger form login response (Bearer tooling)."
+      },
+      "TrendPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "value"
+        ],
+        "title": "TrendPoint"
       },
       "UpdatePassword": {
         "properties": {

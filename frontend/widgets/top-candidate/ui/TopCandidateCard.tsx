@@ -1,14 +1,14 @@
 "use client";
 
-import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
+import Link from "next/link";
 import { Card } from "@/shared/ui/card";
-import { MoreHorizontal, ArrowRight, Sparkles } from "lucide-react";
-import { topCandidatesMock } from "../model/top-candidate.mock";
+import { ArrowRight, Sparkles } from "lucide-react";
+import type { TopCandidate } from "../model/top-candidate.mock";
 
-export function TopCandidatesCard() {
+export function TopCandidatesCard({ candidates, candidateLink = id => `/dashboard/candidates/${id}` }: { candidates: TopCandidate[]; candidateLink?: (id: string) => string }) {
   return (
     <Card className="p-6 bg-card border border-border rounded-2xl flex flex-col justify-between h-full">
-      <DemoBadge />
+      {!candidates.length && <p className="text-sm text-muted-foreground">Оценок кандидатов пока нет</p>}
       {/* Шапка карточки */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
@@ -16,19 +16,19 @@ export function TopCandidatesCard() {
             Топ кандидаты
           </h3>
           <p className="text-sm text-foreground-secondary mt-0.5 mb-0">
-            Кандидаты с высоким AI-рейтингом, требующие внимания
+            Кандидаты с высокой оценкой интервьюера
           </p>
         </div>
 
-        <button className="flex items-center gap-1 text-xs font-medium text-cyan-main hover:underline transition-all pt-1">
+        <Link href="/dashboard/candidates" className="flex items-center gap-1 text-xs font-medium text-cyan-main hover:underline transition-all pt-1">
           <span>Все кандидаты</span>
           <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        </Link>
       </div>
 
       {/* Список топ-кандидатов */}
       <div className="space-y-3.5 my-auto">
-        {topCandidatesMock.map((candidate) => (
+        {candidates.map((candidate) => (
           <div
             key={candidate.id}
             className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-xl bg-secondary/40 border border-border/50 hover:border-border transition-all"
@@ -42,7 +42,7 @@ export function TopCandidatesCard() {
               {/* Имя и специальность */}
               <div>
                 <h4 className="text-sm font-semibold text-foreground m-0 leading-tight">
-                  {candidate.name}
+                  <Link href={candidateLink(candidate.id)}>{candidate.name}</Link>
                 </h4>
                 <p className="text-xs text-foreground-secondary mt-0.5 mb-0">
                   {candidate.position}
@@ -58,13 +58,11 @@ export function TopCandidatesCard() {
 
               <div className="flex items-center gap-1.5 bg-background px-2.5 py-1 rounded-lg border border-border">
                 <Sparkles className="w-3.5 h-3.5 text-cyan-main" />
-                <span className="text-xs font-bold text-foreground">{candidate.aiScore}</span>
-                <span className="text-[10px] text-foreground-secondary">score</span>
+                <span className="text-xs font-bold text-foreground">{candidate.rating} / 5</span>
+                <span className="text-[10px] text-foreground-secondary">оценка</span>
               </div>
 
-              <button className="text-foreground-secondary hover:text-foreground transition-colors p-1">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
+
             </div>
           </div>
         ))}
@@ -72,8 +70,7 @@ export function TopCandidatesCard() {
 
       {/* Футер */}
       <div className="mt-6 pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-secondary">
-        <span>Ранжирование выполнено нейросетью HireAI</span>
-        <span className="text-success font-medium">Обновлено только что</span>
+        <span>Средняя оценка по сохранённым отзывам</span>
       </div>
     </Card>
   );

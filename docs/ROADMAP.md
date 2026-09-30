@@ -37,7 +37,7 @@ not declare resume storage, pipeline mutations or full MVP acceptance complete.
 - [x] Replace browser-local vacancy/candidate/career data with tenant-scoped API reads.
 - [x] Wire vacancy CRUD, HR candidate intake, questionnaire updates and manual assignment.
 - [x] Wire candidate own HTML questionnaire and vacancy application.
-- [x] Read role-shaped dashboard aggregates; label unsupported analytics as demo.
+- [x] Read role-shaped dashboard aggregates and shared database-derived overview analytics.
 - [x] Align OpenAPI DTOs, canonical paths, pagination and presentation defaults.
 - [x] Expose server permissions for UI affordances; retain server-side enforcement.
 - [x] Restore HR manual assignment permission through an Alembic migration (UC-04).
@@ -282,3 +282,13 @@ After the core web flow is proven:
 ## Delivery order
 
 **ATS foundation → reliable candidate pool → vacancy pipeline → LLM recommendations → explicit HR approval → controlled execution → delivery/memory → production scale.**
+### MVP overview and planning (shared dev / production contract)
+
+- [x] Restore overview: candidate history, source pie chart, pipeline bars, top candidates and upcoming interviews. Both modes render `DashboardAnalytics` from the same aggregation service; only DB and preview identity differ.
+- [x] Seed canonical dev candidates from the original dashboard, applications, stages, interviews and human scorecards. No mock-data fallback on API errors.
+- [x] Publish `/dashboard/analytics` and superuser-only `/developer/analytics?role=…`; scope aggregates to tenant and candidate/manager visibility.
+- [x] Interview planning API: list, create, reschedule and delete; save validated human scorecards (1–5). Existing Interview/Scorecard tables are shared by dev and production and migrated through the same Alembic chain.
+- [x] Calendar reads canonical meetings with real dates, week/day navigation and multiple meetings per day.
+- [ ] Calendar planning UI: CRUD controls, interviewer selection and feedback editing. API persistence is available; wire the full calendar workflow next.
+
+Metric definitions: pipeline counts each visible candidate once (active application stage or candidate status); sources use questionnaire.acquisition_source (falling back to questionnaire.source); daily history uses candidate.created_at (UTC, last 30 days); top candidates use the mean of stored human scorecards, not a fabricated AI score; average time to hire uses application.created_at → updated_at for hired applications and is unavailable until a hire exists. Upcoming interviews include active applications only. Development seed dates are relative to bootstrap time so example history and meetings remain visible.

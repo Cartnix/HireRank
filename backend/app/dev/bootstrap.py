@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import uuid
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import psycopg
@@ -16,10 +17,13 @@ from app.core.config import settings
 from app.dev.database import dev_engine, require_dev_database
 from app.models import (
     Application,
+    ApplicationStatus,
     Candidate,
     CandidateStatus,
     DevelopmentDataset,
+    Interview,
     PipelineStage,
+    Scorecard,
     Tenant,
     User,
     UserRole,
@@ -77,11 +81,22 @@ async def seed() -> None:
                         if row["open"]
                         else VacancyStatus.CLOSED,
                         created_by=actor,
+                        created_at=datetime.now(UTC)
+                        - timedelta(days=3 + fixture["vacancies"].index(row)),
                     )
                 )
             await session.flush()
             for row in fixture["vacancies"]:
-                for index, name in enumerate(["Отклик", "Рассмотрение", "Интервью"]):
+                for index, name in enumerate(
+                    ["Отклик", "Рассмотрение", "Интервью"]
+                    + list(
+                        dict.fromkeys(
+                            c["stage"]
+                            for c in fixture["candidates"]
+                            if c.get("stage") and c["vacancyId"] == row["id"]
+                        )
+                    )
+                ):
                     await session.merge(
                         PipelineStage(
                             id=record_id(f"{row['id']}-stage-{index}"),
@@ -98,11 +113,15 @@ async def seed() -> None:
                         id=record_id(row["id"]),
                         tenant_id=TENANT_ID,
                         email=row["email"],
-                        status=CandidateStatus.ASSIGNED
+                        status=CandidateStatus.ACTION_APPLIED
+                        if row.get("hired")
+                        else CandidateStatus.ASSIGNED
                         if row["vacancyId"]
                         else CandidateStatus.UNASSIGNED,
                         resume_url=row["resumeRef"],
                         questionnaire={**row, "dev_key": row["id"]},
+                        created_at=datetime.now(UTC)
+                        - timedelta(days=2 + fixture["candidates"].index(row)),
                     )
                 )
             await session.flush()
@@ -114,9 +133,62 @@ async def seed() -> None:
                             tenant_id=TENANT_ID,
                             candidate_id=record_id(row["id"]),
                             vacancy_id=record_id(row["vacancyId"]),
-                            current_stage_id=record_id(f"{row['vacancyId']}-stage-0"),
+                            status=ApplicationStatus.HIRED
+                            if row.get("hired")
+                            else ApplicationStatus.ACTIVE,
+                            created_at=datetime.now(UTC)
+                            - timedelta(days=25 if row.get("hired") else 5),
+                            updated_at=datetime.now(UTC) - timedelta(days=7)
+                            if row.get("hired")
+                            else datetime.now(UTC),
+                            current_stage_id=record_id(
+                                f"{row['vacancyId']}-stage-{3 if row.get('stage') else 0}"
+                            ),
                         )
                     )
+            await session.flush()
+            for row in fixture["candidates"]:
+                if row.get("rating") or row.get("interviewHour"):
+                    interview_id = record_id(f"{row['id']}-interview")
+                    scheduled = datetime.now(UTC).replace(
+                        hour=row.get("interviewHour") or 10,
+                        minute=0,
+                        second=0,
+                        microsecond=0,
+                    )
+                    if row.get("rating"):
+                        scheduled -= timedelta(days=1)
+                    elif scheduled < datetime.now(UTC):
+                        scheduled += timedelta(days=1)
+                    await session.merge(
+                        Interview(
+                            id=interview_id,
+                            tenant_id=TENANT_ID,
+                            application_id=record_id(f"{row['id']}-application"),
+                            interviewer_id=actor,
+                            scheduled_at=scheduled,
+                        )
+                    )
+                    await session.flush()
+                    if row.get("rating"):
+                        await session.merge(
+                            Scorecard(
+                                id=record_id(f"{row['id']}-score"),
+                                tenant_id=TENANT_ID,
+                                interview_id=interview_id,
+                                rating=row["rating"],
+                                notes="Тестовая оценка интервьюера",
+                            )
+                        )
+            # Link the candidate preview role to its own record.
+            candidate_user = next(
+                u for u in fixture["users"] if u["role"] == "candidate"
+            )
+            own = await session.get(
+                Candidate, record_id(fixture["candidates"][0]["id"])
+            )
+            own.user_id = uuid.UUID(candidate_user["id"])
+            session.add(own)
             await session.merge(
                 DevelopmentDataset(
                     id=1,
