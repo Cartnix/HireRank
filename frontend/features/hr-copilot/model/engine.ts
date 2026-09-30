@@ -1,6 +1,5 @@
 import {
   CandidateSchema,
-  CopilotStateSchema,
   EvaluationSchema,
   VacancySchema,
   type Action,
@@ -10,12 +9,11 @@ import {
   type Role,
   type Vacancy,
 } from "./types";
-import { initialCopilotState } from "./seed";
 
 const id = () => crypto.randomUUID();
 const now = () => new Date().toISOString();
 export const freshState = (): CopilotState =>
-  structuredClone(initialCopilotState);
+  ({ version: 1, users: [], tenants: [], vacancies: [], candidates: [], prompts: [], evaluations: [], feedback: [], notifications: [], audit: [], memory: [], mcpRuns: [] });
 export function sameTenant(item: { tenantId: string }, tenantId: string) {
   return item.tenantId === tenantId;
 }
@@ -408,9 +406,4 @@ export function saveMemory(
     "Markdown записан после проверки HR",
     candidate.id,
   );
-}
-export function parseSavedState(json: string | null) {
-  if (!json) return freshState();
-  const parsed = CopilotStateSchema.safeParse(JSON.parse(json));
-  return parsed.success ? parsed.data : freshState();
 }

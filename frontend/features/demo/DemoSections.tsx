@@ -5,11 +5,10 @@ import { NewJobModal } from "@/features/create-vacancy";
 import { toDashboardJob, toDashboardCandidate } from "@/features/hr-copilot/model/dashboardAdapters";
 import { useState, type FormEvent } from "react";
 import { DashboardPageView } from "@/views/dashboard/ui/DashboardView";
-import { dashboardMock } from "@/app/dashboard/dashboard.mock";
 import { useAuthSession } from "@/features/auth/AuthProvider";
 import { canReadDemoCandidate } from "./access";
 import { useDemo, DEMO_TENANT } from "./DemoProvider";
-import { addVacancy, removeVacancy, freshState } from "@/features/hr-copilot/model/engine";
+import { addVacancy, removeVacancy } from "@/features/hr-copilot/model/engine";
 import { VacancySchema, type Action } from "@/features/hr-copilot/model/types";
 import { actionLabel, card, primary, secondary, inputClass } from "@/features/hr-copilot/ui/constants";
 import { AuditTab } from "@/features/hr-copilot/ui/tabs/AuditTab";
@@ -62,10 +61,10 @@ export function CopilotSettings() {
 export function DemoAudit() {
   const demo = useDemo();
   if (!demo.enabled || !["administrator", "superuser"].includes(demo.role)) return <p role="alert">Журнал действий доступен только администратору.</p>;
-  return <div className="space-y-4"><h1 className="text-2xl font-semibold">Dev mode · Журнал действий</h1><AuditTab state={demo.state} tenantId={DEMO_TENANT} onResetDemo={demo.canMutate ? () => { if (confirm("Сбросить демо?")) demo.update(next => Object.assign(next, freshState())); } : undefined} /></div>;
+  return <div className="space-y-4"><h1 className="text-2xl font-semibold">Dev mode · Журнал действий</h1><AuditTab state={demo.state} tenantId={DEMO_TENANT}  /></div>;
 }
 export function DemoDashboard() {
   const { state, role } = useDemo();
   const candidates = state.candidates.filter(c => canReadDemoCandidate(role, c));
-  return <DashboardPageView {...dashboardMock} activeJobsCount={state.vacancies.filter(v => v.tenantId === DEMO_TENANT && v.open).length} inProgressCandidates={candidates.length} candidateLabel={role === "manager" ? "Назначенные кандидаты" : role === "candidate" ? "Моя анкета" : "Кандидаты"} />;
+  return <DashboardPageView live todaysInterviewsCount={0} avgTimeToHire={0} demoActiveJobs demoCandidates activeJobsCount={state.vacancies.filter(v => v.tenantId === DEMO_TENANT && v.open).length} inProgressCandidates={candidates.length} candidateLabel={role === "manager" ? "Назначенные кандидаты" : role === "candidate" ? "Моя анкета" : "Кандидаты"} />;
 }

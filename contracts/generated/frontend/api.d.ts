@@ -366,23 +366,6 @@ export interface paths {
         patch: operations["users-update_password_me"];
         trace?: never;
     };
-    "/api/v1/users/me/developer-access": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Developer Access */
-        get: operations["users-developer_access"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/users/signup": {
         parameters: {
             query?: never;
@@ -612,6 +595,26 @@ export interface paths {
         };
         /** Get Dashboard */
         get: operations["Dashboard-get_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/dataset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Dataset
+         * @description One shared dataset. Identity/role is checked against the primary database.
+         */
+        get: operations["developer-read_dataset"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2134,26 +2137,6 @@ export interface operations {
             };
         };
     };
-    "users-developer_access": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Message"];
-                };
-            };
-        };
-    };
     "users-register_user": {
         parameters: {
             query?: never;
@@ -2845,6 +2828,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminDashboard"] | components["schemas"]["HRDashboard"] | components["schemas"]["ManagerDashboard"] | components["schemas"]["CandidateDashboard"];
+                };
+            };
+        };
+    };
+    "developer-read_dataset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

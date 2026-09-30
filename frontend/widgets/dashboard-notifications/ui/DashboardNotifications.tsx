@@ -2,16 +2,10 @@
 
 import { useDemo } from "@/features/demo/DemoProvider";
 import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
 
-import {
-  COPILOT_STATE_EVENT,
-  COPILOT_STORAGE_KEY,
-  loadCopilotState,
-  saveCopilotState,
-} from "@/features/hr-copilot/model/storage";
-import type { CopilotState, Notification } from "@/features/hr-copilot/model/types";
+import type { Notification } from "@/features/hr-copilot/model/types";
 
 function formatDate(value: string) {
   const [date = "", time = ""] = value.split("T");
@@ -20,24 +14,8 @@ function formatDate(value: string) {
 
 export function DashboardNotifications() {
   const demo = useDemo();
-  const [state, setState] = useState<CopilotState | null>(null);
+  const state = demo.enabled ? demo.state : null;
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    const syncState = () => setState(loadCopilotState());
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === null || event.key === COPILOT_STORAGE_KEY) syncState();
-    };
-    const frame = window.requestAnimationFrame(syncState);
-
-    window.addEventListener(COPILOT_STATE_EVENT, syncState);
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener(COPILOT_STATE_EVENT, syncState);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
 
   const tenantId = state?.tenants[0]?.id;
   const notifications = state?.notifications.filter(
@@ -53,8 +31,7 @@ export function DashboardNotifications() {
     );
     if (!notification) return;
     notification.read = true;
-    saveCopilotState(next);
-    setState(next);
+    demo.update(value => Object.assign(value, next));
   };
 
   const markAllRead = () => {
@@ -63,8 +40,7 @@ export function DashboardNotifications() {
     next.notifications.forEach((item) => {
       if (notifications.some(n => n.id === item.id)) item.read = true;
     });
-    saveCopilotState(next);
-    setState(next);
+    demo.update(value => Object.assign(value, next));
   };
 
   if (!state || !demo.enabled) return null;

@@ -1177,35 +1177,6 @@
         ]
       }
     },
-    "/api/v1/users/me/developer-access": {
-      "get": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Developer Access",
-        "operationId": "users-developer_access",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Message"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          },
-          {
-            "APIKeyCookie": []
-          }
-        ]
-      }
-    },
     "/api/v1/users/signup": {
       "post": {
         "tags": [
@@ -2402,6 +2373,38 @@
                     }
                   ],
                   "title": "Response Dashboard-Get Dashboard"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/developer/dataset": {
+      "get": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Read Dataset",
+        "description": "One shared dataset. Identity/role is checked against the primary database.",
+        "operationId": "developer-read_dataset",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Developer-Read Dataset"
                 }
               }
             }

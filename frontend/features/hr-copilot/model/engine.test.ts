@@ -1,9 +1,10 @@
+import { testState } from "./test-fixture";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { confirmDecision, evaluate, freshState, intake, saveMemory } from "./engine";
+import { confirmDecision, evaluate, intake, saveMemory } from "./engine";
 
 test("intake creates tenant-scoped AI draft without disposition, then HR approves one MCP action", () => {
-  const state = freshState();
+  const state = testState();
   const tenantId = state.tenants[0].id;
   const candidate = intake(state, tenantId, "recruiter", {
     name: "Новый кандидат", email: "new@example.com", phone: "+77000000000",
@@ -29,7 +30,7 @@ test("intake creates tenant-scoped AI draft without disposition, then HR approve
 });
 
 test("tenant and memory are isolated; memory is included only when HR enables it", () => {
-  const state = freshState(), tenantId = state.tenants[0].id;
+  const state = testState(), tenantId = state.tenants[0].id;
   const candidate = state.candidates.find(x => x.id === "c-timur")!;
   const vacancy = state.vacancies.find(x => x.id === "v-frontend")!;
   state.memory.push({ id: "m1", tenantId, candidateId: candidate.id, evaluationId: "e1", markdown: "Подтверждённый случай", createdAt: new Date().toISOString() });
@@ -41,7 +42,7 @@ test("tenant and memory are isolated; memory is included only when HR enables it
 
 
 test("superuser can confirm a draft and is recorded as the actual actor", () => {
-  const state = freshState();
+  const state = testState();
   const candidate = state.candidates[0];
   const vacancy = state.vacancies.find(v => v.id === candidate.vacancyId)!;
   const evaluation = evaluate(state, candidate, vacancy, "superuser");

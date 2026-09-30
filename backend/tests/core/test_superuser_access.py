@@ -102,11 +102,13 @@ async def test_admin_cannot_delete_owner() -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", list(UserRole))
 async def test_developer_endpoint_enforces_role_over_http(role: UserRole) -> None:
+    from unittest.mock import patch
+
     from fastapi import FastAPI
     from httpx import ASGITransport, AsyncClient
 
     from app.api.deps import get_current_user
-    from app.api.routes.users import router
+    from app.api.routes.developer import router
 
     app = FastAPI()
     app.include_router(router)
@@ -114,5 +116,9 @@ async def test_developer_endpoint_enforces_role_over_http(role: UserRole) -> Non
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        response = await client.get("/users/me/developer-access")
-    assert response.status_code == (200 if role == UserRole.SUPERUSER else 403)
+        with patch(
+            "app.api.routes.developer.require_dev_database",
+            side_effect=ValueError("disabled"),
+        ):
+            response = await client.get("/developer/dataset")
+    assert response.status_code == (404 if role == UserRole.SUPERUSER else 403)

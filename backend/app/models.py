@@ -53,6 +53,7 @@ REGISTERABLE_ROLES: frozenset[UserRole] = frozenset(
         UserRole.HR,
         UserRole.MANAGER,
         UserRole.RECRUITER,
+        UserRole.ADMINISTRATOR,
         UserRole.CANDIDATE,
     }
 )
@@ -702,3 +703,11 @@ class NewPassword(SQLModel):
 class ErrorResponse(SQLModel):
     code: str
     message: str
+
+
+class DevelopmentDataset(SQLModel, table=True):
+    """Preview configuration; canonical entities use the ordinary ATS tables."""
+
+    __tablename__ = "development_dataset"
+    id: int = Field(default=1, primary_key=True)
+    config: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))

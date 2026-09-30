@@ -59,6 +59,7 @@ export function EmailPasswordForm({
               <option value="hr">HR</option>
               <option value="manager">Менеджер</option>
               <option value="recruiter">Рекрутер</option>
+              <option value="administrator">Администратор</option>
             </select>
             {errors.role?.message && (
               <p className="text-sm text-danger">{errors.role.message}</p>

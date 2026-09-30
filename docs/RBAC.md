@@ -13,9 +13,9 @@ Roles and permission matrix for the self-hosted (Core) ATS.
 | `recruiter` | Resume upload; read all enterprise vacancies |
 | `candidate` | Resume upload; read vacancies; own candidate profile |
 
-`superuser` is assigned only to the configured `FIRST_SUPERUSER` by initialization after migrations. Existing administrators remain administrators. Neither privileged role is available through public registration. Administrators cannot create, promote, edit, deactivate or delete a superuser. Only a superuser can grant that role. Management accounts cannot disable, demote or delete themselves.
+`superuser` is assigned only to the configured `FIRST_SUPERUSER` by initialization after migrations. Existing administrators remain administrators. Administrator is available through public registration; superuser is not. Administrators cannot create, promote, edit, deactivate or delete a superuser. Only a superuser can grant that role. Management accounts cannot disable, demote or delete themselves.
 
-Registerable roles: `candidate`, `hr`, `manager`, `recruiter`.
+Registerable roles: `candidate`, `hr`, `manager`, `recruiter`, `administrator`.
 
 ## Permission matrix (MVP)
 
@@ -41,7 +41,7 @@ Stored in PostgreSQL tables `role`, `permission`, and `role_permission` (M2M). S
 
 ### Developer mode and administration controls
 
-`GET /users/me/developer-access` checks the active database user role and rejects every role except `superuser` with 403. The frontend waits for session loading and this endpoint before enabling developer data or restoring a saved preview role. Changing browser storage cannot authorize a non-owner. Preview roles affect only local test data and do not change the authenticated API identity. Development routes are gated by the preview role.
+`GET /developer/dataset` validates the active user in the primary database and returns the shared PostgreSQL development dataset only to `superuser`. All other roles receive 403. The endpoint is enabled only in local development; preview roles never change the authenticated identity. No dataset or preview session is persisted in browser storage. See [development database](DEV_DATABASE.md).
 
 The administration checkbox is available to administrators and superusers (including their developer previews), starts off, and resets when the identity, preview role or data mode changes. Without it, management buttons for vacancies, candidates and users are hidden; reads remain available. HR, manager, recruiter and candidate keep their existing matrix. This checkbox controls the interface; server authorization always uses the authenticated user and permissions independently.
 

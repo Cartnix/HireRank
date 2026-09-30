@@ -60,21 +60,21 @@ HR permission migration; permissions in an issued access JWT do not change in pl
 No API failure may enable a seed-data fallback. LLM/MCP/memory remain post-MVP.
 ### Owner-only developer mode and administration — completed (2026-09-30)
 
-Evidence: [real-session browser and regression checklist](verification/DEV_MODE_ADMINISTRATION.md),
-[ATS schema](ATS_SCHEMA.md), [permission matrix](RBAC.md).
+Evidence: [dev database guide](DEV_DATABASE.md), [dev database verification](verification/DEV_DATABASE.md),
+[administration verification](verification/DEV_MODE_ADMINISTRATION.md), [permission matrix](RBAC.md).
 This supersedes the unrestricted demo switch and earlier mocked-session browser check below.
 
 - [x] Separate `superuser` from administrator; reserve developer access and previewing any role for the owner.
-- [x] Apply owner-role migration to local Compose and initialize the configured owner without promoting ordinary administrators.
-- [x] Enforce owner-only developer access on the server; reject localStorage spoofing and direct development URLs for other accounts.
+- [x] Apply owner-role migration and initialize the configured owner without promoting ordinary administrators.
+- [x] Serve one shared dataset from a separate PostgreSQL dev database through a superuser-only API endpoint; reject other roles and production access.
 - [x] Add owner/admin administration controls, off by default, resetting on role/session/data-mode changes and reload.
 - [x] Hide unavailable vacancy/candidate/user create/edit/delete controls and close already exposed management forms/menus when administration is off.
-- [x] Provide owner/admin user CRUD through API and local test data; prohibit administrator promotion to or modification of superuser.
+- [x] Provide owner/admin user administration through the API; prohibit administrator promotion to or modification of superuser.
 - [x] Fix consent/OAuth cascade on user deletion and add a database regression test.
-- [x] Share vacancy views/forms between API and developer mode; keep demo IDs out of live API requests during reload.
-- [x] Verify all six local previews and real sessions for owner plus all five ordinary roles with agent-browser, including negative API checks with valid CSRF.
-- [x] Verify real/local CRUD, persistence, mobile 390px and cleanup; run 47 targeted backend and 12 frontend tests.
-- [x] Update generated contracts, ATS/RBAC documentation, changelog and acceptance checklists.
+- [x] Load the shared preview records from PostgreSQL and keep test data out of browser storage; simulated edits last until reload.
+- [x] Verify the real superuser session, protected data loading, same records across role previews, ordinary-role denials and empty localStorage.
+- [x] Verify repeatable database seeding, Alembic drift rejection, registration, legal consent, browser rendering and cleanup; run 45 backend and 6 frontend tests.
+- [x] Update generated API contracts, RBAC/product docs, changelog and database setup/verification checklists.
 
 These checks close this administration/dev-mode scope, not the remaining M4/M5
 resume storage, manual status, audit or missing read-API requirements.

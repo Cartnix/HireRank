@@ -80,7 +80,8 @@
               "candidate",
               "hr",
               "manager",
-              "recruiter"
+              "recruiter",
+              "administrator"
             ]
           },
           "first_name": {

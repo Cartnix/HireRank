@@ -1,19 +1,14 @@
-import type { Control, FieldErrors, UseFormRegister } from "react-hook-form";
+import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import type { RegisterFormValuesType } from "@/features/auth/model/FormSchema";
-import { InputField } from "@/shared/ui/FieldInput";
 
 interface ConsentFieldsetProps {
-  control: Control<RegisterFormValuesType>;
   register: UseFormRegister<RegisterFormValuesType>;
   errors: FieldErrors<RegisterFormValuesType>;
-  crossBorder: boolean;
 }
 
 export function ConsentFieldset({
-  control,
   register,
   errors,
-  crossBorder,
 }: ConsentFieldsetProps) {
   return (
     <fieldset className="flex flex-col gap-3 rounded-2xl border border-border-subtle p-4">
@@ -36,31 +31,6 @@ export function ConsentFieldset({
         <p className="text-sm text-danger">
           {errors.consent_account_processing.message}
         </p>
-      )}
-      <label className="flex items-start gap-3 text-sm text-foreground">
-        <input
-          type="checkbox"
-          className="mt-1"
-          {...register("consent_talent_pool")}
-        />
-        <span>Talent pool / кадровый резерв (опционально)</span>
-      </label>
-      <label className="flex items-start gap-3 text-sm text-foreground">
-        <input
-          type="checkbox"
-          className="mt-1"
-          {...register("consent_cross_border")}
-        />
-        <span>Трансграничная передача ПД (опционально)</span>
-      </label>
-      {crossBorder && (
-        <InputField
-          {...register("consent_cross_border_countries")}
-          type="text"
-          placeholder="KZ, RU"
-          label="Страны передачи"
-          error={errors.consent_cross_border_countries?.message}
-        />
       )}
     </fieldset>
   );

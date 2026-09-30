@@ -63,3 +63,4 @@ Resume → Tenant Pool → AI Top-3 Draft → HR Confirmation → Tool/MCP Actio
  > **Resume entered once → tenant pool → AI produces up to three evidence-backed actions → HR confirms → approved tool/MCP execution → audit.**
 
  This is the main business contour **HR Copilot**; a regular ATS remains an independent working fallback contour.
+Локальный Dev mode использует отдельную PostgreSQL БД и доступен только superuser: [настройка, миграции и единые тестовые данные](docs/DEV_DATABASE.md).

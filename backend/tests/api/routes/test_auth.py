@@ -103,7 +103,7 @@ async def test_auth_register_login_me_refresh_logout(client: AsyncClient) -> Non
     assert r.status_code == 401
 
 
-async def test_auth_register_rejects_administrator(client: AsyncClient) -> None:
+async def test_auth_register_allows_administrator(client: AsyncClient) -> None:
     r = await client.post(
         f"{settings.API_V1_STR}/auth/register",
         json=register_json(
@@ -112,7 +112,10 @@ async def test_auth_register_rejects_administrator(client: AsyncClient) -> None:
             role="administrator",
         ),
     )
-    assert r.status_code == 400
+    assert r.status_code == 201
+    me = await client.get(f"{settings.API_V1_STR}/auth/me")
+    assert me.status_code == 200
+    assert me.json()["role"] == "administrator"
 
 
 async def test_candidate_registration_creates_owned_candidate_profile(
@@ -206,3 +209,13 @@ async def test_rbac_permissions_matrix_from_db(db: AsyncSession) -> None:
 
     assert has_permission(admin, "admin.panel")
     assert not has_permission(candidate, "users.manage")
+
+
+async def test_auth_register_rejects_superuser(client: AsyncClient) -> None:
+    response = await client.post(
+        f"{settings.API_V1_STR}/auth/register",
+        json=register_json(
+            email=random_email(), password=random_lower_string(), role="superuser"
+        ),
+    )
+    assert response.status_code == 400

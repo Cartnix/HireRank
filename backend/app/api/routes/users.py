@@ -9,7 +9,6 @@ from app import crud
 from app.api.deps import (
     CurrentUser,
     SessionDep,
-    get_current_active_superuser,
     require_permission,
 )
 from app.auth.consent import build_user_public, record_consents, stamp_legal_acceptance
@@ -129,15 +128,6 @@ async def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@router.get(
-    "/me/developer-access",
-    dependencies=[Depends(get_current_active_superuser)],
-    response_model=Message,
-)
-def developer_access() -> Message:
-    return Message(message="Developer mode authorized")
-
-
 @router.get("/me", response_model=UserPublic)
 def read_user_me(current_user: CurrentUser) -> Any:
     return current_user
@@ -166,6 +156,7 @@ async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
         UserRole.HR,
         UserRole.MANAGER,
         UserRole.RECRUITER,
+        UserRole.ADMINISTRATOR,
     ):
         raise HTTPException(status_code=400, detail="Role is not allowed")
     user = await crud.get_user_by_email(session=session, email=user_in.email)

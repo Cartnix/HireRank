@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-30 — Server-side dev dataset and registration roles
+
+- [x] Created a dedicated `hirerank_dev` PostgreSQL database in local Docker Compose; production and primary application data remain separate.
+- [x] Seeded one shared set of development users, vacancies, candidates, stages and an application using the normal SQLModel entities and Alembic migration chain.
+- [x] Added the single `GET /api/v1/developer/dataset` endpoint. It checks the active superuser from the primary database, disables caching and returns no credentials. Other roles, invalid sessions and production are denied.
+- [x] Wired local startup to migrate and idempotently refresh the dev database; the endpoint refuses a stale Alembic revision.
+- [x] Removed client-side example records and browser persistence. Previews now load through the protected endpoint; UI edits remain in memory until page reload.
+- [x] Enabled administrator registration while keeping superuser assignment owner-only.
+- [x] Simplified registration to the single required processing consent; login consent text is explicit.
+- [x] Updated API contracts, RBAC/product docs and the integration audit.
+- [x] Verified isolated API/RBAC/auth/legal tests (45 passed), frontend tests (6 passed), TypeScript, ESLint, Ruff and a real browser session; superuser and HR preview the same records and localStorage stays empty.
+
+Setup and schema-refresh steps: [dev database guide](docs/DEV_DATABASE.md). Evidence: [verification checklist](docs/verification/DEV_DATABASE.md).
+
 ## 2026-09-30 — Superuser developer access and administration controls
 
 - [x] Added the owner role `superuser` above administrator, with all current/future permissions and exclusive developer access. Public registration excludes privileged roles; administrators cannot grant or manage superuser accounts.

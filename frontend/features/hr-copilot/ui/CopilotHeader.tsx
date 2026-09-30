@@ -66,9 +66,8 @@ export function CopilotHeader({
         </div>
       </header>
       <div className="rounded-xl border border-brand-primary/20 bg-brand-primary/5 px-4 py-3 text-xs text-foreground-secondary">
-        Интерактивное frontend демо. Сессия, JSON и mock MCP сохраняются только
-        в браузере; роли и tenant здесь демонстрационные. Реальные резюме не
-        загружайте.
+        Единые тестовые данные загружены из dev БД. Изменения в предпросмотре
+        действуют до перезагрузки страницы.
       </div>
     </>
   );

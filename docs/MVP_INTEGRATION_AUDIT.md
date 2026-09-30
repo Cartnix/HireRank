@@ -1,3 +1,5 @@
+> Обновление dev mode: клиентские наборы и localStorage удалены, данные загружаются из отдельной БД только superuser. Текущий порядок — [DEV_DATABASE.md](DEV_DATABASE.md). Описания прежних mock/localStorage ниже относятся к исходному аудиту.
+
 # Аудит интеграции frontend ↔ backend MVP
 
 Дата: 2026-09-30. Ветка: `audit/mvp-frontend-backend`.

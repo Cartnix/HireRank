@@ -10,7 +10,7 @@ export function HiringVelocityCard() {
   const [period, setPeriod] = useState<string>("30 дн");
 
   const currentData =
-    hiringVelocityMockData[period] || hiringVelocityMockData["30 дн"];
+    hiringVelocityMockData[period] || { total: 0, delta: "", isPositive: false, chartData: [] };
 
   return (
     <Card className="p-6 bg-card border border-border rounded-2xl flex flex-col justify-between h-full">

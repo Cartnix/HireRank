@@ -47,7 +47,7 @@ flow in UC-01–07 and ROADMAP.md; automatic AI, MCP and confirmed memory follow
 
 - **Core target:** web intake, ATS pool/vacancies, automatic explainable analysis, HR confirmation, approved tool action, tenant/RBAC enforcement, notifications and audit. The underlying ATS path must still work when AI fails.
 - **Optional:** confirmed Markdown memory, candidate email only after HR approval, later delivery channels. Telegram/WhatsApp, ranking engines, autonomous rejection and third-party raw-resume processing are not required for this core flow.
-- **Current implementation:** ATS auth, RLS and CRUD foundations exist; real resume upload, model execution, MCP transport and the end-to-end server gate remain work in progress. The separate Next.js Copilot demo uses browser-local JSON and mock MCP. Its role switch and tenant filter are **not security controls**. The ATS vacancy,
+- **Current implementation:** ATS auth, RLS and CRUD foundations exist; real resume upload, model execution, MCP transport and the end-to-end server gate remain work in progress. The separate Next.js Copilot preview loads canonical records from a superuser-only development database and simulates MCP actions in memory. Its role switch and tenant filter are **not security controls**. The ATS vacancy,
 candidate and career pages now call the real API; browser-local Copilot data is
 kept only in explicitly labelled demo features. See [roadmap](ROADMAP.md) for acceptance gates.
 
