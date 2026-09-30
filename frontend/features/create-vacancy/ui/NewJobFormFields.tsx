@@ -238,7 +238,7 @@ export function NewJobFormFields({
                     key={`${requirement}-${index}`}
                     className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm"
                   >
-                    <span className="min-w-0 break-words">{requirement}</span>
+                    <span className="min-w-0 wrap-break-word">{requirement}</span>
                     <button
                       type="button"
                       onClick={() => handleDelete(index)}
