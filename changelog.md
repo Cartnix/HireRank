@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-09-30 — Responsive inspectors and HR workspace UX
+
+- [x] Add a shared resizable inspector for demo candidate profiles, HR Copilot and vacancy details, with sticky positioning and independent content scrolling.
+- [x] Support pointer dragging and keyboard width adjustment; reveal newly opened and expanded panels automatically.
+- [x] Open vacancy context beside HR Copilot or a candidate profile, including description, requirements and a link to the full vacancy.
+- [x] Keep the vacancy list available alongside details; preserve navigation from a vacancy to its candidates.
+- [x] Redesign vacancy and demo user cards, add candidate/HR avatars and align user management actions.
+- [x] Show the current role in the sidebar profile and expose all primary navigation sections for every role without relaxing data or action permissions.
+- [x] Remove disabled “Soon” items; add Dev mode settings and support prototypes with honest persistence/integration labels.
+- [x] Improve light/dark theme borders, secondary text and avatar contrast; add explicit empty vacancy requirements.
+- [x] Validate with cached agent-browser: panel opening, resizing, sticky/independent scrolling, both themes, all six preview roles, user form opening/cancellation and 390/768/1024/1440 px layouts.
+- [x] Pass TypeScript, ESLint, production build and whitespace checks; verify no browser runtime errors and clear the test browser session.
+
+Evidence: [browser verification checklist](docs/verification/UX_PANELS.md).
+This is a frontend UX update. Demo settings/edits remain temporary; real CRUD writes,
+LLM/MCP integration and support ticket delivery are not declared complete by this check.
+
 ## 2026-09-30 — Server-side dev dataset and registration roles
 
 - [x] Created a dedicated `hirerank_dev` PostgreSQL database in local Docker Compose; production and primary application data remain separate.

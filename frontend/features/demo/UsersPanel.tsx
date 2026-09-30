@@ -1,4 +1,5 @@
 "use client";
+import { Avatar } from "@/shared/ui/Avatar";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuthSession } from "@/features/auth/AuthProvider";
 import { apiFetch } from "@/shared/api/client";
@@ -81,9 +82,9 @@ export function UsersPanel() {
       {editing === "new" && !demo.enabled && <label>Пароль<input type="password" name="password" minLength={8} required className={inputClass} autoComplete="new-password" /></label>}
       <div className="flex gap-2"><button disabled={busy} className={primary}>Сохранить</button><button type="button" className={secondary} onClick={() => setEditing(null)}>Отмена</button></div>
     </form>}
-    <div className="grid gap-3">{rows.map(row => <article key={row.id} className={`${card} flex flex-wrap items-center justify-between gap-3`}>
-      <div><p className="font-semibold">{[row.first_name, row.last_name].filter(Boolean).join(" ") || row.email}</p><p className="text-sm text-muted-foreground">{row.email} · {label[row.role as Role] ?? row.role} · {row.is_active ? "Активен" : "Отключён"}</p></div>
-      {canManage(row) && <div className="flex gap-2"><button disabled={busy} className={secondary} onClick={() => setEditing(row)}>Редактировать</button>{row.id !== user?.id && <button disabled={busy} className={`${secondary} text-destructive`} onClick={() => void remove(row)}>Удалить</button>}</div>}
+    <div className="grid gap-4 xl:grid-cols-2">{rows.map(row => <article key={row.id} className={`${card} flex flex-col gap-4`}>
+      <div className="flex min-w-0 items-center gap-3"><Avatar name={[row.first_name, row.last_name].filter(Boolean).join(" ") || row.email} size={42} /><div><p className="mb-1 text-sm font-semibold">{[row.first_name, row.last_name].filter(Boolean).join(" ") || row.email}</p><p className="mb-0 break-all text-xs text-muted-foreground">{row.email} · {label[row.role as Role] ?? row.role} · {row.is_active ? "Активен" : "Отключён"}</p></div></div>
+      {canManage(row) && <div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3"><button disabled={busy} className={secondary} onClick={() => setEditing(row)}>Редактировать</button>{row.id !== user?.id && <button disabled={busy} className={`${secondary} text-destructive`} onClick={() => void remove(row)}>Удалить</button>}</div>}
     </article>)}</div>
   </div>;
 }

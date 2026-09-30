@@ -79,6 +79,25 @@ This supersedes the unrestricted demo switch and earlier mocked-session browser 
 These checks close this administration/dev-mode scope, not the remaining M4/M5
 resume storage, manual status, audit or missing read-API requirements.
 
+### Responsive inspectors and HR workspace UX — completed (2026-09-30)
+
+Evidence: [browser verification checklist](verification/UX_PANELS.md), [changelog](../changelog.md).
+Frontend UX scope; server authorization and outstanding ATS/AI milestones remain unchanged.
+
+- [x] Share a sticky, resizable inspector across demo candidate profiles, HR Copilot and vacancy details.
+- [x] Scroll panel content independently; resize with pointer or keyboard and keep new/expanded panels visible.
+- [x] Review vacancy context beside Copilot or a candidate without switching sections.
+- [x] Keep the vacancy list and details on the same screen; retain candidate navigation.
+- [x] Redesign vacancy/user cards and align CRUD controls; add avatars and a readable sidebar role/profile.
+- [x] Show all primary navigation sections for every role while retaining data/action access checks and explanatory restricted states.
+- [x] Replace “Soon” placeholders with Dev mode settings/support prototypes; label temporary settings and disconnected support delivery.
+- [x] Improve light/dark theme contrast and vacancy empty states.
+- [x] Verify desktop/mobile layouts, pointer/keyboard resizing, independent scrolling, all six role menus and both themes through agent-browser.
+- [x] Pass TypeScript, ESLint, production build and whitespace checks; record browser evidence without changing server data.
+
+These items complete the inspector/navigation/demo design work. They do not complete
+production settings persistence, support delivery, real CRUD acceptance or LLM/MCP execution.
+
 ### Role demo layout — completed (2026-09-30)
 
 Local frontend demo; these items do not cover the server stages of AI/MCP and MVP acceptance.

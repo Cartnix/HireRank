@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-import { useDemo, demoCan } from "@/features/demo/DemoProvider";
+import { useDemo } from "@/features/demo/DemoProvider";
 import { label } from "@/features/hr-copilot/ui/constants";
 import type { Role } from "@/features/hr-copilot/model/types";
 import { Avatar } from "@/shared/ui/Avatar";
@@ -18,11 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/shared/api/auth-store";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/shared/ui/components/ThemeToogle";
 
 export function Sidebar() {
@@ -45,11 +40,11 @@ export function Sidebar() {
       <button type="button" aria-expanded={mobileOpen} aria-controls="dashboard-sidebar-navigation" className="mx-4 flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>HireAI · Меню <span>{mobileOpen ? "Закрыть" : "Открыть"}</span></button>
       <nav id="dashboard-sidebar-navigation" className={`${mobileOpen ? "flex" : "hidden"} md:flex flex-1 flex-col gap-2 md:min-h-0 md:overflow-y-auto`}>
         <div className="flex h-14 items-center gap-2.5 rounded-lg px-5 text-[14px]">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-cyan-300 text-[15px] font-bold text-background">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand-primary text-[15px] font-bold text-brand-primary-foreground">
             H
           </div>
           <div className="text-[16px] font-bold tracking-tight">
-            Hire<span className="text-[16px] font-bold text-cyan-300">AI</span>
+            Hire<span className="text-[16px] font-bold text-brand-primary">AI</span>
           </div>
         </div>
 
@@ -64,11 +59,11 @@ export function Sidebar() {
         {(demo.enabled && ["administrator", "superuser"].includes(demo.role)) && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/audit">Журнал действий</Link>}
         <div className="my-3 h-px bg-sidebar-border" />
 
-        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide/ text-muted-foreground/70">
+        <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground">
           Основное
         </div>
 
-        {navItems.filter(item => demo.enabled ? (demoCan(demo.role, item.id) || (["calendar", "agent"].includes(item.id) && ["hr", "administrator", "superuser"].includes(demo.role))) : ["dashboard", "jobs", "candidates"].includes(item.id)).map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
             item.href === "/dashboard"
@@ -82,8 +77,8 @@ export function Sidebar() {
               onClick={() => setMobileOpen(false)}
               className={`group flex items-center gap-2.5 rounded-lg px-3 py-2.5 mx-3 text-[14px] transition-all duration-200 ${
                 isActive
-                  ? "active-glow-item font-semibold text-cyan-300"
-                  : "text-muted-foreground hover:translate-x-0.5 hover:bg-background-hover hover:text-foreground"
+                  ? "active-glow-item font-semibold text-sidebar-accent-foreground"
+                  : "text-muted-foreground hover:translate-x-0.5 hover:bg-accent hover:text-foreground"
               }`}
             >
               <Icon
@@ -103,28 +98,9 @@ export function Sidebar() {
           Прочее
         </div>
 
-        {secondaryNavItems.filter(item => demo.enabled || !item.inDevelopment).map((item) => {
+        {secondaryNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname.startsWith(item.href);
-
-          if (item.inDevelopment) {
-            return (
-              <Tooltip key={item.id}>
-                <TooltipTrigger asChild>
-                  <div className="group relative flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2.5 mx-3 text-[14px] text-muted-foreground/40 bg-secondary/20 border border-border/20">
-                    <Icon size={18} className="text-muted-foreground/30" />
-                    <span>{item.label}</span>
-                    <span className="ml-auto rounded-md bg-warning/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warning border border-warning/20">
-                      Скоро
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  Раздел в разработке — скоро будет доступен
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
 
           return (
             <Link
@@ -133,8 +109,8 @@ export function Sidebar() {
               onClick={() => setMobileOpen(false)}
               className={`group flex items-center gap-2.5 rounded-lg px-3 py-2.5 mx-3 text-[14px] transition-all duration-200 ${
                 isActive
-                  ? "active-glow-item font-semibold text-cyan-300"
-                  : "text-muted-foreground hover:translate-x-0.5 hover:bg-background-hover hover:text-foreground"
+                  ? "active-glow-item font-semibold text-sidebar-accent-foreground"
+                  : "text-muted-foreground hover:translate-x-0.5 hover:bg-accent hover:text-foreground"
               }`}
             >
               <Icon
@@ -149,20 +125,18 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className={`${mobileOpen ? "block" : "hidden"} md:block shrink-0`}>
+      <div className={`${mobileOpen ? "block" : "hidden"} md:block shrink-0 px-3 pt-4`}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex w-full items-center justify-between rounded-[10px] border border-border px-3 py-2.5 transition-colors hover:bg-background-hover cursor-pointer outline-none">
-            <div className="flex items-center gap-2">
+          <button className="flex w-full items-center justify-between rounded-[10px] border border-border px-3 py-2.5 transition-colors hover:bg-accent cursor-pointer outline-none">
+            <div className="flex min-w-0 items-center gap-3 text-left">
               <Avatar
                 name={[user?.first_name, user?.last_name]
                   .filter(Boolean)
-                  .join(" ")}
+                  .join(" ") || "HR"}
                 size={36}
               />
-              <div className="text-[1.1em] font-bold leading-tight">
-                {[user?.first_name, user?.last_name].filter(Boolean).join(" ")}
-              </div>
+              <div className="min-w-0"><div className="truncate text-sm font-semibold">{[user?.first_name, user?.last_name].filter(Boolean).join(" ") || "HR профиль"}</div><div className="mt-1 text-xs text-muted-foreground">{label[(demo.enabled ? demo.role : user?.role) as Role] ?? "Пользователь"}{demo.enabled ? " · Dev mode" : ""}</div></div>
             </div>
           </button>
         </DropdownMenuTrigger>

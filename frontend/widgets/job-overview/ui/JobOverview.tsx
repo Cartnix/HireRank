@@ -180,7 +180,7 @@ export function JobOverview({
           </div>
         </details>
       </form>}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-5 grid-cols-1">
         <Card className="p-5 sm:p-6">
           <section>
             <h2 className="text-sm font-semibold text-foreground">Описание вакансии</h2>
@@ -189,6 +189,7 @@ export function JobOverview({
             </p>
           </section>
 
+          <section className="mt-6 border-t border-border pt-5"><h2 className="m-0 text-sm font-semibold">Требования</h2>{!job.requirements.length && <p className="mt-3 text-sm text-muted-foreground">Требования пока не добавлены.</p>}<ul className="mt-3 list-disc space-y-2 pl-5 text-sm">{job.requirements.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
           <section className="mt-6 border-t border-border pt-5">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-sm font-semibold text-foreground">

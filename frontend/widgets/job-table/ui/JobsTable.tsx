@@ -1,111 +1,16 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Users, MapPin } from "lucide-react";
 import { Job, JobStatusBadge } from "@/entities/job";
 import { Candidate } from "@/entities/candidate";
-import { Card } from "@/shared/ui/card";
 
-const EMPLOYMENT_LABELS: Record<NonNullable<Job["employmentType"]>, string> = {
-  "full-time": "Полная",
-  "part-time": "Частичная",
-  internship: "Стажировка",
-};
-
-export function JobsTable({
-  jobs,
-  candidates,
-  onOpenJob,
-}: {
-  jobs: Job[];
-  candidates: Candidate[];
-  onOpenJob: (id: string) => void;
-}) {
-  return (
-    <Card className="overflow-hidden p-0">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-[13.5px]">
-          <thead className="bg-muted/40">
-            <tr className="border-b border-border text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              <th className="px-5 py-3.5">Вакансия</th>
-              <th className="px-5 py-3.5">Отдел</th>
-              <th className="px-5 py-3.5">Зарплата</th>
-              <th className="px-5 py-3.5">Условия</th>
-              <th className="px-5 py-3.5">Статус</th>
-              <th className="px-5 py-3.5">Кандидаты</th>
-              <th className="w-10 px-3 py-3.5" />
-            </tr>
-          </thead>
-          <tbody>
-            {jobs.map((job) => {
-              const count = candidates.filter(
-                (candidate) => candidate.assigned_vacancy_id === job.id,
-              ).length;
-              const hasSalary = job.salaryMin != null && job.salaryMax != null;
-
-              return (
-                <tr
-                  key={job.id}
-                  onClick={() => onOpenJob(job.id)}
-                  className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-muted/50"
-                >
-                  <td className="max-w-[300px] px-5 py-4">
-                    <div className="truncate font-semibold text-foreground">
-                      {job.title}
-                    </div>
-                    <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-                      {job.description}
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 text-foreground-secondary">
-                    {job.department || "—"}
-                  </td>
-                  <td className="whitespace-nowrap px-5 py-4 font-medium text-foreground">
-                    {hasSalary ? (
-                      `${job.salaryMin!.toLocaleString()}–${job.salaryMax!.toLocaleString()} ₸`
-                    ) : (
-                      <span className="font-normal text-muted-foreground">
-                        Не указана
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-xs text-foreground-secondary">
-                    <div>{job.location ?? "Локация не указана"}</div>
-                    {job.employmentType && (
-                      <div className="mt-1 text-muted-foreground">
-                        {EMPLOYMENT_LABELS[job.employmentType]}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-5 py-4">
-                    <JobStatusBadge status={job.status} />
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className="inline-flex min-w-8 items-center justify-center rounded-full bg-muted px-2 py-1 text-xs font-semibold tabular-nums text-foreground-secondary">
-                      {count}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 text-right">
-                    <ChevronRight
-                      size={16}
-                      className="ml-auto text-muted-foreground"
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-            {jobs.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-5 py-12 text-center">
-                  <div className="text-sm font-medium text-foreground">
-                    Вакансии не найдены
-                  </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    Измените запрос или выберите другой статус.
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
+export function JobsTable({ jobs, candidates, onOpenJob }: { jobs: Job[]; candidates: Candidate[]; onOpenJob: (id: string) => void }) {
+  return <section aria-label="Список вакансий" className="grid gap-3">{jobs.map(job => {
+    const count = candidates.filter(candidate => candidate.assigned_vacancy_id === job.id).length;
+    return <button key={job.id} type="button" onClick={() => onOpenJob(job.id)} className="group w-full rounded-2xl border border-border bg-card p-5 text-left shadow-sm transition-colors hover:border-brand-primary focus-visible:ring-2 focus-visible:ring-ring">
+      <div className="flex flex-wrap items-start justify-between gap-3"><span className="text-base font-semibold">{job.title}</span><JobStatusBadge status={job.status} /></div>
+      <p className="mb-0 mt-2 text-xs text-muted-foreground">{job.department || "Отдел не указан"}</p>
+      <p className="mb-0 mt-3 line-clamp-2 text-sm text-foreground-secondary">{job.description || "Описание пока не добавлено"}</p>
+      {job.salaryMin != null && <p className="mb-0 mt-3 text-sm font-medium">{job.salaryMin.toLocaleString()}{job.salaryMax != null ? `–${job.salaryMax.toLocaleString()}` : ""} ₸</p>}
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-3 text-xs text-muted-foreground"><span className="inline-flex items-center gap-1"><MapPin size={14} />{job.location || "Локация не указана"}</span><span className="inline-flex items-center gap-1"><Users size={14} />{count} кандидатов</span><span className="ml-auto inline-flex items-center gap-1 font-medium text-brand-primary">Подробнее<ChevronRight size={14} /></span></div>
+    </button>;
+  })}{!jobs.length && <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Вакансий пока нет или они не подходят под фильтры.</div>}</section>;
 }

@@ -14,7 +14,7 @@ export const Avatar = memo(
           height: size,
           fontSize: size * 0.4 
         }}
-        className="flex shrink-0 items-center justify-center rounded-full bg-avatar-bg text-background font-bold"
+        className="flex shrink-0 items-center justify-center rounded-full bg-avatar-bg text-brand-primary-foreground font-bold"
       >
         {initials(displayName)}
       </div>

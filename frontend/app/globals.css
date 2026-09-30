@@ -31,13 +31,13 @@
   --danger: #ff3b30;
   
   --muted: #e9e9eb;
-  --muted-foreground: #8e8e93;
+  --muted-foreground: #61616b;
   
-  --border: #e5e5ea;
+  --border: #cdd1db;
   --border-subtle: #d1d1d6;
-  --input: #e5e5ea;
+  --input: #b8beca;
   --ring: #007aff;
-  --cyan-main: #22d3ee;
+  --cyan-main: #087c96;
 
   --chart-1: #007aff;
   --chart-2: #34c759;
@@ -77,7 +77,7 @@
   --secondary: #1b202b;
   --secondary-foreground: #f1f5f9;
   --muted: #1b202b;
-  --muted-foreground: #64748b;
+  --muted-foreground: #94a3b8;
   --accent: #1b202b;
   --accent-foreground: #f1f5f9;
   
@@ -198,3 +198,12 @@
     @apply cursor-pointer;
   }
 }
+/* Inspectors share the viewport while the list remains available. */
+.inspector-workspace { display: flex; align-items: flex-start; gap: 1rem; min-width: 0; }
+.inspector-dock { position: sticky; top: 1rem; display: flex; gap: 1rem; max-width: 68%; overflow-x: auto; padding: 0 8px 8px; }
+.detail-panel { position: relative; display: flex; flex-direction: column; width: var(--panel-width); min-width: 300px; flex-shrink: 0; max-height: calc(100dvh - 2rem); border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: var(--card-foreground); box-shadow: 0 8px 24px #0000000a; }
+.panel-resizer { position: absolute; left: -8px; top: 0; bottom: 0; width: 16px; display: flex; align-items: center; justify-content: center; cursor: ew-resize; touch-action: none; color: var(--muted-foreground); z-index: 2; }
+.panel-resizer:hover, .panel-resizer:focus-visible { color: var(--brand-primary); background: color-mix(in srgb, var(--brand-primary) 12%, transparent); }
+.inspector-workspace > section { min-width: 280px; }
+@media (max-width: 1023px) { .inspector-workspace { flex-direction: column; } .inspector-dock { position: static; flex-direction: column; max-width: 100%; width: 100%; overflow: visible; padding: 0; } .detail-panel { width: 100%; min-width: 0; max-height: 75dvh; } .panel-resizer { display: none; } }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }

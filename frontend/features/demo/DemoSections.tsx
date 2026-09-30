@@ -15,16 +15,17 @@ import { AuditTab } from "@/features/hr-copilot/ui/tabs/AuditTab";
 export function DemoJobs({ initialId }: { initialId?: string | null }) {
   const { state, role, update, message, canMutate } = useDemo();
   const router = useRouter();
+  const [selectedId, setSelectedId] = useState(initialId ?? null);
   const [creating, setCreating] = useState(false);
   const write = canMutate && ["hr", "administrator", "superuser"].includes(role);
   const jobs = state.vacancies.filter(v => v.tenantId === DEMO_TENANT).map(toDashboardJob);
   const candidates = state.candidates.filter(c => canReadDemoCandidate(role, c)).map(c => toDashboardCandidate(c));
-  const selectedJob = jobs.find(v => v.id === initialId) ?? null;
+  const selectedJob = jobs.find(v => v.id === selectedId) ?? null;
   return <>
     {message && <p role="alert">{message}</p>}
     <JobsView jobs={jobs} candidates={candidates} selectedJob={selectedJob}
       canCreate={write} canUpdate={write} canDelete={write}
-      onOpenJob={id => router.push(`/dashboard/jobs/${id}`)} onBack={() => router.push("/dashboard/jobs")}
+      onOpenJob={setSelectedId} onBack={() => setSelectedId(null)}
       onOpenCandidate={id => router.push(`/dashboard/candidates/${id}`)} onCreateJob={() => setCreating(true)}
       onUpdateJob={async (id, input) => {
         update(next => {
@@ -36,7 +37,7 @@ export function DemoJobs({ initialId }: { initialId?: string | null }) {
         });
       }}
       onUpdateStages={stages => { if (!write || !selectedJob) return; update(next => { next.vacancies.find(v => v.id === selectedJob.id)!.stages = stages; next.audit.unshift({ id: crypto.randomUUID(), tenantId: DEMO_TENANT, candidateId: null, actor: role, action: "vacancy.stages.updated", detail: selectedJob.title, createdAt: new Date().toISOString() }); }); }}
-      onDeleteJob={async id => { if (!write) return; if (update(next => removeVacancy(next, DEMO_TENANT, role, id))) router.push("/dashboard/jobs"); }} />
+      onDeleteJob={async id => { if (!write) return; if (update(next => removeVacancy(next, DEMO_TENANT, role, id))) setSelectedId(null); }} />
     {creating && write && <NewJobModal onClose={() => setCreating(false)}
       createJob={async input => {
         let created: ReturnType<typeof addVacancy> | undefined;

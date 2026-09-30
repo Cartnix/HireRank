@@ -10,6 +10,6 @@ export function DevRouteGate({ children }: { children: React.ReactNode }) {
   if (!enabled && developmentRoutes.some(route => pathname === route || pathname.startsWith(route + "/"))) {
     return <p className="text-sm text-muted-foreground">{canDevelop ? "Этот раздел доступен в Dev mode. Включите тестовые данные в меню." : "Раздел недоступен."}</p>;
   }
-  if (enabled && developmentRoutes.some(route => pathname === route || pathname.startsWith(route + "/")) && !demoCan(role, pathname.split("/")[2])) return <p role="alert">Раздел недоступен для выбранной роли.</p>;
+  if (enabled && developmentRoutes.some(route => pathname === route || pathname.startsWith(route + "/")) && !demoCan(role, pathname.split("/")[2])) return <p role="alert">Для выбранной роли здесь пока нет доступных данных и действий.</p>;
   return children;
 }
