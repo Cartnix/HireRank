@@ -7,6 +7,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, Clock3, Plus, Users, UserX } from "lucide-react";
 import { CandidateProfile } from "@/widgets/candidate-profile";
+import { CandidateEvaluationPanel } from "@/features/candidate-evaluation/ui/CandidateEvaluationPanel";
 import { SearchInput } from "@/features/search-candidates/ui/SearchInputCandidate";
 import { StageFilter } from "@/features/filter-candidates/ui/StageFilter";
 import { CandidatesTable } from "@/widgets/candidate-table/ui/CandidatesTable";
@@ -34,6 +35,7 @@ function LiveCandidatesPageClient({
   const [saving, setSaving] = useState(false);
   const jobById = useMemo(() => Object.fromEntries(jobs.map(job => [job.id, job])) as Record<string, Job>, [jobs]);
   const vacancies = jobs.map(job => ({ id: job.id, title: job.title, open: job.status === "open" }));
+  const needsGeminiAttestation = ["hr", "administrator", "superuser"].includes(user?.role ?? "");
 
   async function submitIntake(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,8 +45,10 @@ function LiveCandidatesPageClient({
     if (file) { setFormMessage("Загрузка файлов ожидает backend. Введите текст резюме или ссылку; файл сейчас не будет сохранён."); return; }
     const resumeText = String(values.get("resumeText") ?? "").trim();
     const resumeUrl = String(values.get("resumeUrl") ?? "").trim();
+    const geminiConsentAttested = values.get("geminiConsent") === "on";
     if (!resumeText && !resumeUrl) { setFormMessage("Введите текст резюме или ссылку"); return; }
     if (values.get("processingConsent") !== "on") { setFormMessage("Подтвердите согласие на обработку данных"); return; }
+    if (needsGeminiAttestation && !geminiConsentAttested) { setFormMessage("Подтвердите, что кандидат уже дал согласие на трансграничную обработку для Gemini"); return; }
     setSaving(true); setFormMessage("");
     try {
       const questionnaire = { name: String(values.get("name") ?? "").trim(), email: String(values.get("email") ?? "").trim(), location: String(values.get("location") ?? "").trim(), phone: String(values.get("phone") ?? "").trim(), experience: String(values.get("experience") ?? "").trim(), skills: String(values.get("skills") ?? "").trim(), resume_text: resumeText, resume_reference: resumeUrl || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true };
@@ -53,7 +57,7 @@ function LiveCandidatesPageClient({
         const own = candidates.find(candidate => candidate.user_id === user.id);
         if (!own) throw Error("Профиль кандидата не найден. Обратитесь к администратору.");
         created = await updateQuestionnaire(own.id, { ...own.questionnaire, ...questionnaire });
-      } else created = await createCandidate({ questionnaire, email: questionnaire.email, resume_url: resumeUrl || null });
+      } else created = await createCandidate({ questionnaire, email: questionnaire.email, resume_url: resumeUrl || null, gemini_consent_attested: needsGeminiAttestation && geminiConsentAttested });
       setIsIntakeOpen(false); reload(); router.push(`/dashboard/candidates/${created.id}`);
     } catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось сохранить анкету"); }
     finally { setSaving(false); }
@@ -137,7 +141,7 @@ function LiveCandidatesPageClient({
           addNote={addNote}
           onBack={back}
         />
-        <div className="mt-5 grid gap-5 lg:grid-cols-2"><section aria-label="Вакансия кандидата" className="rounded-xl border border-border p-5"><h2 className="font-semibold">{selectedJob?.title || "Кандидат пока не назначен"}</h2>{selectedJob && <><p className="mt-3 whitespace-pre-wrap text-sm">{selectedJob.description}</p><ul className="mt-3 list-disc pl-5 text-sm">{selectedJob.requirements?.map(item => <li key={item}>{item}</li>)}</ul><Link href={`/dashboard/jobs/${selectedJob.id}`} className="mt-4 inline-block text-brand-primary">Полная вакансия</Link></>}</section>{["hr", "administrator", "superuser"].includes(user?.role ?? "") && <section id="candidate-copilot" aria-label="HR Copilot" className="scroll-mt-5 rounded-xl border border-border p-5"><h2 className="font-semibold">HR Copilot · {selectedCandidate.name}</h2><p className="mt-3 text-sm">{selectedJob ? `Контекст: ${selectedJob.title}` : "Назначьте кандидата на вакансию для анализа."}</p><p className="mt-3 text-sm text-muted-foreground">AI-анализ в рабочей среде ещё не подключён. Для тестового анализа включите Dev mode.</p><Link href="/dashboard/copilot" className="mt-4 inline-block text-brand-primary">Настройки HR Copilot</Link></section>}</div>
+        <div className="mt-5 grid gap-5 lg:grid-cols-2"><section aria-label="Вакансия кандидата" className="rounded-xl border border-border p-5"><h2 className="font-semibold">{selectedJob?.title || "Кандидат пока не назначен"}</h2>{selectedJob && <><p className="mt-3 whitespace-pre-wrap text-sm">{selectedJob.description}</p><ul className="mt-3 list-disc pl-5 text-sm">{selectedJob.requirements?.map(item => <li key={item}>{item}</li>)}</ul><Link href={`/dashboard/jobs/${selectedJob.id}`} className="mt-4 inline-block text-brand-primary">Полная вакансия</Link></>}</section>{["hr", "administrator", "superuser"].includes(user?.role ?? "") && <CandidateEvaluationPanel key={selectedCandidate.id} candidate={selectedCandidate} vacancies={jobs} />}</div>
       </main></div>
     );
   }
@@ -270,7 +274,7 @@ function LiveCandidatesPageClient({
                 {formMessage}
               </p>
             )}
-            <IntakeTab mvp busy={saving} vacancies={vacancies} submitIntake={submitIntake} />
+            <IntakeTab mvp busy={saving} showGeminiConsent={needsGeminiAttestation} vacancies={vacancies} submitIntake={submitIntake} />
           </div>
         </div>
       )}

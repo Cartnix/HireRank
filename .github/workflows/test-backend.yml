@@ -15,6 +15,7 @@ jobs:
       POSTGRES_PORT: 5432
       DOMAIN: localhost
       ENVIRONMENT: local
+      DEV_DATABASE_ENABLED: "true"
 
       STACK_NAME: ${{ secrets.STACK_NAME }}
       PROJECT_NAME: ${{ secrets.PROJECT_NAME }}

@@ -9,8 +9,10 @@ export function IntakeTab({
   vacancies,
   submitIntake,
   mvp = false, busy = false, initialValues,
+  showGeminiConsent = false,
 }: {
   mvp?: boolean; busy?: boolean; initialValues?: Record<string, unknown>;
+  showGeminiConsent?: boolean;
   vacancies: Pick<Vacancy, "id" | "title" | "open">[];
   submitIntake: (event: FormEvent<HTMLFormElement>) => void;
 }) {
@@ -70,6 +72,9 @@ export function IntakeTab({
           <label className="flex gap-2 text-xs sm:col-span-2">
             <input name="processingConsent" type="checkbox" required /> Согласен на обработку данных для рассмотрения анкеты в организации
           </label>
+          {showGeminiConsent && <label className="flex gap-2 text-xs sm:col-span-2">
+            <input name="geminiConsent" type="checkbox" required /> Подтверждаю, что кандидат уже дал явное согласие на передачу обезличенных данных резюме в Google Gemini в страну обработки, настроенную для системы
+          </label>}
           <button disabled={busy} className={`${primary} sm:col-span-2`}>
             {mvp ? (busy ? "Сохраняем..." : "Сохранить анкету") : "Зарегистрировать и запустить AI"}
           </button>

@@ -99,6 +99,9 @@ services:
       - ./backend/htmlcov:/app/backend/htmlcov
     environment:
       DEV_DATABASE_ENABLED: "true"
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_PROCESSING_COUNTRY: ${GEMINI_PROCESSING_COUNTRY:-}
       SMTP_HOST: "mailcatcher"
       SMTP_PORT: "1025"
       SMTP_TLS: "false"
@@ -127,7 +130,7 @@ services:
   frontend:
     restart: "no"
     ports:
-      - "3000:3000"
+      - "3001:3000"
     build:
       context: ./frontend
       dockerfile: Dockerfile

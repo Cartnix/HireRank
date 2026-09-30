@@ -3,23 +3,46 @@
 from __future__ import annotations
 
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    status,
+)
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep, require_permission
 from app.ats import candidates as candidate_svc
+from app.ats.gemini_evaluation import evaluate_candidate_with_gemini
 from app.ats.resume import build_presigned_resume_url
 from app.auth.permissions import has_permission
-from app.models import CandidateStatus, UserRole, role_str
+from app.core.config import settings
+from app.models import (
+    Candidate,
+    CandidateStatus,
+    CopilotSettings,
+    UserRole,
+    Vacancy,
+    role_str,
+)
 from app.schemas.ats import (
     AssignCandidateRequest,
+    CandidateEvaluationRequest,
+    CandidateEvaluationResponse,
     CandidatePublic,
     CreateCandidateRequest,
     PagedCandidateResponse,
     ResumeUrlResponse,
     UpdateQuestionnaireRequest,
 )
+from app.schemas.copilot import CopilotConfig
 
 router = APIRouter(prefix="/candidates", tags=["Candidates"])
 
@@ -31,6 +54,17 @@ def _require_candidate_update(request: Request, current_user: CurrentUser) -> No
     perms = getattr(request.state, "permissions", None) or []
     if not has_permission(perms, "candidate.update"):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+
+def _preserve_gemini_attestation(
+    candidate: Candidate, body: UpdateQuestionnaireRequest
+) -> UpdateQuestionnaireRequest:
+    questionnaire = dict(body.questionnaire)
+    attestation = (candidate.questionnaire or {}).get("gemini_cross_border_attestation")
+    questionnaire.pop("gemini_cross_border_attestation", None)
+    if isinstance(attestation, dict):
+        questionnaire["gemini_cross_border_attestation"] = attestation
+    return body.model_copy(update={"questionnaire": questionnaire})
 
 
 @router.get("/", response_model=PagedCandidateResponse)
@@ -64,9 +98,54 @@ async def list_candidates(
     dependencies=[Depends(require_permission("candidate.create"))],
 )
 async def create_candidate(
-    *, session: SessionDep, body: CreateCandidateRequest
+    *,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    current_user: CurrentUser,
+    body: CreateCandidateRequest,
 ) -> CandidatePublic:
+    questionnaire = dict(body.questionnaire)
+    questionnaire.pop("gemini_cross_border_attestation", None)
+    consent_country = ""
+    if body.gemini_consent_attested:
+        if role_str(current_user.role) not in {
+            UserRole.HR.value,
+            UserRole.ADMINISTRATOR.value,
+            UserRole.SUPERUSER.value,
+        }:
+            raise HTTPException(
+                status_code=403, detail="HR consent attestation required"
+            )
+        if questionnaire.get("processing_consent") is not True:
+            raise HTTPException(
+                status_code=400,
+                detail="Personal data processing consent is required",
+            )
+        consent_country = settings.GEMINI_PROCESSING_COUNTRY.strip().upper()
+        if not consent_country:
+            raise HTTPException(
+                status_code=503,
+                detail="Gemini processing country must be configured before attestation",
+            )
+        questionnaire["gemini_cross_border_attestation"] = {
+            "country": consent_country,
+            "attested_at": datetime.now(UTC).isoformat(),
+            "attested_by": str(current_user.id),
+        }
+    body = body.model_copy(update={"questionnaire": questionnaire})
     candidate = await candidate_svc.create_candidate(session=session, body=body)
+    if consent_country:
+        from app.audit.service import get_audit_service
+
+        await get_audit_service().log(
+            background_tasks=background_tasks,
+            action="candidate.gemini_consent_attested",
+            entity_type="candidate",
+            entity_id=candidate.id,
+            payload={"country": consent_country, "source": "hr_attestation"},
+            tenant_id=current_user.tenant_id,
+            user_id=current_user.id,
+        )
     return await candidate_svc.to_public(session, candidate)
 
 
@@ -108,6 +187,7 @@ async def update_candidate(
             raise HTTPException(status_code=404, detail="Candidate not found")
     else:
         _require_candidate_update(request, current_user)
+    body = _preserve_gemini_attestation(candidate, body)
     candidate = await candidate_svc.update_questionnaire(
         session=session, candidate=candidate, body=body, publish_event=False
     )
@@ -192,6 +272,7 @@ async def put_questionnaire(
     else:
         _require_candidate_update(request, current_user)
         publish = False
+    body = _preserve_gemini_attestation(candidate, body)
     candidate = await candidate_svc.update_questionnaire(
         session=session,
         candidate=candidate,
@@ -222,3 +303,103 @@ async def get_resume_url(
     if not candidate.resume_url:
         raise HTTPException(status_code=404, detail="Resume not found")
     return ResumeUrlResponse(url=build_presigned_resume_url(candidate), expires_in=900)
+
+
+@router.post(
+    "/{candidate_id}/evaluate",
+    response_model=CandidateEvaluationResponse,
+    dependencies=[Depends(require_permission("candidate.read"))],
+)
+async def evaluate_candidate(
+    *,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    current_user: CurrentUser,
+    candidate_id: uuid.UUID,
+    body: CandidateEvaluationRequest,
+) -> CandidateEvaluationResponse:
+    if role_str(current_user.role) not in {
+        UserRole.HR.value,
+        UserRole.ADMINISTRATOR.value,
+        UserRole.SUPERUSER.value,
+    }:
+        raise HTTPException(status_code=403, detail="HR evaluation access required")
+
+    candidate = await candidate_svc.get_candidate(
+        session=session, candidate_id=candidate_id
+    )
+    if candidate is None or not candidate_svc.can_view_candidate(
+        viewer=current_user, candidate=candidate
+    ):
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    country = settings.GEMINI_PROCESSING_COUNTRY.strip().upper()
+    if not country:
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini processing country must be configured before evaluation",
+        )
+    has_user_consent = False
+    if candidate.user_id is not None:
+        from app.auth.consent import get_consent_grant
+
+        consent = await get_consent_grant(session, user_id=candidate.user_id)
+        has_user_consent = (
+            consent.account_processing
+            and consent.cross_border
+            and country
+            in {item.strip().upper() for item in consent.cross_border_countries}
+        )
+    questionnaire = candidate.questionnaire or {}
+    attestation = questionnaire.get("gemini_cross_border_attestation")
+    has_hr_attestation = (
+        questionnaire.get("processing_consent") is True
+        and isinstance(attestation, dict)
+        and attestation.get("country", "").strip().upper() == country
+        and bool(attestation.get("attested_at"))
+        and bool(attestation.get("attested_by"))
+    )
+    if not has_user_consent and not has_hr_attestation:
+        raise HTTPException(
+            status_code=403,
+            detail="Candidate consent or HR attestation for Gemini is required",
+        )
+
+    vacancy = (
+        await session.exec(
+            select(Vacancy).where(
+                Vacancy.id == body.vacancy_id,
+                Vacancy.tenant_id == current_user.tenant_id,
+            )
+        )
+    ).first()
+    if vacancy is None:
+        raise HTTPException(status_code=404, detail="Vacancy not found")
+
+    copilot_record = (
+        await session.exec(
+            select(CopilotSettings).where(
+                CopilotSettings.tenant_id == current_user.tenant_id
+            )
+        )
+    ).first()
+    copilot = CopilotConfig.model_validate(
+        copilot_record.config if copilot_record else {}
+    )
+    result = await evaluate_candidate_with_gemini(candidate, vacancy, copilot)
+    from app.audit.service import get_audit_service
+
+    await get_audit_service().log(
+        background_tasks=background_tasks,
+        action="candidate.gemini_evaluation",
+        entity_type="candidate",
+        entity_id=candidate.id,
+        payload={
+            "vacancy_id": str(vacancy.id),
+            "model": settings.GEMINI_MODEL,
+            "copilot_version": copilot.version,
+        },
+        tenant_id=current_user.tenant_id,
+        user_id=current_user.id,
+    )
+    return result

@@ -174,6 +174,7 @@ export const JobsView = ({
       <JobsTable
         jobs={filteredJobs}
         candidates={candidates}
+        selectedJobId={selectedJob?.id}
         onOpenJob={onOpenJob}
       />
       </div>{selectedJob && <div className="inspector-dock"><DetailPanel title="Детали вакансии" onClose={onBack}>

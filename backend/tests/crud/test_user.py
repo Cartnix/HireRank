@@ -54,12 +54,12 @@ async def test_check_if_user_is_active_inactive(db: AsyncSession) -> None:
     assert user.is_active is False
 
 
-async def test_check_if_user_is_administrator(db: AsyncSession) -> None:
+async def test_administrator_is_not_superuser(db: AsyncSession) -> None:
     email = random_email()
     password = random_lower_string()
     user_in = UserCreate(email=email, password=password, role=UserRole.ADMINISTRATOR)
     user = await crud.create_user(session=db, user_create=user_in)
-    assert user.is_superuser is True
+    assert user.is_superuser is False
     assert user.role == UserRole.ADMINISTRATOR
 
 

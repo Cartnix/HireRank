@@ -586,6 +586,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/candidates/{candidate_id}/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluate Candidate */
+        post: operations["Candidates-evaluate_candidate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboard": {
         parameters: {
             query?: never;
@@ -986,6 +1003,35 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** CandidateEvaluationRequest */
+        CandidateEvaluationRequest: {
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+        };
+        /** CandidateEvaluationResponse */
+        CandidateEvaluationResponse: {
+            /** Match Score */
+            match_score: number;
+            /** Summary */
+            summary: string;
+            /** Criteria */
+            criteria: components["schemas"]["EvaluationCriterion"][];
+            /** Green Flags */
+            green_flags: components["schemas"]["EvaluationFlag"][];
+            /** Red Flags */
+            red_flags: components["schemas"]["EvaluationFlag"][];
+            /** Strengths */
+            strengths: string[];
+            /** Gaps */
+            gaps: string[];
+            /** Follow Up Questions */
+            follow_up_questions: string[];
+            /** Recommendations */
+            recommendations: components["schemas"]["EvaluationRecommendation"][];
+        };
         /** CandidatePublic */
         CandidatePublic: {
             /**
@@ -1133,6 +1179,11 @@ export interface components {
             email?: string | null;
             /** Resume Url */
             resume_url?: string | null;
+            /**
+             * Gemini Consent Attested
+             * @default false
+             */
+            gemini_consent_attested: boolean;
         };
         /** CreateVacancyRequest */
         CreateVacancyRequest: {
@@ -1232,6 +1283,44 @@ export interface components {
             code: string;
             /** Message */
             message: string;
+        };
+        /** EvaluationCriterion */
+        EvaluationCriterion: {
+            /** Criterion */
+            criterion: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "met" | "partial" | "not_found";
+            /** Evidence */
+            evidence: string;
+        };
+        /** EvaluationFlag */
+        EvaluationFlag: {
+            /** Flag */
+            flag: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "matched" | "not_found";
+            /** Evidence */
+            evidence: string;
+        };
+        /** EvaluationRecommendation */
+        EvaluationRecommendation: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "review" | "interview" | "rejected";
+            /** Title */
+            title: string;
+            /** Reason */
+            reason: string;
+            /** Evidence */
+            evidence: string;
         };
         /** GenerateRequest */
         GenerateRequest: {
@@ -3268,6 +3357,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResumeUrlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "Candidates-evaluate_candidate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CandidateEvaluationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CandidateEvaluationResponse"];
                 };
             };
             /** @description Validation Error */

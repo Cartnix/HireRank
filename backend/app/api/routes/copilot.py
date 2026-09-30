@@ -1,30 +1,12 @@
 """Tenant-scoped Copilot configuration. Dev previews use /developer/dataset."""
 
-from typing import Literal
-
 from fastapi import APIRouter, HTTPException, Response
-from pydantic import BaseModel, Field
 from sqlalchemy import text
 
 from app.api.deps import CurrentUser, SessionDep
+from app.schemas.copilot import CopilotConfig
 
 router = APIRouter(prefix="/copilot", tags=["Copilot"])
-
-
-class CopilotConfig(BaseModel):
-    text: str = Field(
-        default="Сопоставляй опыт с вакансией. Указывай проверяемые основания. Решение подтверждает HR.",
-        min_length=12,
-        max_length=20000,
-    )
-    greenFlags: list[str] = Field(default_factory=list, max_length=100)
-    redFlags: list[str] = Field(default_factory=list, max_length=100)
-    useMemory: bool = False
-    memoryMarkdown: str = Field(default="", max_length=100000)
-    allowedActions: list[Literal["review", "interview", "rejected"]] = Field(
-        default=["review", "interview"], min_length=1, max_length=3
-    )
-    version: int = Field(default=1, ge=1)
 
 
 def authorize(user: CurrentUser) -> None:

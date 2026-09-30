@@ -223,7 +223,7 @@ async def test_authenticated_session_sets_user_gucs(
                 )
             ).one()
             assert row[0] == str(user.id)
-            assert row[1] == "administrator"
+            assert row[1] == "superuser"
             assert row[2] == str(settings.TENANT_ID)
         finally:
             event.remove(session.sync_session, "after_begin", _set_rls)

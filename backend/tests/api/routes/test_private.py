@@ -7,7 +7,11 @@ from app.models import User
 from tests.utils.utils import random_email
 
 
-async def test_create_user(client: AsyncClient, db: AsyncSession) -> None:
+async def test_create_user(
+    client: AsyncClient,
+    db: AsyncSession,
+    superuser_token_headers: dict[str, str],
+) -> None:
     email = random_email()
     r = await client.post(
         f"{settings.API_V1_STR}/private/users/",
@@ -17,6 +21,7 @@ async def test_create_user(client: AsyncClient, db: AsyncSession) -> None:
             "first_name": "Pollo",
             "last_name": "Listo",
         },
+        headers=superuser_token_headers,
     )
 
     assert r.status_code == 200

@@ -9,6 +9,7 @@ export type DashboardDTO = components["schemas"]["HRDashboard"] | components["sc
 export type CandidateInput = components["schemas"]["CreateCandidateRequest"];
 export type VacancyInput = components["schemas"]["CreateVacancyRequest"];
 export type VacancyUpdate = components["schemas"]["UpdateVacancyRequest"];
+export type CandidateEvaluationResponse = components["schemas"]["CandidateEvaluationResponse"];
 
 type Page<T> = { items: T[]; pagination: components["schemas"]["Pagination"] };
 // The existing views filter locally and compute totals; load every API page,
@@ -42,4 +43,5 @@ export async function vacancyDetail(id: string) { return vacancyView(await apiFe
 export async function createCandidate(input: CandidateInput) { return candidateView(await apiFetch<CandidateDTO>("/candidates/", { method: "POST", json: input })); }
 export async function updateQuestionnaire(id: string, questionnaire: Record<string, unknown>) { return candidateView(await apiFetch<CandidateDTO>(`/candidates/${id}/questionnaire`, { method: "PUT", json: { questionnaire } })); }
 export async function assignCandidate(id: string, vacancy_id: string) { return candidateView(await apiFetch<CandidateDTO>(`/candidates/${id}/assign`, { method: "POST", json: { vacancy_id } })); }
+export async function evaluateCandidate(id: string, vacancy_id: string) { return apiFetch<CandidateEvaluationResponse>(`/candidates/${id}/evaluate`, { method: "POST", json: { vacancy_id } }); }
 export async function deleteCandidate(id: string) { await apiFetch<void>(`/candidates/${id}`, { method: "DELETE" }); }

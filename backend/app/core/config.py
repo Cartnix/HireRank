@@ -97,6 +97,9 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = ""
     DEV_DATABASE_ENABLED: bool = False
     POSTGRES_DEV_DB: str = "hirerank_dev"
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_PROCESSING_COUNTRY: str = ""
     SQLALCHEMY_ECHO: bool = False
     SQLALCHEMY_POOL_MODE: Literal["queue", "null"] = "queue"
     SQLALCHEMY_POOL_SIZE: int = 20

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -74,6 +74,7 @@ class CreateCandidateRequest(BaseModel):
     questionnaire: dict[str, Any]
     email: str | None = Field(default=None, max_length=255)
     resume_url: str | None = None
+    gemini_consent_attested: bool = False
 
 
 class UpdateQuestionnaireRequest(BaseModel):
@@ -129,6 +130,43 @@ class PagedCandidateResponse(BaseModel):
 class ResumeUrlResponse(BaseModel):
     url: str
     expires_in: int = 900
+
+
+class CandidateEvaluationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    vacancy_id: uuid.UUID
+
+
+class EvaluationCriterion(BaseModel):
+    criterion: str = Field(min_length=1, max_length=250)
+    status: Literal["met", "partial", "not_found"]
+    evidence: str = Field(max_length=600)
+
+
+class EvaluationFlag(BaseModel):
+    flag: str = Field(min_length=1, max_length=250)
+    status: Literal["matched", "not_found"]
+    evidence: str = Field(max_length=600)
+
+
+class EvaluationRecommendation(BaseModel):
+    action: Literal["review", "interview", "rejected"]
+    title: str = Field(min_length=1, max_length=120)
+    reason: str = Field(min_length=1, max_length=500)
+    evidence: str = Field(max_length=600)
+
+
+class CandidateEvaluationResponse(BaseModel):
+    match_score: int = Field(ge=0, le=100)
+    summary: str = Field(min_length=1, max_length=1200)
+    criteria: list[EvaluationCriterion] = Field(max_length=20)
+    green_flags: list[EvaluationFlag] = Field(max_length=100)
+    red_flags: list[EvaluationFlag] = Field(max_length=100)
+    strengths: list[str] = Field(max_length=10)
+    gaps: list[str] = Field(max_length=10)
+    follow_up_questions: list[str] = Field(max_length=10)
+    recommendations: list[EvaluationRecommendation] = Field(max_length=3)
 
 
 class AdminDashboard(BaseModel):

@@ -268,6 +268,106 @@
     "type": "object",
     "title": "CandidateDashboard"
   },
+  "CandidateEvaluationRequest": {
+    "properties": {
+      "vacancy_id": {
+        "type": "string",
+        "format": "uuid",
+        "title": "Vacancy Id"
+      }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+      "vacancy_id"
+    ],
+    "title": "CandidateEvaluationRequest"
+  },
+  "CandidateEvaluationResponse": {
+    "properties": {
+      "match_score": {
+        "type": "integer",
+        "maximum": 100.0,
+        "minimum": 0.0,
+        "title": "Match Score"
+      },
+      "summary": {
+        "type": "string",
+        "maxLength": 1200,
+        "minLength": 1,
+        "title": "Summary"
+      },
+      "criteria": {
+        "items": {
+          "$ref": "#/components/schemas/EvaluationCriterion"
+        },
+        "type": "array",
+        "maxItems": 20,
+        "title": "Criteria"
+      },
+      "green_flags": {
+        "items": {
+          "$ref": "#/components/schemas/EvaluationFlag"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "title": "Green Flags"
+      },
+      "red_flags": {
+        "items": {
+          "$ref": "#/components/schemas/EvaluationFlag"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "title": "Red Flags"
+      },
+      "strengths": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "maxItems": 10,
+        "title": "Strengths"
+      },
+      "gaps": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "maxItems": 10,
+        "title": "Gaps"
+      },
+      "follow_up_questions": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "maxItems": 10,
+        "title": "Follow Up Questions"
+      },
+      "recommendations": {
+        "items": {
+          "$ref": "#/components/schemas/EvaluationRecommendation"
+        },
+        "type": "array",
+        "maxItems": 3,
+        "title": "Recommendations"
+      }
+    },
+    "type": "object",
+    "required": [
+      "match_score",
+      "summary",
+      "criteria",
+      "green_flags",
+      "red_flags",
+      "strengths",
+      "gaps",
+      "follow_up_questions",
+      "recommendations"
+    ],
+    "title": "CandidateEvaluationResponse"
+  },
   "CandidatePublic": {
     "properties": {
       "id": {
@@ -571,6 +671,11 @@
           }
         ],
         "title": "Resume Url"
+      },
+      "gemini_consent_attested": {
+        "type": "boolean",
+        "title": "Gemini Consent Attested",
+        "default": false
       }
     },
     "additionalProperties": false,
@@ -872,6 +977,105 @@
       "message"
     ],
     "title": "ErrorResponse"
+  },
+  "EvaluationCriterion": {
+    "properties": {
+      "criterion": {
+        "type": "string",
+        "maxLength": 250,
+        "minLength": 1,
+        "title": "Criterion"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "met",
+          "partial",
+          "not_found"
+        ],
+        "title": "Status"
+      },
+      "evidence": {
+        "type": "string",
+        "maxLength": 600,
+        "title": "Evidence"
+      }
+    },
+    "type": "object",
+    "required": [
+      "criterion",
+      "status",
+      "evidence"
+    ],
+    "title": "EvaluationCriterion"
+  },
+  "EvaluationFlag": {
+    "properties": {
+      "flag": {
+        "type": "string",
+        "maxLength": 250,
+        "minLength": 1,
+        "title": "Flag"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "matched",
+          "not_found"
+        ],
+        "title": "Status"
+      },
+      "evidence": {
+        "type": "string",
+        "maxLength": 600,
+        "title": "Evidence"
+      }
+    },
+    "type": "object",
+    "required": [
+      "flag",
+      "status",
+      "evidence"
+    ],
+    "title": "EvaluationFlag"
+  },
+  "EvaluationRecommendation": {
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "review",
+          "interview",
+          "rejected"
+        ],
+        "title": "Action"
+      },
+      "title": {
+        "type": "string",
+        "maxLength": 120,
+        "minLength": 1,
+        "title": "Title"
+      },
+      "reason": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1,
+        "title": "Reason"
+      },
+      "evidence": {
+        "type": "string",
+        "maxLength": 600,
+        "title": "Evidence"
+      }
+    },
+    "type": "object",
+    "required": [
+      "action",
+      "title",
+      "reason",
+      "evidence"
+    ],
+    "title": "EvaluationRecommendation"
   },
   "GenerateRequest": {
     "properties": {

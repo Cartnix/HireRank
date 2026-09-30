@@ -1,8 +1,17 @@
+import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 from alembic.config import Config
 from alembic.script import ScriptDirectory
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+)
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlmodel import select
@@ -10,6 +19,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.api.deps import SessionDep, get_current_active_superuser
 from app.ats.analytics import build_analytics
+from app.ats.gemini_evaluation import evaluate_candidate_with_gemini
+from app.core.config import settings
 from app.dev.bootstrap import TENANT_ID
 from app.dev.database import dev_engine, require_dev_database
 from app.models import (
@@ -23,6 +34,8 @@ from app.models import (
     Vacancy,
 )
 from app.schemas.analytics import DashboardAnalytics, ScheduledInterview
+from app.schemas.ats import CandidateEvaluationResponse
+from app.schemas.copilot import CopilotConfig
 
 router = APIRouter(
     prefix="/developer",
@@ -74,6 +87,90 @@ class DatasetWrite(BaseModel):
     audit: list[dict[str, Any]] = Field(default_factory=list, max_length=20000)
     memory: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
     mcpRuns: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
+
+
+class DemoCandidateForEvaluation(BaseModel):
+    id: str = Field(min_length=1, max_length=128)
+    tenantId: uuid.UUID
+    name: str = Field(min_length=2, max_length=255)
+    email: str = Field(max_length=255)
+    phone: str = Field(max_length=64)
+    experience: str = Field(max_length=6000)
+    skills: str = Field(max_length=4000)
+    resumeText: str = Field(max_length=18000)
+    resumeRef: str = Field(max_length=1000)
+
+
+class DemoVacancyForEvaluation(BaseModel):
+    id: str = Field(min_length=1, max_length=128)
+    tenantId: uuid.UUID
+    title: str = Field(min_length=1, max_length=255)
+    description: str = Field(default="", max_length=8000)
+    requirements: list[str] = Field(default_factory=list, max_length=40)
+
+
+class DemoGeminiEvaluationRequest(BaseModel):
+    candidate: DemoCandidateForEvaluation
+    vacancy: DemoVacancyForEvaluation
+    copilot: CopilotConfig
+    consent_attested: bool = False
+
+
+@router.post("/evaluate", response_model=CandidateEvaluationResponse)
+async def evaluate_demo_candidate(
+    body: DemoGeminiEvaluationRequest,
+    background_tasks: BackgroundTasks,
+    actor: User = Depends(get_current_active_superuser),
+) -> CandidateEvaluationResponse:
+    check_dev_database()
+    if not body.consent_attested:
+        raise HTTPException(
+            status_code=403,
+            detail="Confirm the candidate's consent before sending demo data to Gemini",
+        )
+    if not settings.GEMINI_PROCESSING_COUNTRY.strip():
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini processing country is not configured",
+        )
+    if body.candidate.tenantId != TENANT_ID or body.vacancy.tenantId != TENANT_ID:
+        raise HTTPException(status_code=404, detail="Developer dataset item not found")
+
+    result = await evaluate_candidate_with_gemini(
+        {
+            "email": body.candidate.email,
+            "questionnaire": {
+                "name": body.candidate.name,
+                "phone": body.candidate.phone,
+                "experience": body.candidate.experience,
+                "skills": body.candidate.skills,
+                "resume_text": body.candidate.resumeText,
+            },
+        },
+        {
+            "title": body.vacancy.title,
+            "description": body.vacancy.description,
+            "requirements": body.vacancy.requirements,
+        },
+        body.copilot,
+    )
+    from app.audit.service import get_audit_service
+
+    await get_audit_service().log(
+        background_tasks=background_tasks,
+        action="developer.gemini_evaluation",
+        entity_type="developer_candidate",
+        payload={
+            "candidate_id": body.candidate.id,
+            "vacancy_id": body.vacancy.id,
+            "country": settings.GEMINI_PROCESSING_COUNTRY.upper(),
+            "copilot_version": body.copilot.version,
+            "consent_attested_at": datetime.now(UTC).isoformat(),
+        },
+        tenant_id=actor.tenant_id,
+        user_id=actor.id,
+    )
+    return result
 
 
 @router.put("/dataset", status_code=204)
