@@ -34,6 +34,8 @@ type ApiFetchOptions = Omit<RequestInit, "credentials"> & {
 
 let refreshPromise: Promise<boolean> | null = null;
 let previewRole: string | null = null;
+let developmentMode = false;
+export function setApiDevelopmentMode(enabled: boolean) { developmentMode = enabled; }
 export function setApiPreviewRole(role: string | null) { previewRole = role; }
 
 function errorDetail(value: unknown): string {
@@ -69,6 +71,9 @@ export async function apiFetch<T = unknown>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<T> {
+  if (developmentMode && /^\/(candidates|vacancies|users|interviews|copilot)(\/|$)/.test(path)) {
+    throw new ApiError(403, "Dev mode: запрос к рабочей БД заблокирован. Используйте тестовый dataset.");
+  }
   const { json, skipCsrf, headers: initHeaders, _retried, ...rest } = options;
   const headers = new Headers(initHeaders);
   if (previewRole && !/^\/(auth|login|developer)(\/|$)/.test(path)) headers.set("X-Preview-Role", previewRole);

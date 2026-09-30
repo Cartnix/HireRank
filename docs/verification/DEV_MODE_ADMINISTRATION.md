@@ -115,7 +115,7 @@ API credential and does not change the authenticated identity.
 Role preview is now independent of Dev mode; real data remains the default.
 DEV settings adds configurable generation (20/20), optional dev-only clearing,
 and confirmed direct dev-to-live ATS import. Editable dev entities persist;
-Copilot/MCP simulation results remain temporary. Earlier checklist claims about
+Copilot/MCP simulation results now persist in the isolated dev dataset; see the candidate/Copilot update below. Earlier checklist claims about
 reload discarding entity edits describe the previous implementation.
 
 Verified with `python -m scripts.verify_developer_tools` against two newly
@@ -137,3 +137,18 @@ only in isolated databases. Detailed browser evidence: [UX checklist](UX_PANELS.
 
 - [ ] Production LLM/MCP execution and durable evaluation/feedback/memory.
 - [ ] Protected resume storage, complete manual pipeline/status APIs and remaining M4/M5 acceptance.
+
+
+## Candidate/Copilot update — 2026-09-30
+
+- [x] Shared candidate context prevents mismatched profile/vacancy/evaluation.
+- [x] Frontend guard blocks live ATS/configuration calls during Dev mode; developer dataset calls remain available.
+- [x] Dev Markdown memory survives dataset PUT/GET reload; stale snapshots remain rejected.
+- [x] Ordinary HR settings persist via tenant-isolated API; candidate/recruiter/manager are denied, stale settings writes return 409.
+- [x] 42 backend tests passed in two temporary databases, which were removed after the run; 17 frontend tests passed.
+- [x] TypeScript, changed-file ESLint, Ruff and whitespace checks passed; both local databases received `f7a8b9c0d1e2`.
+- [ ] Current desktop/mobile interaction verification: Chrome cannot launch without `libnspr4.so`.
+- [ ] Production LLM/MCP execution, production evaluation history and confirmed decision-memory lifecycle.
+
+Earlier browser evidence remains historical. Current evidence and exact test
+commands: [candidate/Copilot checklist](CANDIDATE_COPILOT.md).

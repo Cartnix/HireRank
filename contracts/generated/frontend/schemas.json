@@ -193,6 +193,10 @@
           "phone": {
             "type": "string"
           },
+          "location": {
+            "type": "string",
+            "maxLength": 255
+          },
           "experience": {
             "type": "string",
             "minLength": 10
@@ -484,6 +488,10 @@
                 "phone": {
                   "type": "string"
                 },
+                "location": {
+                  "type": "string",
+                  "maxLength": 255
+                },
                 "experience": {
                   "type": "string",
                   "minLength": 10
@@ -567,6 +575,25 @@
                 },
                 "useMemory": {
                   "type": "boolean"
+                },
+                "greenFlags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": []
+                },
+                "redFlags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": []
+                },
+                "memoryMarkdown": {
+                  "type": "string",
+                  "maxLength": 100000,
+                  "default": ""
                 },
                 "allowedActions": {
                   "type": "array",
@@ -1518,6 +1545,25 @@
           },
           "useMemory": {
             "type": "boolean"
+          },
+          "greenFlags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "redFlags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "memoryMarkdown": {
+            "type": "string",
+            "maxLength": 100000,
+            "default": ""
           },
           "allowedActions": {
             "type": "array",

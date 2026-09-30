@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-09-30 — Synchronized candidate workspace and persistent Copilot configuration
+
+- [x] Use one candidate selection for questionnaire, linked vacancy and Copilot evaluation; reject analysis belonging to a different vacancy after reassignment.
+- [x] Add profile → Copilot navigation and quick links between inspectors; retain candidate selection in the ordinary ATS detail view.
+- [x] Make questionnaire editing reveal its form; add candidate location to intake/edit forms and stop deriving it from vacancy location.
+- [x] Replace nested/resizable inspector scrolling with ordinary page scrolling. Stack inspectors at narrower widths and show three columns from 1800 px.
+- [x] Make Copilot settings available to HR/admin/owner outside Dev mode: prompt, green/red flags, allowed recommendations and optional memory.md content.
+- [x] Add tenant-isolated `copilot_settings`, GET/PUT API, version conflict protection and migration `f7a8b9c0d1e2`; apply migration to both local application and dev databases.
+- [x] Persist dev evaluations, feedback, notifications, audit, confirmed Markdown memory and mock action runs in the isolated dev dataset; apply configured flags/actions/memory during deterministic intake analysis.
+- [x] Block accidental direct frontend requests to live ATS/configuration endpoints while Dev mode is enabled. Authentication and explicitly confirmed dev-to-live import retain their existing boundaries.
+- [x] Store authoritative configuration on the server rather than in browser cookies/localStorage; browser clearing does not delete saved settings.
+- [x] Regenerate contracts and update ATS schema/matrix, roadmap and verification documentation.
+- [x] Pass 42 backend tests in two automatically cleaned temporary databases, 17 frontend tests, TypeScript, changed-file ESLint, Ruff and whitespace checks.
+- [x] Confirm local `/dashboard/copilot` responds with HTTP 200.
+- [ ] Re-run desktop/mobile interaction checks in agent-browser: this run could not start Chrome because `libnspr4.so` was unavailable.
+
+Evidence: [candidate/Copilot checklist](docs/verification/CANDIDATE_COPILOT.md),
+[ATS schema and storage matrix](docs/ATS_SCHEMA.md).
+This supersedes independent candidate/Copilot selection, resizable inspectors and
+temporary dev analysis/memory described in earlier entries. Production LLM analysis,
+MCP execution and protected resume bytes remain open; persisted dev results are
+still deterministic test simulations. No new production build or successful visual
+browser verification is claimed for this change.
+
 ## 2026-09-30 — Superuser data tools, independent role previews and calendar month
 
 - [x] Add owner-only **DEV settings**, protected by the real superuser session on the server.

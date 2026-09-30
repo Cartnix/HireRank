@@ -3,7 +3,7 @@ import { Fragment } from "react";
 import { usePathname } from "next/navigation";
 import { demoCan } from "./access";
 import { useDemo } from "./DemoProvider";
-const developmentRoutes = ["/dashboard/agent", "/dashboard/copilot", "/dashboard/audit", "/dashboard/settings", "/dashboard/support"];
+const developmentRoutes = ["/dashboard/agent", "/dashboard/audit", "/dashboard/settings", "/dashboard/support"];
 export function DevRouteGate({ children }: { children: React.ReactNode }) {
   const { ready, enabled, canDevelop, role } = useDemo();
   const pathname = usePathname();

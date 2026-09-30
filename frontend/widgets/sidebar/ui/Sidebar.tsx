@@ -65,7 +65,7 @@ export function Sidebar() {
           Основное
         </div>
 
-        {navItems.filter(item => demoCan(demo.role, item.id) && (demo.enabled || !["agent", "copilot"].includes(item.id))).map((item) => {
+        {navItems.filter(item => demoCan(demo.role, item.id) && (demo.enabled || !["agent"].includes(item.id))).map((item) => {
           const Icon = item.icon;
           const isActive =
             item.href === "/dashboard"

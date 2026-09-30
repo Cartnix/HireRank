@@ -16,6 +16,7 @@ must not invent product behavior.
 | `candidate`      | Pool profile: structured resume data, `resume_url`, and status enum              |
 | `application`    | Join vacancy↔candidate (`UNIQUE (vacancy_id, candidate_id)`); `current_stage_id` |
 | `interview`      | Scheduled interview on an application                                            |
+| `copilot_settings` | Tenant-scoped prompt, flags, allowed recommendations and optional Markdown memory (JSONB, versioned) |
 | `scorecard`      | **Human** interview feedback (`rating` 1–5 + notes) — not AI auto-scoring        |
 
 
@@ -151,12 +152,56 @@ other administrators are not promoted. See [the complete permission matrix](RBAC
 | Candidate read | all | all | all | assigned scope | no pool | own |
 | Assign candidate to vacancy | yes | yes | yes | no | no | no |
 | Apply to an open vacancy | yes | no | no | no | no | own |
+| Copilot configuration (prompt, flags, actions, optional memory.md) | yes | yes | yes | no | no | no |
 | Development audit | yes | preview only | no | no | no | no |
 
 The frontend administration checkbox reveals management controls for owner/admin;
 server RBAC and tenant RLS remain authoritative. No role-preview value is sent as
 an API credential. Demo user rows use the API field names (`id`, `tenant_id`,
 `email`, `role`, `is_active`, `first_name`, `last_name`). Vacancy lists, detail
-cards and create forms share production components. Copilot evaluations,
-recommendations, local resume files and memory remain frontend prototypes;
+cards and create forms share production components. Copilot evaluations and recommendations use a deterministic dev engine;
+local resume file bytes are not uploaded. Dev evaluations and Markdown memory
+are persisted in the isolated development database;
 internal demo models are adapted to shared display models, not sent to API writes.
+
+
+## Copilot configuration and synchronized candidate context
+
+`GET/PUT /api/v1/copilot/settings` is available to HR, administrator and owner
+in the ordinary workspace. `copilot_settings.tenant_id` is both primary key and
+FK to `tenant`; FORCE RLS isolates settings by organization. Configuration contains
+`text`, `greenFlags`, `redFlags`, `allowedActions`, `useMemory`, `memoryMarkdown`
+and `version`. Stale writes return 409. These permissions control proposed actions;
+execution still requires HR confirmation. Production AI execution is not connected
+by this change; the interface states that limitation.
+
+Candidate `questionnaire.location` stores the candidate's city/location, independently
+of vacancy location. Intake and edit forms preserve this field.
+
+Candidate selection is the single context for questionnaire, linked vacancy and
+Copilot analysis. The displayed evaluation must match candidate and linked vacancy.
+At narrower widths inspectors stack with ordinary page scrolling; at wide widths
+three inspectors share the right-hand workspace. Candidate profiles link to Copilot,
+and Copilot links to its settings.
+
+### Environment storage matrix
+
+| Data / action | Ordinary workspace | Dev mode |
+| --- | --- | --- |
+| Users, vacancies, candidate edits/deletion | Primary ATS database, ordinary RBAC/RLS | Canonical ATS tables in separate dev database via owner-only dataset API |
+| Copilot prompt, flags, actions, optional memory.md | `copilot_settings`, tenant RLS | `development_dataset.config.prompts` in dev database |
+| Evaluation, feedback, notifications, audit, confirmed Markdown memory, mock actions | Production AI execution remains pending | Persisted in `development_dataset.config`, deterministic test engine |
+| Resume location | `candidate.questionnaire.location` | Same questionnaire field, dev database |
+| Browser storage | No authoritative prompt or personal data in localStorage/cookies | No authoritative dataset in localStorage/cookies |
+
+Dev mode blocks direct frontend requests to live users/candidates/vacancies/interviews
+and Copilot configuration routes. Authentication still uses the real owner identity;
+test data and memory are never used as authentication credentials. Backend dev tools
+require a separate enabled development database and remain disabled in production.
+Explicit import into the primary database is a distinct owner action requiring the
+existing `IMPORT TO REAL DATABASE` confirmation; toggling Dev mode never imports data.
+
+Server persistence makes settings survive browser clearing and work across sessions.
+Cookies are reserved for the session and CSRF. Browser drafts would be readable by
+scripts on the origin and shared by users of the same browser, so no persistent
+browser prompt cache is introduced. Use the server configuration as the authority.

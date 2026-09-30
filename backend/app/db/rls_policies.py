@@ -58,7 +58,10 @@ tenant_isolation_on_interview = _tenant_isolation("public.interview")
 tenant_isolation_on_scorecard = _tenant_isolation("public.scorecard")
 tenant_isolation_on_notification = _tenant_isolation("public.notification")
 
+tenant_isolation_on_copilot_settings = _tenant_isolation("public.copilot_settings")
+
 RLS_POLICIES: list[PGPolicy] = [
+    tenant_isolation_on_copilot_settings,
     tenant_isolation_on_user,
     tenant_self_on_tenant,
     tenant_isolation_on_audit_log,

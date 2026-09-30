@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useDemo } from "@/features/demo/DemoProvider";
 import { DemoCandidates } from "@/features/demo/DemoCandidates";
 
@@ -46,7 +47,7 @@ function LiveCandidatesPageClient({
     if (values.get("processingConsent") !== "on") { setFormMessage("Подтвердите согласие на обработку данных"); return; }
     setSaving(true); setFormMessage("");
     try {
-      const questionnaire = { name: String(values.get("name") ?? "").trim(), email: String(values.get("email") ?? "").trim(), phone: String(values.get("phone") ?? "").trim(), experience: String(values.get("experience") ?? "").trim(), skills: String(values.get("skills") ?? "").trim(), resume_text: resumeText, resume_reference: resumeUrl || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true };
+      const questionnaire = { name: String(values.get("name") ?? "").trim(), email: String(values.get("email") ?? "").trim(), location: String(values.get("location") ?? "").trim(), phone: String(values.get("phone") ?? "").trim(), experience: String(values.get("experience") ?? "").trim(), skills: String(values.get("skills") ?? "").trim(), resume_text: resumeText, resume_reference: resumeUrl || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true };
       let created;
       if (user?.role === "candidate") {
         const own = candidates.find(candidate => candidate.user_id === user.id);
@@ -89,7 +90,9 @@ function LiveCandidatesPageClient({
 
   if (selectedCandidate) {
     return (
-      <main className="w-full p-6">
+      <div className="grid gap-5 p-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+        <section aria-label="Выбор кандидата" className="space-y-2">{displayedCandidates.map(candidate => <button key={candidate.id} onClick={() => openCandidate(candidate.id)} aria-pressed={candidate.id === selectedCandidate.id} className={`w-full rounded-xl border p-3 text-left ${candidate.id === selectedCandidate.id ? "border-brand-primary bg-brand-primary/5" : "border-border"}`}><strong className="block">{candidate.name || candidate.email}</strong><span className="text-xs text-muted-foreground">{jobById[candidate.assigned_vacancy_id ?? ""]?.title || "Без назначения"}</span></button>)}</section>
+      <main className="min-w-0" key={selectedCandidate.id}>
         {formMessage && <p role="alert" className="text-danger">{formMessage}</p>}
         {can("application.assign") && <form className="mb-4 flex flex-wrap gap-3" onSubmit={async event => {
           event.preventDefault(); if (saving) return;
@@ -110,7 +113,7 @@ function LiveCandidatesPageClient({
             if (values.get("processingConsent") !== "on") return;
             setSaving(true); setFormMessage("");
             try {
-              const questionnaire = { ...selectedCandidate.questionnaire, name: String(values.get("name") ?? ""), email: String(values.get("email") ?? ""), phone: String(values.get("phone") ?? ""), experience: String(values.get("experience") ?? ""), skills: String(values.get("skills") ?? ""), resume_text: String(values.get("resumeText") ?? ""), resume_reference: String(values.get("resumeUrl") ?? "") || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true };
+              const questionnaire = { ...selectedCandidate.questionnaire, name: String(values.get("name") ?? ""), email: String(values.get("email") ?? ""), location: String(values.get("location") ?? "").trim(), phone: String(values.get("phone") ?? ""), experience: String(values.get("experience") ?? ""), skills: String(values.get("skills") ?? ""), resume_text: String(values.get("resumeText") ?? ""), resume_reference: String(values.get("resumeUrl") ?? "") || null, requested_vacancy_id: String(values.get("vacancyId") ?? "") || null, processing_consent: true };
               if (!questionnaire.resume_text.trim() && !questionnaire.resume_reference) throw Error("Введите текст резюме или ссылку");
               await updateQuestionnaire(selectedCandidate.id, questionnaire); reload();
             } catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось обновить анкету"); }
@@ -124,6 +127,7 @@ function LiveCandidatesPageClient({
           catch (e) { setFormMessage(e instanceof Error ? e.message : "Не удалось удалить кандидата"); }
           finally { setSaving(false); }
         }}>Удалить кандидата</button>}
+        {(user?.role === "hr" || user?.role === "administrator" || user?.role === "superuser") && <a href="#candidate-copilot" className="mb-4 inline-block rounded-lg border border-border px-4 py-2 text-sm text-brand-primary">HR Copilot · {selectedCandidate.name}</a>}
         <CandidateProfile
           candidate={selectedCandidate}
           job={selectedJob}
@@ -133,7 +137,8 @@ function LiveCandidatesPageClient({
           addNote={addNote}
           onBack={back}
         />
-      </main>
+        <div className="mt-5 grid gap-5 lg:grid-cols-2"><section aria-label="Вакансия кандидата" className="rounded-xl border border-border p-5"><h2 className="font-semibold">{selectedJob?.title || "Кандидат пока не назначен"}</h2>{selectedJob && <><p className="mt-3 whitespace-pre-wrap text-sm">{selectedJob.description}</p><ul className="mt-3 list-disc pl-5 text-sm">{selectedJob.requirements?.map(item => <li key={item}>{item}</li>)}</ul><Link href={`/dashboard/jobs/${selectedJob.id}`} className="mt-4 inline-block text-brand-primary">Полная вакансия</Link></>}</section>{["hr", "administrator", "superuser"].includes(user?.role ?? "") && <section id="candidate-copilot" aria-label="HR Copilot" className="scroll-mt-5 rounded-xl border border-border p-5"><h2 className="font-semibold">HR Copilot · {selectedCandidate.name}</h2><p className="mt-3 text-sm">{selectedJob ? `Контекст: ${selectedJob.title}` : "Назначьте кандидата на вакансию для анализа."}</p><p className="mt-3 text-sm text-muted-foreground">AI-анализ в рабочей среде ещё не подключён. Для тестового анализа включите Dev mode.</p><Link href="/dashboard/copilot" className="mt-4 inline-block text-brand-primary">Настройки HR Copilot</Link></section>}</div>
+      </main></div>
     );
   }
 

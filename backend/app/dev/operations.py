@@ -388,6 +388,7 @@ async def save_dataset(session: AsyncSession, data: dict) -> None:
         "revision": data["revision"] + 1,
         "aliases": aliases,
         "prompts": data.get("prompts", dataset.config["prompts"]),
+        **{key: data.get(key, []) for key in ("evaluations", "feedback", "notifications", "audit", "memory", "mcpRuns")},
     }
     session.add(dataset)
     await session.commit()

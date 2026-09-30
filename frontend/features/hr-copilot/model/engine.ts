@@ -109,6 +109,9 @@ export function evaluate(
         .slice(-3)
         .map((x) => x.markdown)
     : [];
+  if (prompt.useMemory && prompt.memoryMarkdown) memory.push(prompt.memoryMarkdown);
+  const matchedGreen = prompt.greenFlags.filter(flag => source.includes(flag.toLowerCase()));
+  const matchedRed = prompt.redFlags.filter(flag => source.includes(flag.toLowerCase()));
   const result = EvaluationSchema.parse({
     id: id(),
     tenantId: candidate.tenantId,
@@ -134,13 +137,13 @@ export function evaluate(
     },
     output: {
       summary: `Mock JSON: резюме сопоставлено с вакансией «${vacancy.title}». Решение остаётся за HR.`,
-      greenFlags: hits.length
+      greenFlags: [...matchedGreen, ...(hits.length
         ? [
             `Совпадение с вакансией: ${hits.join(", ")}`,
             ...(matched.length ? [`Критерии HR: ${matched.join(", ")}`] : []),
           ]
-        : ["Заявлен опыт — нужна проверка"],
-      redFlags: source.length < 90 ? ["Мало проверяемых деталей"] : [],
+        : ["Заявлен опыт — нужна проверка"])],
+      redFlags: [...matchedRed, ...(source.length < 90 ? ["Мало проверяемых деталей"] : [])],
       recommendations: order
         .filter((x) => prompt.allowedActions.includes(x))
         .slice(0, 3)

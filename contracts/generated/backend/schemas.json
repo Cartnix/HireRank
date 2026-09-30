@@ -478,6 +478,70 @@
     "title": "ConsentPublic",
     "description": "Current consent state returned to the authenticated subject."
   },
+  "CopilotConfig": {
+    "properties": {
+      "text": {
+        "type": "string",
+        "maxLength": 20000,
+        "minLength": 12,
+        "title": "Text",
+        "default": "Сопоставляй опыт с вакансией. Указывай проверяемые основания. Решение подтверждает HR."
+      },
+      "greenFlags": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "title": "Greenflags"
+      },
+      "redFlags": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "maxItems": 100,
+        "title": "Redflags"
+      },
+      "useMemory": {
+        "type": "boolean",
+        "title": "Usememory",
+        "default": false
+      },
+      "memoryMarkdown": {
+        "type": "string",
+        "maxLength": 100000,
+        "title": "Memorymarkdown",
+        "default": ""
+      },
+      "allowedActions": {
+        "items": {
+          "type": "string",
+          "enum": [
+            "review",
+            "interview",
+            "rejected"
+          ]
+        },
+        "type": "array",
+        "maxItems": 3,
+        "minItems": 1,
+        "title": "Allowedactions",
+        "default": [
+          "review",
+          "interview"
+        ]
+      },
+      "version": {
+        "type": "integer",
+        "minimum": 1.0,
+        "title": "Version",
+        "default": 1
+      }
+    },
+    "type": "object",
+    "title": "CopilotConfig"
+  },
   "CreateCandidateRequest": {
     "properties": {
       "questionnaire": {
@@ -707,6 +771,60 @@
         "type": "array",
         "maxItems": 100,
         "title": "Prompts"
+      },
+      "evaluations": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Evaluations"
+      },
+      "feedback": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Feedback"
+      },
+      "notifications": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Notifications"
+      },
+      "audit": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 20000,
+        "title": "Audit"
+      },
+      "memory": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Memory"
+      },
+      "mcpRuns": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "maxItems": 10000,
+        "title": "Mcpruns"
       }
     },
     "type": "object",

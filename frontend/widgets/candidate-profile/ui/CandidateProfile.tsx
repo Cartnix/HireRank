@@ -47,7 +47,7 @@ export function CandidateProfile({
         <ChevronLeft size={15} /> Все кандидаты
       </button>
 
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <Card className="h-fit p-6">
           <div className="mb-4 flex flex-col items-center text-center">
             <Avatar name={displayName} size={64} />
@@ -92,7 +92,7 @@ export function CandidateProfile({
           </div>
         </Card>
 
-        <div className="col-span-2">
+        <div className="min-w-0 xl:col-span-2">
           <div className="mb-4 inline-flex rounded-[10px] border border-border bg-background p-1">
             {tabs.filter(item => enabled || item.key === "profile").map((item) => {
               const active = tab === item.key;
@@ -145,6 +145,7 @@ export function CandidateProfile({
                 </div>
               </div>
 
+              <div className="mt-5 space-y-3 border-t border-border pt-4 text-sm"><h3 className="font-semibold">Опыт</h3><p className="whitespace-pre-wrap">{String((q as unknown as Record<string, unknown>).experience ?? "Не указан")}</p><h3 className="font-semibold">Резюме</h3><p className="whitespace-pre-wrap break-words">{String((q as unknown as Record<string, unknown>).resume_text ?? "Не добавлено")}</p></div>
               {enabled && <div className="mt-5 rounded-[10px] border border-border bg-muted/30 p-4">
                 <DemoBadge />
                 <div className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">AI Match по вакансиям</div>

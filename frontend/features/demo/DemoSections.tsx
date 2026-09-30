@@ -3,12 +3,11 @@ import { useRouter } from "next/navigation";
 import { JobsView } from "@/views/jobs";
 import { NewJobModal } from "@/features/create-vacancy";
 import { toDashboardJob, toDashboardCandidate } from "@/features/hr-copilot/model/dashboardAdapters";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { canReadDemoCandidate } from "./access";
 import { useDemo, DEMO_TENANT } from "./DemoProvider";
 import { addVacancy, removeVacancy } from "@/features/hr-copilot/model/engine";
-import { VacancySchema, type Action } from "@/features/hr-copilot/model/types";
-import { actionLabel, card, primary, secondary, inputClass } from "@/features/hr-copilot/ui/constants";
+import { VacancySchema } from "@/features/hr-copilot/model/types";
 import { AuditTab } from "@/features/hr-copilot/ui/tabs/AuditTab";
 
 export function DemoJobs({ initialId }: { initialId?: string | null }) {
@@ -46,17 +45,7 @@ export function DemoJobs({ initialId }: { initialId?: string | null }) {
       onCreate={job => { setCreating(false); router.push(`/dashboard/jobs/${job.id}`); }} />}
   </>;
 }
-export function CopilotSettings() {
-  const demo = useDemo();
-  const role = demo.role;
-  const prompt = demo.state.prompts.find(p => p.tenantId === DEMO_TENANT)!;
-  if (!demo.enabled || !["hr", "administrator", "superuser"].includes(role ?? "")) return <p role="alert">Настройки Copilot доступны HR и администратору.</p>;
-  function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const data = new FormData(event.currentTarget);
-    demo.update(next => { const p = next.prompts.find(p => p.tenantId === DEMO_TENANT)!; const text = String(data.get("prompt")).trim(); const actions = data.getAll("action") as Action[]; if (text.length < 12 || !actions.length) throw Error("Укажите инструкцию и хотя бы одно действие"); p.text = text; p.allowedActions = actions; p.useMemory = data.get("memory") === "on"; p.version++; next.audit.unshift({ id: crypto.randomUUID(), tenantId: DEMO_TENANT, candidateId: null, actor: role as "hr" | "administrator", action: "prompt.updated", detail: `v${p.version}`, createdAt: new Date().toISOString() }); });
-  }
-  return <div className="mx-auto max-w-3xl space-y-5"><h1 className="text-2xl font-semibold">Dev mode · Настройки HR Copilot</h1><p className="text-sm text-muted-foreground">Инструкция применяется к следующим анализам. Откройте HR Copilot в карточке кандидата для работы с рекомендациями.</p>{demo.message && <p role="alert">{demo.message}</p>}<fieldset disabled={!demo.canMutate}><form key={prompt.version} onSubmit={save} className={`${card} space-y-5`}><label className="block text-sm font-semibold">Инструкция Copilot<textarea required minLength={12} name="prompt" rows={8} defaultValue={prompt.text} className={`${inputClass} mt-3`} /></label><fieldset><legend className="mb-3 text-sm font-semibold">Разрешённые рекомендации</legend><div className="flex flex-wrap gap-2">{Object.entries(actionLabel).map(([action, name]) => <label key={action} className={secondary}><input type="checkbox" name="action" value={action} defaultChecked={prompt.allowedActions.includes(action as Action)} /> {name}</label>)}</div></fieldset><label className="flex gap-2 text-sm"><input type="checkbox" name="memory" defaultChecked={prompt.useMemory} /> Использовать подтверждённую память HR</label><button className={primary}>Сохранить настройки · v{prompt.version}</button></form></fieldset></div>;
-}
+export { CopilotSettings } from "@/features/hr-copilot/ui/CopilotSettings";
 export function DemoAudit() {
   const demo = useDemo();
   if (!demo.enabled || !["administrator", "superuser"].includes(demo.role)) return <p role="alert">Журнал действий доступен только администратору.</p>;

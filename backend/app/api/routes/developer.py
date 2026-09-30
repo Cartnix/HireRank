@@ -68,6 +68,12 @@ class DatasetWrite(BaseModel):
     vacancies: list[dict[str, Any]] = Field(max_length=2000)
     candidates: list[dict[str, Any]] = Field(max_length=10000)
     prompts: list[dict[str, Any]] = Field(max_length=100)
+    evaluations: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
+    feedback: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
+    notifications: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
+    audit: list[dict[str, Any]] = Field(default_factory=list, max_length=20000)
+    memory: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
+    mcpRuns: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
 
 
 @router.put("/dataset", status_code=204)
@@ -222,7 +228,7 @@ async def read_dataset(response: Response) -> dict[str, Any]:
             # Fixture aliases retain existing preview assignments; data comes from canonical ORM records.
             aliases = fixture["aliases"]
             result = {
-                key: []
+                key: fixture.get(key, [])
                 for key in (
                     "evaluations",
                     "feedback",

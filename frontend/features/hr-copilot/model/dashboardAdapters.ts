@@ -61,7 +61,7 @@ export function toDashboardCandidate(
     skills: candidate.skills.split(/[,;]+/).map((skill) => skill.trim()).filter(Boolean),
     stage: candidateStages[candidate.status],
     resumeFileName: candidate.resumeRef,
-    location: vacancy?.location,
+    location: candidate.location,
   };
 }
 

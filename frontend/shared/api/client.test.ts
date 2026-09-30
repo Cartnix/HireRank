@@ -53,3 +53,22 @@ test("role preview is excluded from auth and developer requests", async () => {
     assert.deepEqual(captured, ["manager", null, null]);
   } finally { setApiPreviewRole(null); globalThis.fetch = originalFetch; }
 });
+
+test("dev mode blocks live ATS calls while allowing the isolated dataset", async () => {
+  const { setApiDevelopmentMode } = await import("./client");
+  const originalFetch = globalThis.fetch;
+  let requests = 0;
+  globalThis.fetch = async () => { requests++; return new Response("{}", { headers: { "content-type": "application/json" } }); };
+  try {
+    setApiDevelopmentMode(true);
+    for (const path of ["/users/test", "/vacancies/", "/candidates/test/questionnaire", "/interviews/", "/copilot/settings"]) {
+      await assert.rejects(apiFetch(path, { method: "DELETE" }), /Dev mode/);
+    }
+    assert.equal(requests, 0);
+    await apiFetch("/developer/dataset");
+    assert.equal(requests, 1);
+    setApiDevelopmentMode(false);
+    await apiFetch("/candidates/");
+    assert.equal(requests, 2);
+  } finally { setApiDevelopmentMode(false); globalThis.fetch = originalFetch; }
+});

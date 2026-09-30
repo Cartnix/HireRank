@@ -711,3 +711,9 @@ class DevelopmentDataset(SQLModel, table=True):
     __tablename__ = "development_dataset"
     id: int = Field(default=1, primary_key=True)
     config: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))
+
+
+class CopilotSettings(SQLModel, table=True):
+    __tablename__ = "copilot_settings"
+    tenant_id: uuid.UUID = Field(foreign_key="tenant.id", primary_key=True)
+    config: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))

@@ -39,6 +39,7 @@ export const CandidateSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   phone: z.string(),
+  location: z.string().max(255).optional(),
   experience: z.string().min(10),
   skills: z.string(),
   resumeRef: z.string(),
@@ -54,6 +55,9 @@ export const PromptSchema = z.object({
   tenantId: z.string(),
   text: z.string().min(12),
   useMemory: z.boolean(),
+  greenFlags: z.array(z.string()).default([]),
+  redFlags: z.array(z.string()).default([]),
+  memoryMarkdown: z.string().max(100000).default(""),
   allowedActions: z.array(ActionSchema).min(1).max(3),
   version: z.number().int(),
 });

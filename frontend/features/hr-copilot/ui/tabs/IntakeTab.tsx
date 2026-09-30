@@ -35,6 +35,7 @@ export function IntakeTab({
             Телефон
             <input defaultValue={value("phone")} name="phone" required className={`${inputClass} mt-2`} />
           </label>
+          <label className="text-xs font-semibold">Локация / город<input defaultValue={value("location")} name="location" maxLength={255} placeholder="Город, страна или удалённо" className={`${inputClass} mt-2`} /></label>
           <label className="text-xs font-semibold">
             Файл резюме {mvp ? <DemoBadge label="Dev mode · загрузка не подключена" /> : "(имя сохраняется, байты нет)"}
             <input disabled={mvp} name="resumeFile" type="file" accept=".pdf,.doc,.docx,.html,.htm,.txt" className={`${inputClass} mt-2`} />
@@ -78,7 +79,7 @@ export function IntakeTab({
       <Section title="Что произойдёт" description="Анкета поступит в HireRank — единую организацию.">
         <ol className="mt-5 space-y-3 text-sm">
           {(mvp ? ["Анкета, текст и ссылка сохраняются на сервере", "Кандидат остаётся в пуле без автоматического назначения", "HR отдельно подтверждает назначение на открытую вакансию", "AI и загрузка файла ожидают следующих этапов"] : [
-            "Карточка и ссылка / имя файла сохраняются в демо JSON",
+            "Карточка и ссылка / имя файла сохраняются в тестовой БД",
             "HR и менеджер получают уведомления",
             "AI получает резюме, вакансию, промпт и включённую память",
             "HR проверяет Top‑3 и явно подтверждает действие",

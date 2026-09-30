@@ -51,3 +51,22 @@ test("superuser can confirm a draft and is recorded as the actual actor", () => 
   assert.equal(state.mcpRuns[0].approvedBy, "superuser");
   assert.equal(state.audit.find(entry => entry.action === "mcp.executed")?.actor, "superuser");
 });
+
+test("new intake uses configured flags, actions, memory and preserves candidate location", () => {
+  const state = testState();
+  const prompt = state.prompts[0];
+  prompt.greenFlags = ["React"];
+  prompt.redFlags = ["нет опыта"];
+  prompt.allowedActions = ["review"];
+  prompt.useMemory = true;
+  prompt.memoryMarkdown = "Проверять описание проектов";
+  const candidate = intake(state, prompt.tenantId, "hr", { name: "Тест критериев", email: "flags@example.com", phone: "123", location: "Алматы", experience: "React: учебные проекты, нет опыта коммерческой разработки", skills: "React", resumeRef: "cv.txt", resumeText: "React, нет опыта", requestedVacancyId: "v-frontend" });
+  const result = state.evaluations[0];
+  assert.equal(candidate.location, "Алматы");
+  assert.ok(result.output.greenFlags.includes("React"));
+  assert.ok(result.output.redFlags.includes("нет опыта"));
+  assert.deepEqual(result.output.recommendations.map(r => r.action), ["review"]);
+  assert.ok(result.input.memory.includes(prompt.memoryMarkdown));
+  prompt.useMemory = false;
+  assert.deepEqual(evaluate(state, candidate, state.vacancies.find(v => v.id === "v-frontend")!, "hr").input.memory, []);
+});

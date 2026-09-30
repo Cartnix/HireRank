@@ -796,6 +796,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/copilot/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Settings */
+        get: operations["Copilot-read_settings"];
+        /** Write Settings */
+        put: operations["Copilot-write_settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/private/users/": {
         parameters: {
             query?: never;
@@ -1070,6 +1088,41 @@ export interface components {
              */
             cross_border_countries: string[];
         };
+        /** CopilotConfig */
+        CopilotConfig: {
+            /**
+             * Text
+             * @default Сопоставляй опыт с вакансией. Указывай проверяемые основания. Решение подтверждает HR.
+             */
+            text: string;
+            /** Greenflags */
+            greenFlags?: string[];
+            /** Redflags */
+            redFlags?: string[];
+            /**
+             * Usememory
+             * @default false
+             */
+            useMemory: boolean;
+            /**
+             * Memorymarkdown
+             * @default
+             */
+            memoryMarkdown: string;
+            /**
+             * Allowedactions
+             * @default [
+             *       "review",
+             *       "interview"
+             *     ]
+             */
+            allowedActions: ("review" | "interview" | "rejected")[];
+            /**
+             * Version
+             * @default 1
+             */
+            version: number;
+        };
         /** CreateCandidateRequest */
         CreateCandidateRequest: {
             /** Questionnaire */
@@ -1139,6 +1192,30 @@ export interface components {
             }[];
             /** Prompts */
             prompts: {
+                [key: string]: unknown;
+            }[];
+            /** Evaluations */
+            evaluations?: {
+                [key: string]: unknown;
+            }[];
+            /** Feedback */
+            feedback?: {
+                [key: string]: unknown;
+            }[];
+            /** Notifications */
+            notifications?: {
+                [key: string]: unknown;
+            }[];
+            /** Audit */
+            audit?: {
+                [key: string]: unknown;
+            }[];
+            /** Memory */
+            memory?: {
+                [key: string]: unknown;
+            }[];
+            /** Mcpruns */
+            mcpRuns?: {
                 [key: string]: unknown;
             }[];
         };
@@ -3610,6 +3687,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScheduledInterview"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "Copilot-read_settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotConfig"];
+                };
+            };
+        };
+    };
+    "Copilot-write_settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopilotConfig"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotConfig"];
                 };
             };
             /** @description Validation Error */

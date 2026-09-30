@@ -58,6 +58,28 @@ not declare resume storage, pipeline mutations or full MVP acceptance complete.
 Existing tokens must be refreshed or the user must sign in again after the new
 HR permission migration; permissions in an issued access JWT do not change in place.
 No API failure may enable a seed-data fallback. LLM/MCP/memory remain post-MVP.
+### Candidate workspace and Copilot configuration — implemented (2026-09-30)
+
+Evidence: [candidate/Copilot checklist](verification/CANDIDATE_COPILOT.md),
+[ATS schema and storage matrix](ATS_SCHEMA.md), [changelog](../changelog.md).
+
+- [x] Synchronize questionnaire, vacancy and analysis from one selected candidate; exclude stale analysis after vacancy reassignment.
+- [x] Add profile/Copilot/vacancy quick navigation and keep candidate selection available in the ordinary ATS profile view.
+- [x] Reveal the candidate edit form and persist candidate location independently of vacancy location.
+- [x] Use page scrolling and responsive stacked/three-column inspectors; supersede the earlier resizable, independently scrolling panels.
+- [x] Expose HR/admin/owner Copilot configuration in ordinary and dev workspaces: prompt, flags, permitted recommendations and optional memory.md text.
+- [x] Persist versioned tenant-scoped ordinary configuration with FORCE RLS; apply migration to both local databases.
+- [x] Persist deterministic dev analysis, feedback, notifications, audit, Markdown memory and mock action runs in the separate dev database.
+- [x] Apply saved flags/actions/memory to new test resume intake and block accidental live ATS/configuration calls while Dev mode is active.
+- [x] Keep authoritative configuration out of browser storage; update generated API contracts and ATS matrix.
+- [x] Pass 42 backend and 17 frontend tests, TypeScript, changed-file ESLint, Ruff and whitespace checks; local Copilot route returns HTTP 200.
+- [ ] Verify the changed desktop/mobile interactions in a working browser. Current Chrome launch fails because `libnspr4.so` is missing.
+- [ ] Connect production LLM analysis and server-validated MCP execution; persisted settings alone do not complete these milestones.
+
+The prior UX/browser checks below describe earlier implementations. This update
+supersedes their panel sizing/scrolling behavior and temporary dev-result storage;
+it does not reuse those visual checks as evidence for the current layout.
+
 ### Superuser data tools and role previews — completed (2026-09-30)
 
 Evidence: [administration checklist](verification/DEV_MODE_ADMINISTRATION.md),
@@ -79,7 +101,7 @@ Evidence: [administration checklist](verification/DEV_MODE_ADMINISTRATION.md),
 
 The role preview preserves the owner's user ID: candidate “own” records in real
 mode can be empty if the owner has no linked candidate profile. Copilot/MCP
-simulation results and memory remain temporary. Import provides ATS records for
+simulation results and memory now persist in the dev database (see the update above). Import provides ATS records for
 pre-release integration checks; production MCP execution and remaining M4/M5
 acceptance tasks stay open.
 
@@ -96,7 +118,7 @@ This supersedes the unrestricted demo switch and earlier mocked-session browser 
 - [x] Hide unavailable vacancy/candidate/user create/edit/delete controls and close already exposed management forms/menus when administration is off.
 - [x] Provide owner/admin user administration through the API; prohibit administrator promotion to or modification of superuser.
 - [x] Fix consent/OAuth cascade on user deletion and add a database regression test.
-- [x] Load the shared preview records from PostgreSQL and keep test data out of browser storage; entity edits now persist through the owner data tools above, while Copilot/MCP simulation results remain temporary.
+- [x] Load the shared preview records from PostgreSQL and keep test data out of browser storage; entity edits now persist through the owner data tools above, while the later candidate workspace update also persists Copilot/MCP simulation results.
 - [x] Verify the real superuser session, protected data loading, same records across role previews, ordinary-role denials and empty localStorage.
 - [x] Verify repeatable database seeding, Alembic drift rejection, registration, legal consent, browser rendering and cleanup; run 45 backend and 6 frontend tests.
 - [x] Update generated API contracts, RBAC/product docs, changelog and database setup/verification checklists.
@@ -211,10 +233,10 @@ Not current work: LLM, MCP, n8n, Telegram, WhatsApp or Memory.
 ## Milestone 6 — Evaluation model
 
 - [ ] Define vacancy-specific HR prompt and evaluation criteria.
-- [ ] Define green/red flags and allowed recommendations/actions.
+- [x] Define tenant-scoped green/red flags and allowed recommendations in persisted HR configuration; production execution remains pending.
 - [ ] Define tenant-scoped candidate evaluation history.
 - [ ] Define evidence, rationale and audit fields.
-- [ ] Version prompts and criteria so changes affect subsequent analyses.
+- [x] Version tenant prompts/criteria and apply them to subsequent deterministic dev analyses; production analysis integration remains pending.
 
 ## Milestone 7 — LLM analysis
 

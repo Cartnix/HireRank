@@ -88,6 +88,7 @@ async def test_generate_persist_and_import(
     )
     assert own.json()["total_candidates"] == 1
     dataset["vacancies"][0]["title"] = "Edited in dev PostgreSQL"
+    dataset["memory"] = [{"id": "test-memory", "tenantId": dataset["tenants"][0]["id"], "candidateId": dataset["candidates"][0]["id"], "evaluationId": "test-evaluation", "markdown": "# Только тестовая память", "createdAt": "2026-09-30T00:00:00Z"}]
     response = await client.put(
         f"{base}/dataset", headers=superuser_token_headers, json=dataset
     )
@@ -99,6 +100,7 @@ async def test_generate_persist_and_import(
     reloaded = (
         await client.get(f"{base}/dataset", headers=superuser_token_headers)
     ).json()
+    assert reloaded["memory"] == dataset["memory"]
     assert any(v["title"] == "Edited in dev PostgreSQL" for v in reloaded["vacancies"])
     owner = (await db.exec(select(User))).first()
     existing = Vacancy(

@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 import uuid
+from pathlib import Path
 
 import psycopg
 from psycopg import sql
@@ -26,20 +27,29 @@ def main() -> None:
             )
     env = {
         **os.environ,
+        "PATH": str(Path(sys.executable).parent)
+        + os.pathsep
+        + os.environ.get("PATH", ""),
         "POSTGRES_DB": primary,
         "POSTGRES_DEV_DB": dev,
         "DEV_DATABASE_ENABLED": "true",
         "SQLALCHEMY_POOL_MODE": "null",
     }
     try:
-        subprocess.run(["alembic", "upgrade", "head"], env=env, check=True)
+        subprocess.run(
+            [str(Path(sys.executable).with_name("alembic")), "upgrade", "head"],
+            env=env,
+            check=True,
+        )
         subprocess.run([sys.executable, "-m", "app.dev.bootstrap"], env=env, check=True)
         subprocess.run(
             [
-                "pytest",
+                str(Path(sys.executable).with_name("pytest")),
                 "tests/core/test_superuser_access.py",
                 "tests/api/routes/test_developer.py",
                 "tests/api/routes/test_developer_tools.py",
+                "tests/api/routes/test_copilot_settings.py",
+                "tests/db/test_tenant_schema_guard.py",
                 "-q",
             ],
             env=env,
