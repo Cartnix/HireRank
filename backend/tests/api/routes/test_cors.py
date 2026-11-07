@@ -87,3 +87,14 @@ async def test_unknown_origin_preflight_rejected(client: AsyncClient) -> None:
     )
     assert r.status_code == 400
     assert r.headers.get("access-control-allow-origin") is None
+
+
+async def test_api_routes_accept_both_trailing_slash_forms(
+    client: AsyncClient,
+) -> None:
+    for path in (
+        f"{settings.API_V1_STR}/utils/health-check",
+        f"{settings.API_V1_STR}/utils/health-check/",
+    ):
+        response = await client.get(path, follow_redirects=False)
+        assert response.status_code == 200

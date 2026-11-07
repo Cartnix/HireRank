@@ -16,8 +16,9 @@ test("ATS pagination loads records beyond the first page and preserves filters",
     const page = new URL(url).searchParams.get("page");
     return json({ items: [{ id: page }], pagination: { page: Number(page), page_size: 100, total: 101, total_pages: 2 } });
   };
-  assert.deepEqual(await allPages("/candidates/?status=assigned"), [{ id: "1" }, { id: "2" }]);
+  assert.deepEqual(await allPages("/candidates?status=assigned"), [{ id: "1" }, { id: "2" }]);
   assert.equal(requests.length, 2);
+  assert.ok(requests.every(url => new URL(url).pathname === "/api/v1/candidates/"));
   assert.ok(requests.every(url => url.includes("status=assigned") && url.includes("page_size=100")));
 });
 

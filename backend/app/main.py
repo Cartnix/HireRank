@@ -2,9 +2,11 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.routing import APIRoute
+from starlette.middleware.base import RequestResponseEndpoint
 from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Match
 
 from app.api.main import api_router
 from app.core.config import settings
@@ -34,10 +36,29 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
     lifespan=lifespan,
+    redirect_slashes=False,
 )
 
 # Innermost first for user code: RequestContext wraps the app; CORS outermost.
 app.add_middleware(RequestContextMiddleware)
+
+
+@app.middleware("http")
+async def match_api_trailing_slash(
+    request: Request, call_next: RequestResponseEndpoint
+) -> Response:
+    path = request.scope["path"]
+    if path.startswith(f"{settings.API_V1_STR}/"):
+        alternate_path = path[:-1] if path.endswith("/") else f"{path}/"
+        alternate_scope = {**request.scope, "path": alternate_path}
+        if any(
+            isinstance(route, APIRoute)
+            and route.matches(alternate_scope)[0] is Match.FULL
+            for route in app.router.routes
+        ):
+            request.scope["path"] = alternate_path
+    return await call_next(request)
+
 
 # CORS outermost so error/preflight responses still carry ACAO.
 if settings.all_cors_origins or settings.cors_origin_regex:

@@ -32,6 +32,20 @@ type ApiFetchOptions = Omit<RequestInit, "credentials"> & {
   _retried?: boolean;
 };
 
+const trailingSlashCollectionPaths = new Set([
+  "/candidates",
+  "/interviews",
+  "/users",
+  "/vacancies",
+]);
+
+function canonicalApiPath(path: string): string {
+  const queryIndex = path.indexOf("?");
+  const pathname = queryIndex === -1 ? path : path.slice(0, queryIndex);
+  if (!trailingSlashCollectionPaths.has(pathname)) return path;
+  return `${pathname}/${queryIndex === -1 ? "" : path.slice(queryIndex)}`;
+}
+
 let refreshPromise: Promise<boolean> | null = null;
 let previewRole: string | null = null;
 let developmentMode = false;
@@ -91,7 +105,7 @@ export async function apiFetch<T = unknown>(
   }
 
   try {
-    const res = await fetch(`${getApiV1Url()}${path}`, {
+    const res = await fetch(`${getApiV1Url()}${canonicalApiPath(path)}`, {
       ...rest,
       headers,
       credentials: "include",
