@@ -8,39 +8,33 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
 # Compile bytecode
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#compiling-bytecode
 ENV UV_COMPILE_BYTECODE=1
 
 # uv Cache
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#caching
 ENV UV_LINK_MODE=copy
 
 WORKDIR /app/backend
 
 # Place executables in the environment at the front of the path
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#using-the-environment
 ENV PATH="/app/backend/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/backend"
 
-
-COPY ./backend/pyproject.toml ./backend/uv.lock ./backend/alembic.ini ./
+# Копируем конфиги зависимостей (относительно корня backend)
+COPY pyproject.toml uv.lock alembic.ini ./
 
 # Install dependencies
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#intermediate-layers
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync
+    uv sync --frozen --no-dev --no-install-project
 
-COPY ./backend/scripts ./scripts
-
-COPY ./backend/app ./app
+# Копируем скрипты и сам код
+COPY scripts ./scripts
+COPY app ./app
 
 # Sync the project
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync
+    uv sync --frozen --no-dev
 
-
-CMD ["fastapi", "run", "--workers", "4"]
+CMD ["sh", "-c", "bash scripts/prestart.sh && exec fastapi run app/main.py --host 0.0.0.0 --port ${PORT:-10000} --workers ${WEB_CONCURRENCY:-1}"]
