@@ -1,11 +1,19 @@
 export function getApiBaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
-  if (!url) {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (configuredUrl === undefined) {
     throw new Error("NEXT_PUBLIC_API_URL is not configured");
   }
-  return url;
+  return configuredUrl.replace(/\/$/, "");
 }
 
 export function getApiV1Url(): string {
-  return `${getApiBaseUrl()}/api/v1`;
+  const baseUrl = getApiBaseUrl();
+  if (baseUrl) return `${baseUrl}/api/v1`;
+  if (typeof window !== "undefined") return "/api/v1";
+
+  const proxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, "");
+  if (!proxyTarget) {
+    throw new Error("API_PROXY_TARGET is required for server-side API requests");
+  }
+  return `${proxyTarget}/api/v1`;
 }
