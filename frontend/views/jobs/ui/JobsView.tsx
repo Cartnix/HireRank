@@ -60,24 +60,27 @@ export const JobsView = ({
   });
 
   return (
-    <div className="px-6 md:px-10 lg:px-15 space-y-8 pb-12">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <SectionTitle
-          title="Вакансии"
-          subtitle="Управляйте позициями и отслеживайте поток кандидатов."
-        />
-        {canCreate && <MainButton
-          onClick={onCreateJob}
-          title="Создать вакансию"
-          className="h-10 gap-2 rounded-lg px-4"
-        >
-          <Plus size={15} />
-        </MainButton>}
-      </header>
+    <div className="space-y-6 px-6 pb-12 md:px-10 lg:px-15">
+      <SectionTitle
+        badge="Talent pipeline"
+        title="Вакансии"
+        subtitle="Управляйте позициями и отслеживайте поток кандидатов."
+        action={
+          canCreate ? (
+            <MainButton
+              onClick={onCreateJob}
+              title="Создать вакансию"
+              className="h-11 gap-2 rounded-xl px-4 shadow-sm"
+            >
+              <Plus size={15} />
+            </MainButton>
+          ) : undefined
+        }
+      />
 
       <section
         aria-label="Сводка по вакансиям"
-        className="grid grid-cols-2 divide-x divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-y-0"
+        className="grid grid-cols-2 gap-3 sm:grid-cols-3"
       >
         {[
           {
@@ -101,15 +104,15 @@ export const JobsView = ({
         ].map(({ label, value, icon: Icon, color }) => (
           <div
             key={label}
-            className="flex min-w-0 items-center gap-3 px-3 py-4 first:pl-0 sm:px-5 sm:first:pl-0"
+            className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card/80 p-4 shadow-sm transition-transform hover:-translate-y-0.5"
           >
             <div
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}`}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color}`}
             >
-              <Icon size={17} />
+              <Icon size={18} />
             </div>
             <div className="min-w-0">
-              <div className="text-xl font-semibold leading-none tabular-nums text-foreground">
+              <div className="text-2xl font-semibold leading-none tabular-nums text-foreground">
                 {value}
               </div>
               <div className="mt-1 truncate text-xs text-muted-foreground">
@@ -122,74 +125,88 @@ export const JobsView = ({
 
       <section
         aria-label="Поиск и фильтры вакансий"
-        className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 sm:p-4 md:flex-row md:items-center md:justify-between"
+        className="rounded-2xl border border-border bg-card/80 p-3 shadow-sm sm:p-4"
       >
-        <label className="relative block w-full md:max-w-sm">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Поиск по вакансии или отделу"
-            aria-label="Поиск по вакансиям"
-            className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          />
-        </label>
-        <div
-          className="flex items-center gap-1 overflow-x-auto"
-          aria-label="Статус вакансии"
-        >
-          {(
-            [
-              ["all", "Все"],
-              ["open", "Активные"],
-              ["closed", "Закрытые"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              onClick={() => setStatusFilter(value)}
-              className={`shrink-0 rounded-full px-3 py-2 text-xs font-medium transition-colors ${
-                statusFilter === value
-                  ? "bg-brand-primary text-brand-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="shrink-0 text-xs text-muted-foreground">
-          Найдено{" "}
-          <span className="font-semibold text-foreground">
-            {filteredJobs.length}
-          </span>{" "}
-          из {jobs.length}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <label className="relative block w-full md:max-w-sm">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Поиск по вакансии или отделу"
+              aria-label="Поиск по вакансиям"
+              className="h-11 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            />
+          </label>
+
+          <div
+            className="flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-muted/20 p-1"
+            aria-label="Статус вакансии"
+          >
+            {(
+              [
+                ["all", "Все"],
+                ["open", "Активные"],
+                ["closed", "Закрытые"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setStatusFilter(value)}
+                className={`shrink-0 rounded-full px-3 py-2 text-xs font-medium transition-colors ${
+                  statusFilter === value
+                    ? "bg-brand-primary text-brand-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-background hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="shrink-0 text-xs text-muted-foreground">
+            Найдено{" "}
+            <span className="font-semibold text-foreground">
+              {filteredJobs.length}
+            </span>{" "}
+            из {jobs.length}
+          </div>
         </div>
       </section>
 
-      <div className="inspector-workspace"><div className="min-w-0 flex-1">
-      <JobsTable
-        jobs={filteredJobs}
-        candidates={candidates}
-        selectedJobId={selectedJob?.id}
-        onOpenJob={onOpenJob}
-      />
-      </div>{selectedJob && <div className="inspector-dock"><DetailPanel title="Детали вакансии" onClose={onBack}>
-      <JobOverview
-        canUpdate={canUpdate} canDelete={canDelete} onUpdateJob={onUpdateJob}
-        job={selectedJob}
-        candidates={candidates.filter(
-          (c) => c.assigned_vacancy_id === selectedJob.id,
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(360px,1fr)] xl:items-start">
+        <div className="min-w-0">
+          <JobsTable
+            jobs={filteredJobs}
+            candidates={candidates}
+            selectedJobId={selectedJob?.id}
+            onOpenJob={onOpenJob}
+          />
+        </div>
+
+        {selectedJob && (
+          <div className="min-w-0 xl:sticky xl:top-6">
+            <DetailPanel title="Детали вакансии" onClose={onBack}>
+              <JobOverview
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+                onUpdateJob={onUpdateJob}
+                job={selectedJob}
+                candidates={candidates.filter(
+                  (c) => c.assigned_vacancy_id === selectedJob.id,
+                )}
+                onBack={onBack}
+                onUpdateStages={onUpdateStages}
+                onOpenCandidate={onOpenCandidate}
+                onDeleteJob={onDeleteJob}
+              />
+            </DetailPanel>
+          </div>
         )}
-        onBack={onBack}
-        onUpdateStages={onUpdateStages}
-        onOpenCandidate={onOpenCandidate}
-        onDeleteJob={onDeleteJob}
-      />
-      </DetailPanel></div>}</div>
+      </div>
     </div>
   );
 };

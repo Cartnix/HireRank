@@ -13,7 +13,7 @@ engine_kwargs: dict[str, object] = {
 if settings.SQLALCHEMY_POOL_MODE == "null":
     engine_kwargs["poolclass"] = NullPool
 else:
-    engine_kwargs["pool_pre_ping"] = True
+    engine_kwargs["pool_pre_ping"] = settings.SQLALCHEMY_POOL_PRE_PING
     engine_kwargs["pool_size"] = settings.SQLALCHEMY_POOL_SIZE
     engine_kwargs["max_overflow"] = settings.SQLALCHEMY_MAX_OVERFLOW
     engine_kwargs["pool_recycle"] = settings.SQLALCHEMY_POOL_RECYCLE

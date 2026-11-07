@@ -59,8 +59,28 @@ tenant_isolation_on_scorecard = _tenant_isolation("public.scorecard")
 tenant_isolation_on_notification = _tenant_isolation("public.notification")
 
 tenant_isolation_on_copilot_settings = _tenant_isolation("public.copilot_settings")
+tenant_isolation_on_user_consent = _tenant_isolation("public.user_consent")
+
+_RBAC_READ_ONLY = "as PERMISSIVE for SELECT to hirerank_app using (true)"
+
+
+def _rbac_read_only(on_entity: str) -> PGPolicy:
+    return PGPolicy(
+        schema="public",
+        signature="hirerank_app_read_policy",
+        on_entity=on_entity,
+        definition=_RBAC_READ_ONLY,
+    )
+
+
+hirerank_app_read_role = _rbac_read_only("public.role")
+hirerank_app_read_permission = _rbac_read_only("public.permission")
+hirerank_app_read_role_permission = _rbac_read_only("public.role_permission")
 
 RLS_POLICIES: list[PGPolicy] = [
+    hirerank_app_read_role,
+    hirerank_app_read_permission,
+    hirerank_app_read_role_permission,
     tenant_isolation_on_copilot_settings,
     tenant_isolation_on_user,
     tenant_self_on_tenant,
@@ -72,4 +92,5 @@ RLS_POLICIES: list[PGPolicy] = [
     tenant_isolation_on_interview,
     tenant_isolation_on_scorecard,
     tenant_isolation_on_notification,
+    tenant_isolation_on_user_consent,
 ]

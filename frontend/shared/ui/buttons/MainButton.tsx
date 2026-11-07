@@ -11,12 +11,13 @@ interface MainButtonI extends ButtonHTMLAttributes<HTMLButtonElement> {
   onClick?: () => void
 }
 
-export const MainButton = ({ title, link, onClick, className, ...props }: MainButtonI) => {
+export const MainButton = ({ title, link, onClick, className, children, ...props }: MainButtonI) => {
   const buttonStyles = "px-5 py-1.5 bg-brand-primary hover:bg-brand-primary-hover text-brand-primary-foreground rounded-2xl";
 
   const Component = (
     <Button onClick={onClick} className={cn(buttonStyles, className)} {...props}>
-      {title}
+      {children}
+      {children ? <span>{title}</span> : title}
     </Button>
   );
 

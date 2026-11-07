@@ -13,6 +13,7 @@ from tests.conftest import session_context
 # Explicit registry — expand when new tenant-scoped domain tables ship.
 REQUIRED_TENANT_TABLES = (
     "user",
+    "user_consent",
     "vacancy",
     "pipeline_stage",
     "candidate",

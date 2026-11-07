@@ -16,7 +16,7 @@ export function JobsTable({
   return (
     <section
       aria-label="Список вакансий"
-      className="overflow-hidden rounded-xl border border-border bg-card"
+      className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
     >
       {jobs.map((job) => {
         const count = candidates.filter(
@@ -30,26 +30,26 @@ export function JobsTable({
             type="button"
             aria-pressed={selected}
             onClick={() => onOpenJob(job.id)}
-            className={`group w-full border-b border-border px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${selected ? "bg-brand-primary/5" : "bg-card"}`}
+            className={`group w-full border-b border-border px-5 py-5 text-left transition-all duration-200 last:border-b-0 hover:bg-muted/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${selected ? "bg-brand-primary/6 shadow-inner ring-1 ring-brand-primary/25" : "bg-card"}`}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+              <span className="min-w-0 truncate text-base font-semibold text-foreground">
                 {job.title}
               </span>
               <JobStatusBadge status={job.status} />
             </div>
-            <div className="mt-1 text-xs text-muted-foreground">
+            <div className="mt-2 text-xs text-muted-foreground">
               {job.department || "Отдел не указан"}
             </div>
-            <p className="mb-0 mt-2 line-clamp-2 text-sm text-foreground-secondary">
+            <p className="mb-0 mt-3 line-clamp-2 text-sm leading-6 text-foreground-secondary">
               {job.description || "Описание пока не добавлено"}
             </p>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
                 <MapPin size={14} />
                 {job.location || "Локация не указана"}
               </span>
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1.5">
                 <Users size={14} />
                 {count} кандидатов
               </span>

@@ -95,6 +95,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
+    POSTGRES_SSL_MODE: Literal["disable", "require"] = "disable"
     DEV_DATABASE_ENABLED: bool = False
     POSTGRES_DEV_DB: str = "hirerank_dev"
     GEMINI_API_KEY: str = ""
@@ -102,6 +103,7 @@ class Settings(BaseSettings):
     GEMINI_PROCESSING_COUNTRY: str = ""
     SQLALCHEMY_ECHO: bool = False
     SQLALCHEMY_POOL_MODE: Literal["queue", "null"] = "queue"
+    SQLALCHEMY_POOL_PRE_PING: bool = False
     SQLALCHEMY_POOL_SIZE: int = 20
     SQLALCHEMY_MAX_OVERFLOW: int = 10
     SQLALCHEMY_POOL_RECYCLE: int = 1800
@@ -183,6 +185,7 @@ class Settings(BaseSettings):
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
+            query=f"sslmode={self.POSTGRES_SSL_MODE}",
         )
 
     @computed_field  # type: ignore[prop-decorator]
@@ -195,6 +198,7 @@ class Settings(BaseSettings):
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
+            query=f"ssl={self.POSTGRES_SSL_MODE}",
         )
 
     @computed_field  # type: ignore[prop-decorator]

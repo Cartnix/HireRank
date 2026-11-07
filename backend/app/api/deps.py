@@ -36,45 +36,18 @@ access_cookie_scheme = APIKeyCookie(
 bearer_scheme = oauth2_scheme
 
 
-def set_tenant_guc(connection: Connection, tenant_id: uuid.UUID | str) -> None:
-    """Inject tenant id into PostgreSQL session for RLS (transaction-local)."""
-    connection.execute(
-        text("SELECT set_config('app.current_tenant', :tenant, true)"),
-        {"tenant": str(tenant_id)},
-    )
-
-
-def set_user_gucs(
-    connection: Connection,
-    *,
-    user_id: uuid.UUID | str,
-    role: str,
-) -> None:
-    """Inject user id/role for future resource-level RLS policies."""
-    connection.execute(
-        text("SELECT set_config('app.current_user_id', :user_id, true)"),
-        {"user_id": str(user_id)},
-    )
-    connection.execute(
-        text("SELECT set_config('app.current_user_role', :role, true)"),
-        {"role": role},
-    )
-
-
 async def set_user_gucs_async(
     session: AsyncSession,
     *,
     user_id: uuid.UUID | str,
     role: str,
 ) -> None:
-    connection = await session.connection()
-    await connection.execute(
-        text("SELECT set_config('app.current_user_id', :user_id, true)"),
-        {"user_id": str(user_id)},
-    )
-    await connection.execute(
-        text("SELECT set_config('app.current_user_role', :role, true)"),
-        {"role": role},
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true), "
+            "set_config('app.current_user_role', :role, true)"
+        ),
+        {"user_id": str(user_id), "role": role},
     )
 
 
@@ -88,21 +61,34 @@ def apply_rls_context(
     """
     Bind the session to the non-BYPASSRLS app role and set tenant GUC.
 
-    Superusers ignore FORCE RLS; SET LOCAL ROLE hirerank_app is required for
-    policies to take effect when the login role is postgres/owner.
+    Superusers ignore FORCE RLS; transaction-local role switching is required
+    for policies to take effect when the login role is postgres/owner.
 
-    Always re-enable row_security first: a pooled connection may still have
-    session-level `row_security=off` from seed/bypass helpers (pool pollution).
+    Restore row_security and the application role within the current
+    transaction, without extra database round-trips.
 
     Optional user_id/role GUCs prepare future vacancy/candidate RLS without
     changing the Python session lifecycle later.
     """
-    connection.execute(text("SET row_security = on"))
-    app_role = settings.RLS_APP_ROLE
-    connection.execute(text(f"SET LOCAL ROLE {app_role}"))
-    set_tenant_guc(connection, tenant_id or settings.TENANT_ID)
+    connection.execute(
+        text(
+            "SELECT set_config('row_security', 'on', true), "
+            "set_config('role', :app_role, true), "
+            "set_config('app.current_tenant', :tenant, true)"
+        ),
+        {
+            "app_role": settings.RLS_APP_ROLE,
+            "tenant": str(tenant_id or settings.TENANT_ID),
+        },
+    )
     if user_id is not None and role is not None:
-        set_user_gucs(connection, user_id=user_id, role=role)
+        connection.execute(
+            text(
+                "SELECT set_config('app.current_user_id', :user_id, true), "
+                "set_config('app.current_user_role', :role, true)"
+            ),
+            {"user_id": str(user_id), "role": role},
+        )
 
 
 async def get_db() -> AsyncGenerator[AsyncSession]:
@@ -114,7 +100,6 @@ async def get_db() -> AsyncGenerator[AsyncSession]:
 
             event.listen(session.sync_session, "after_begin", _bypass)
             try:
-                await session.execute(text("SELECT 1"))
                 yield session
             finally:
                 event.remove(session.sync_session, "after_begin", _bypass)
@@ -126,8 +111,6 @@ async def get_db() -> AsyncGenerator[AsyncSession]:
 
             event.listen(session.sync_session, "after_begin", _set_rls)
             try:
-                # Start a transaction so after_begin fires and GUC/ROLE are set
-                await session.execute(text("SELECT 1"))
                 yield session
             finally:
                 event.remove(session.sync_session, "after_begin", _set_rls)
