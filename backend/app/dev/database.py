@@ -68,7 +68,8 @@ async def bind_demo_tenant(session: AsyncSession) -> None:
     require_dev_database()
     await session.execute(
         text(
-            "SELECT set_config('role', :app_role, true), "
+            "SELECT set_config('row_security', 'on', true), "
+            "set_config('role', :app_role, true), "
             "set_config('app.current_tenant', :tenant_id, true)"
         ),
         {
