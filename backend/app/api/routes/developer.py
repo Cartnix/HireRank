@@ -22,7 +22,7 @@ from app.ats.analytics import build_analytics
 from app.ats.gemini_evaluation import evaluate_candidate_with_gemini
 from app.core.config import settings
 from app.dev.bootstrap import TENANT_ID
-from app.dev.database import dev_engine, require_dev_database
+from app.dev.database import dev_engine, prepare_dev_session, require_dev_database
 from app.models import (
     Application,
     Candidate,
@@ -182,7 +182,7 @@ async def write_dataset(body: DatasetWrite) -> None:
     try:
         async with AsyncSession(engine) as session:
             await ensure_dev_schema(session)
-            await session.execute(text("SET LOCAL row_security = off"))
+            await prepare_dev_session(session)
             # Serialize snapshots to prevent two browser sessions interleaving writes.
             await session.execute(text("SELECT pg_advisory_xact_lock(5508400)"))
             dataset = await session.get(DevelopmentDataset, 1)
@@ -208,7 +208,7 @@ async def generate_data(body: GenerateRequest) -> dict:
     try:
         async with AsyncSession(engine) as session:
             await ensure_dev_schema(session)
-            await session.execute(text("SET LOCAL row_security = off"))
+            await prepare_dev_session(session)
             return await generate(
                 session, body.candidates, body.vacancies, body.clear_existing
             )
@@ -234,7 +234,7 @@ async def import_data(
     try:
         async with AsyncSession(engine) as source:
             await ensure_dev_schema(source)
-            await source.execute(text("SET LOCAL row_security = off"))
+            await prepare_dev_session(source)
             result = await copy_to_live(source, session, actor)
             from app.audit.service import get_audit_service
 
@@ -253,6 +253,8 @@ async def import_data(
 
 
 async def ensure_dev_schema(session: AsyncSession) -> None:
+    if settings.ENVIRONMENT == "production":
+        return
     heads = ScriptDirectory.from_config(Config("alembic.ini")).get_heads()
     current = (
         (await session.execute(text("SELECT version_num FROM alembic_version")))
@@ -278,7 +280,7 @@ async def read_dataset(response: Response) -> dict[str, Any]:
     try:
         async with AsyncSession(engine) as session:
             await ensure_dev_schema(session)
-            await session.execute(text("SET LOCAL row_security = off"))
+            await prepare_dev_session(session)
             users = (
                 await session.exec(
                     select(User).where(User.tenant_id == TENANT_ID).order_by(User.email)
@@ -418,7 +420,7 @@ async def development_analytics(
     try:
         async with AsyncSession(engine) as session:
             await ensure_dev_schema(session)
-            await session.execute(text("SET LOCAL row_security = off"))
+            await prepare_dev_session(session)
             user = (
                 await session.exec(
                     select(User).where(User.tenant_id == TENANT_ID, User.role == role)

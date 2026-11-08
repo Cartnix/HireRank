@@ -1,10 +1,12 @@
-"""Create a separate DB, migrate to head, refresh canonical seed records."""
+"""Seed the isolated demo tenant in cloud or the separate local demo database."""
 
 import asyncio
 import json
 import os
 import subprocess
 import uuid
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -14,7 +16,13 @@ from sqlalchemy import text
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
-from app.dev.database import dev_engine, require_dev_database
+from app.core.db import async_session_maker
+from app.dev.database import (
+    DEV_TENANT_ID,
+    bind_demo_tenant,
+    dev_engine,
+    require_dev_database,
+)
 from app.models import (
     Application,
     ApplicationStatus,
@@ -32,30 +40,67 @@ from app.models import (
 )
 
 FIXTURES = Path(__file__).with_name("fixtures.json")
-TENANT_ID = uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
+TENANT_ID = DEV_TENANT_ID
 
 
-def record_id(key: str) -> uuid.UUID:
-    return uuid.uuid5(TENANT_ID, key)
+def record_id(key: str, namespace: uuid.UUID = TENANT_ID) -> uuid.UUID:
+    return uuid.uuid5(namespace, key)
 
 
-async def seed() -> None:
-    fixture = json.loads(FIXTURES.read_text())
+@asynccontextmanager
+async def _seed_session(
+    session: AsyncSession | None,
+) -> AsyncIterator[AsyncSession]:
+    if session is not None:
+        yield session
+        return
     engine = dev_engine()
     try:
-        async with AsyncSession(engine) as session:
+        async with AsyncSession(engine) as dev_session:
+            yield dev_session
+    finally:
+        await engine.dispose()
+
+
+async def seed(
+    session: AsyncSession | None = None,
+    *,
+    tenant_id: uuid.UUID = TENANT_ID,
+    actor_id: uuid.UUID | None = None,
+    create_fixture_users: bool = False,
+) -> None:
+    if session is None and settings.ENVIRONMENT != "local":
+        raise ValueError("A database session is required outside local development")
+    is_separate_dev_database = session is None
+    create_fixture_users = create_fixture_users or is_separate_dev_database
+    fixture = json.loads(FIXTURES.read_text())
+    async with _seed_session(session) as session:
+        if is_separate_dev_database:
             await session.execute(text("SET LOCAL row_security = off"))
+        else:
+            await bind_demo_tenant(session)
+        await session.execute(text("SELECT pg_advisory_xact_lock(5508400)"))
+        if (
+            not is_separate_dev_database
+            and await session.get(DevelopmentDataset, 1) is not None
+        ):
+            return
+        if create_fixture_users:
             await session.merge(
                 Tenant(
-                    id=TENANT_ID, slug="development", name=fixture["tenants"][0]["name"]
+                    id=tenant_id,
+                    slug=f"demo-{tenant_id.hex[:12]}",
+                    name=fixture["tenants"][0]["name"],
                 )
             )
             await session.flush()
             for row in fixture["users"]:
                 await session.merge(
                     User(
-                        id=uuid.UUID(row["id"]),
-                        tenant_id=TENANT_ID,
+                        id=uuid.uuid5(tenant_id, row["id"])
+                        if not is_separate_dev_database
+                        else uuid.UUID(row["id"]),
+                        tenant_id=tenant_id,
                         email=row["email"],
                         role=UserRole(row["role"]),
                         is_active=row["is_active"],
@@ -65,150 +110,185 @@ async def seed() -> None:
                     )
                 )
             await session.flush()
-            actor = uuid.UUID(
-                next(u["id"] for u in fixture["users"] if u["role"] == "hr")
+            fixture_user_ids = {
+                row["role"]: (
+                    uuid.UUID(row["id"])
+                    if is_separate_dev_database
+                    else uuid.uuid5(tenant_id, row["id"])
+                )
+                for row in fixture["users"]
+            }
+            actor = (
+                uuid.UUID(next(u["id"] for u in fixture["users"] if u["role"] == "hr"))
+                if is_separate_dev_database
+                else fixture_user_ids["hr"]
             )
-            for row in fixture["vacancies"]:
-                await session.merge(
-                    Vacancy(
-                        id=record_id(row["id"]),
-                        tenant_id=TENANT_ID,
-                        title=row["title"],
-                        department=row["department"],
-                        description=row["description"],
-                        requirements=row.get("requirements", []),
-                        status=VacancyStatus.OPEN
-                        if row["open"]
-                        else VacancyStatus.CLOSED,
-                        created_by=actor,
-                        created_at=datetime.now(UTC)
-                        - timedelta(days=3 + fixture["vacancies"].index(row)),
+        else:
+            if actor_id is None:
+                raise ValueError("actor_id is required when seeding application data")
+            actor = actor_id
+        for row in fixture["vacancies"]:
+            await session.merge(
+                Vacancy(
+                    id=record_id(row["id"], tenant_id),
+                    tenant_id=tenant_id,
+                    title=row["title"],
+                    department=row["department"],
+                    description=row["description"],
+                    requirements=row.get("requirements", []),
+                    status=VacancyStatus.OPEN if row["open"] else VacancyStatus.CLOSED,
+                    created_by=actor,
+                    created_at=datetime.now(UTC)
+                    - timedelta(days=3 + fixture["vacancies"].index(row)),
+                )
+            )
+        await session.flush()
+        for row in fixture["vacancies"]:
+            for index, name in enumerate(
+                ["Отклик", "Рассмотрение", "Интервью"]
+                + list(
+                    dict.fromkeys(
+                        c["stage"]
+                        for c in fixture["candidates"]
+                        if c.get("stage") and c["vacancyId"] == row["id"]
                     )
                 )
-            await session.flush()
-            for row in fixture["vacancies"]:
-                for index, name in enumerate(
-                    ["Отклик", "Рассмотрение", "Интервью"]
-                    + list(
-                        dict.fromkeys(
-                            c["stage"]
-                            for c in fixture["candidates"]
-                            if c.get("stage") and c["vacancyId"] == row["id"]
-                        )
-                    )
-                ):
-                    await session.merge(
-                        PipelineStage(
-                            id=record_id(f"{row['id']}-stage-{index}"),
-                            tenant_id=TENANT_ID,
-                            vacancy_id=record_id(row["id"]),
-                            stage_name=name,
-                            sort_order=index,
-                        )
-                    )
-            await session.flush()
-            for row in fixture["candidates"]:
+            ):
                 await session.merge(
-                    Candidate(
-                        id=record_id(row["id"]),
-                        tenant_id=TENANT_ID,
-                        email=row["email"],
-                        status=CandidateStatus.ACTION_APPLIED
+                    PipelineStage(
+                        id=record_id(f"{row['id']}-stage-{index}", tenant_id),
+                        tenant_id=tenant_id,
+                        vacancy_id=record_id(row["id"], tenant_id),
+                        stage_name=name,
+                        sort_order=index,
+                    )
+                )
+        await session.flush()
+        for row in fixture["candidates"]:
+            await session.merge(
+                Candidate(
+                    id=record_id(row["id"], tenant_id),
+                    tenant_id=tenant_id,
+                    email=row["email"],
+                    status=CandidateStatus.ACTION_APPLIED
+                    if row.get("hired")
+                    else CandidateStatus.ASSIGNED
+                    if row["vacancyId"]
+                    else CandidateStatus.UNASSIGNED,
+                    resume_url=row["resumeRef"],
+                    questionnaire={
+                        **row,
+                        "tenantId": str(tenant_id),
+                        "dev_key": row["id"],
+                    },
+                    created_at=datetime.now(UTC)
+                    - timedelta(days=2 + fixture["candidates"].index(row)),
+                )
+            )
+        await session.flush()
+        for row in fixture["candidates"]:
+            if row["vacancyId"]:
+                await session.merge(
+                    Application(
+                        id=record_id(f"{row['id']}-application", tenant_id),
+                        tenant_id=tenant_id,
+                        candidate_id=record_id(row["id"], tenant_id),
+                        vacancy_id=record_id(row["vacancyId"], tenant_id),
+                        status=ApplicationStatus.HIRED
                         if row.get("hired")
-                        else CandidateStatus.ASSIGNED
-                        if row["vacancyId"]
-                        else CandidateStatus.UNASSIGNED,
-                        resume_url=row["resumeRef"],
-                        questionnaire={**row, "dev_key": row["id"]},
+                        else ApplicationStatus.ACTIVE,
                         created_at=datetime.now(UTC)
-                        - timedelta(days=2 + fixture["candidates"].index(row)),
+                        - timedelta(days=25 if row.get("hired") else 5),
+                        updated_at=datetime.now(UTC) - timedelta(days=7)
+                        if row.get("hired")
+                        else datetime.now(UTC),
+                        current_stage_id=record_id(
+                            f"{row['vacancyId']}-stage-{3 if row.get('stage') else 0}",
+                            tenant_id,
+                        ),
                     )
                 )
-            await session.flush()
-            for row in fixture["candidates"]:
-                if row["vacancyId"]:
+        await session.flush()
+        for row in fixture["candidates"]:
+            if row.get("rating") or row.get("interviewHour"):
+                interview_id = record_id(f"{row['id']}-interview", tenant_id)
+                scheduled = datetime.now(UTC).replace(
+                    hour=row.get("interviewHour") or 10,
+                    minute=0,
+                    second=0,
+                    microsecond=0,
+                )
+                if row.get("rating"):
+                    scheduled -= timedelta(days=1)
+                elif scheduled < datetime.now(UTC):
+                    scheduled += timedelta(days=1)
+                await session.merge(
+                    Interview(
+                        id=interview_id,
+                        tenant_id=tenant_id,
+                        application_id=record_id(f"{row['id']}-application", tenant_id),
+                        interviewer_id=actor,
+                        scheduled_at=scheduled,
+                    )
+                )
+                await session.flush()
+                if row.get("rating"):
                     await session.merge(
-                        Application(
-                            id=record_id(f"{row['id']}-application"),
-                            tenant_id=TENANT_ID,
-                            candidate_id=record_id(row["id"]),
-                            vacancy_id=record_id(row["vacancyId"]),
-                            status=ApplicationStatus.HIRED
-                            if row.get("hired")
-                            else ApplicationStatus.ACTIVE,
-                            created_at=datetime.now(UTC)
-                            - timedelta(days=25 if row.get("hired") else 5),
-                            updated_at=datetime.now(UTC) - timedelta(days=7)
-                            if row.get("hired")
-                            else datetime.now(UTC),
-                            current_stage_id=record_id(
-                                f"{row['vacancyId']}-stage-{3 if row.get('stage') else 0}"
-                            ),
+                        Scorecard(
+                            id=record_id(f"{row['id']}-score", tenant_id),
+                            tenant_id=tenant_id,
+                            interview_id=interview_id,
+                            rating=row["rating"],
+                            notes="Тестовая оценка интервьюера",
                         )
                     )
-            await session.flush()
-            for row in fixture["candidates"]:
-                if row.get("rating") or row.get("interviewHour"):
-                    interview_id = record_id(f"{row['id']}-interview")
-                    scheduled = datetime.now(UTC).replace(
-                        hour=row.get("interviewHour") or 10,
-                        minute=0,
-                        second=0,
-                        microsecond=0,
-                    )
-                    if row.get("rating"):
-                        scheduled -= timedelta(days=1)
-                    elif scheduled < datetime.now(UTC):
-                        scheduled += timedelta(days=1)
-                    await session.merge(
-                        Interview(
-                            id=interview_id,
-                            tenant_id=TENANT_ID,
-                            application_id=record_id(f"{row['id']}-application"),
-                            interviewer_id=actor,
-                            scheduled_at=scheduled,
-                        )
-                    )
-                    await session.flush()
-                    if row.get("rating"):
-                        await session.merge(
-                            Scorecard(
-                                id=record_id(f"{row['id']}-score"),
-                                tenant_id=TENANT_ID,
-                                interview_id=interview_id,
-                                rating=row["rating"],
-                                notes="Тестовая оценка интервьюера",
-                            )
-                        )
-            # Link the candidate preview role to its own record.
+        if is_separate_dev_database:
             candidate_user = next(
                 u for u in fixture["users"] if u["role"] == "candidate"
             )
             own = await session.get(
-                Candidate, record_id(fixture["candidates"][0]["id"])
+                Candidate, record_id(fixture["candidates"][0]["id"], tenant_id)
             )
+            if own is None:
+                raise RuntimeError("The candidate fixture was not created")
             own.user_id = uuid.UUID(candidate_user["id"])
             session.add(own)
-            await session.merge(
-                DevelopmentDataset(
-                    id=1,
-                    config={
-                        "tenants": fixture["tenants"],
-                        "prompts": fixture["prompts"],
-                        "aliases": {
-                            str(record_id(row["id"])): row["id"]
-                            for row in fixture["vacancies"]
-                        },
+        await session.merge(
+            DevelopmentDataset(
+                id=1,
+                config={
+                    "tenants": fixture["tenants"],
+                    "prompts": fixture["prompts"],
+                    "aliases": {
+                        str(record_id(row["id"], tenant_id)): row["id"]
+                        for row in fixture["vacancies"]
                     },
-                )
+                },
             )
-            await session.commit()
-    finally:
-        await engine.dispose()
+        )
+        await session.commit()
+
+
+async def seed_application_demo_data(
+    session: AsyncSession, *, tenant_id: uuid.UUID
+) -> None:
+    await seed(session, tenant_id=tenant_id, create_fixture_users=True)
 
 
 def main() -> None:
     if not settings.DEV_DATABASE_ENABLED:
+        return
+    if settings.ENVIRONMENT == "production":
+
+        async def seed_shared_database() -> None:
+            async with async_session_maker() as session:
+                await seed(
+                    session,
+                    tenant_id=TENANT_ID,
+                    create_fixture_users=True,
+                )
+
+        asyncio.run(seed_shared_database())
         return
     require_dev_database()
     with psycopg.connect(

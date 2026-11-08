@@ -450,7 +450,8 @@ x-backend-environment: &backend-environment
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set Supabase password in .env}
   POSTGRES_SSL_MODE: ${POSTGRES_SSL_MODE:-require}
   TOKEN_STORE: memory
-  DEV_DATABASE_ENABLED: "false"
+  DEV_DATABASE_ENABLED: ${DEV_DATABASE_ENABLED:-false}
+  POSTGRES_DEV_DB: ${POSTGRES_DEV_DB:-hirerank_dev}
   TENANT_ID: ${TENANT_ID:-00000000-0000-4000-8000-000000000001}
   TENANT_SLUG: ${TENANT_SLUG:-default}
   TENANT_NAME: ${TENANT_NAME:-Default}
@@ -505,4 +506,3 @@ services:
 volumes:
   frontend-node-modules:
   frontend-next:
-
