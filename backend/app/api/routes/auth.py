@@ -438,13 +438,6 @@ async def refresh(
         payload = security.decode_token(refresh_raw)
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
-        await emit_auth_audit(
-            request=request,
-            background_tasks=background_tasks,
-            action=AuditAction.LOGIN_FAILURE,
-            metadata={"reason": "refresh_invalid"},
-            force_sync=True,
-        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or expired",

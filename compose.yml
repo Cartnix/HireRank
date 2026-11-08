@@ -440,6 +440,7 @@ x-backend-environment: &backend-environment
   FRONTEND_HOST: ${FRONTEND_HOST:-http://localhost:3000}
   BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
   SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+  SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
   FIRST_SUPERUSER: ${FIRST_SUPERUSER:?Set FIRST_SUPERUSER in .env}
   FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD:?Set FIRST_SUPERUSER_PASSWORD in .env}
   POSTGRES_SERVER: ${POSTGRES_SERVER:?Set Supabase host in .env}
@@ -504,5 +505,4 @@ services:
 volumes:
   frontend-node-modules:
   frontend-next:
-
 

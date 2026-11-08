@@ -22,6 +22,10 @@ TOKEN_TYPE_ACCESS = "access"
 TOKEN_TYPE_REFRESH = "refresh"
 
 
+def _jwt_secret() -> str:
+    return settings.SUPABASE_JWT_SECRET or settings.SECRET_KEY
+
+
 def create_access_token(
     *,
     subject: str | UUID,
@@ -47,7 +51,7 @@ def create_access_token(
         "jti": token_jti,
         "type": TOKEN_TYPE_ACCESS,
     }
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, _jwt_secret(), algorithm=ALGORITHM)
     return encoded_jwt, token_jti, expire
 
 
@@ -74,12 +78,12 @@ def create_refresh_token(
         "jti": token_jti,
         "type": TOKEN_TYPE_REFRESH,
     }
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, _jwt_secret(), algorithm=ALGORITHM)
     return encoded_jwt, token_jti, expire
 
 
 def decode_token(token: str) -> dict[str, Any]:
-    return jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+    return jwt.decode(token, _jwt_secret(), algorithms=[ALGORITHM])
 
 
 def verify_password(

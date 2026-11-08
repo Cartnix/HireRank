@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     )
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
+    SUPABASE_JWT_SECRET: str = ""
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 14
     FRONTEND_HOST: str = "http://localhost:3000"
@@ -252,6 +253,10 @@ class Settings(BaseSettings):
                 f"SECRET_KEY must be at least 32 bytes for HS256 (got {key_len}). "
                 'Use e.g. `python -c "import secrets; print(secrets.token_urlsafe(32))"`.'
             )
+        if self.SUPABASE_JWT_SECRET and len(
+            self.SUPABASE_JWT_SECRET.encode("utf-8")
+        ) < 32:
+            raise ValueError("SUPABASE_JWT_SECRET must be at least 32 bytes for HS256.")
 
     @model_validator(mode="after")
     def _enforce_non_default_secrets(self) -> Self:
