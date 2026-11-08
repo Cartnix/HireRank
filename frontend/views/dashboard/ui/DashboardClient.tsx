@@ -55,6 +55,7 @@ export function DashboardClient() {
   return (
     <DashboardPageView
       live
+      demoMode={demo.enabled}
       analytics={data}
       candidateLink={candidateLink}
       activeJobsCount={data.active_jobs}

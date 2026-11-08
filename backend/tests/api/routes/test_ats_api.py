@@ -668,6 +668,65 @@ async def test_manual_assignment_requires_open_vacancy(
 
 
 @pytest.mark.asyncio
+async def test_hr_can_move_candidate_between_stages_of_assigned_vacancy(
+    client: AsyncClient,
+) -> None:
+    headers = await _headers_for_role(client, "hr")
+    vacancy = await client.post(
+        f"{VACANCIES}/",
+        headers=headers,
+        json={"title": "Stage update vacancy", "status": "open"},
+    )
+    other_vacancy = await client.post(
+        f"{VACANCIES}/",
+        headers=headers,
+        json={"title": "Other vacancy", "status": "open"},
+    )
+    candidate = await client.post(
+        f"{CANDIDATES}/",
+        headers=headers,
+        json={
+            "questionnaire": {"name": "Stage update candidate"},
+            "email": random_email(),
+        },
+    )
+    assert vacancy.status_code == other_vacancy.status_code == candidate.status_code == 201
+    candidate_id = candidate.json()["id"]
+    vacancy_id = vacancy.json()["id"]
+    first_stage, next_stage = vacancy.json()["stages"][:2]
+    foreign_stage = other_vacancy.json()["stages"][1]
+
+    assigned = await client.post(
+        f"{CANDIDATES}/{candidate_id}/assign",
+        headers=headers,
+        json={"vacancy_id": vacancy_id},
+    )
+    assert assigned.status_code == 200, assigned.text
+    assert assigned.json()["current_stage_id"] == first_stage["id"]
+    assert assigned.json()["current_stage_name"] == first_stage["stage_name"]
+
+    rejected = await client.patch(
+        f"{CANDIDATES}/{candidate_id}/stage",
+        headers=headers,
+        json={"vacancy_id": vacancy_id, "stage_id": foreign_stage["id"]},
+    )
+    assert rejected.status_code == 400
+
+    moved = await client.patch(
+        f"{CANDIDATES}/{candidate_id}/stage",
+        headers=headers,
+        json={"vacancy_id": vacancy_id, "stage_id": next_stage["id"]},
+    )
+    assert moved.status_code == 200, moved.text
+    assert moved.json()["current_stage_id"] == next_stage["id"]
+
+    detail = await client.get(f"{CANDIDATES}/{candidate_id}", headers=headers)
+    assert detail.status_code == 200
+    assert detail.json()["current_stage_id"] == next_stage["id"]
+    assert detail.json()["current_stage_name"] == next_stage["stage_name"]
+
+
+@pytest.mark.asyncio
 async def test_me_exposes_permissions_for_ui_without_granting_manager_writes(
     client: AsyncClient,
 ) -> None:

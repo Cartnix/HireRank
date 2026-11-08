@@ -551,6 +551,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/candidates/{candidate_id}/stage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Candidate Stage */
+        patch: operations["Candidates-update_candidate_stage"];
+        trace?: never;
+    };
     "/api/v1/candidates/{candidate_id}/questionnaire": {
         parameters: {
             query?: never;
@@ -718,6 +735,23 @@ export interface paths {
         get: operations["developer-developer_access"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/developer/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluate Demo Candidate */
+        post: operations["developer-evaluate_demo_candidate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1059,6 +1093,10 @@ export interface components {
             active_package_id?: string | null;
             /** Assigned Vacancy Id */
             assigned_vacancy_id?: string | null;
+            /** Current Stage Id */
+            current_stage_id?: string | null;
+            /** Current Stage Name */
+            current_stage_name?: string | null;
             /** Created At */
             created_at?: string | null;
             /** Updated At */
@@ -1269,6 +1307,60 @@ export interface components {
             mcpRuns?: {
                 [key: string]: unknown;
             }[];
+        };
+        /** DemoCandidateForEvaluation */
+        DemoCandidateForEvaluation: {
+            /** Id */
+            id: string;
+            /**
+             * Tenantid
+             * Format: uuid
+             */
+            tenantId: string;
+            /** Name */
+            name: string;
+            /** Email */
+            email: string;
+            /** Phone */
+            phone: string;
+            /** Experience */
+            experience: string;
+            /** Skills */
+            skills: string;
+            /** Resumetext */
+            resumeText: string;
+            /** Resumeref */
+            resumeRef: string;
+        };
+        /** DemoGeminiEvaluationRequest */
+        DemoGeminiEvaluationRequest: {
+            candidate: components["schemas"]["DemoCandidateForEvaluation"];
+            vacancy: components["schemas"]["DemoVacancyForEvaluation"];
+            copilot: components["schemas"]["CopilotConfig"];
+            /**
+             * Consent Attested
+             * @default false
+             */
+            consent_attested: boolean;
+        };
+        /** DemoVacancyForEvaluation */
+        DemoVacancyForEvaluation: {
+            /** Id */
+            id: string;
+            /**
+             * Tenantid
+             * Format: uuid
+             */
+            tenantId: string;
+            /** Title */
+            title: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Requirements */
+            requirements?: string[];
         };
         /** Distribution */
         Distribution: {
@@ -1652,6 +1744,19 @@ export interface components {
             date: string;
             /** Value */
             value: number;
+        };
+        /** UpdateApplicationStageRequest */
+        UpdateApplicationStageRequest: {
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+            /**
+             * Stage Id
+             * Format: uuid
+             */
+            stage_id: string;
         };
         /** UpdatePassword */
         UpdatePassword: {
@@ -3271,6 +3376,41 @@ export interface operations {
             };
         };
     };
+    "Candidates-update_candidate_stage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateApplicationStageRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationPublic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     "Candidates-get_questionnaire": {
         parameters: {
             query?: never;
@@ -3635,6 +3775,39 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    "developer-evaluate_demo_candidate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DemoGeminiEvaluationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CandidateEvaluationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

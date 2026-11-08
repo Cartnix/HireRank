@@ -89,6 +89,13 @@ class AssignCandidateRequest(BaseModel):
     vacancy_id: uuid.UUID
 
 
+class UpdateApplicationStageRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    vacancy_id: uuid.UUID
+    stage_id: uuid.UUID
+
+
 class ApplyToVacancyRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -118,6 +125,8 @@ class CandidatePublic(BaseModel):
     resume_url: str | None = None
     active_package_id: uuid.UUID | None = None
     assigned_vacancy_id: uuid.UUID | None = None
+    current_stage_id: uuid.UUID | None = None
+    current_stage_name: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

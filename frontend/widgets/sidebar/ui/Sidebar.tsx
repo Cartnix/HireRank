@@ -9,7 +9,7 @@ import { Avatar } from "@/shared/ui/Avatar";
 import { navItems, secondaryNavItems } from "@/shared/utils/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { ChevronDown, FlaskConical, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/features/auth/useAuth";
 import {
   DropdownMenu,
@@ -49,16 +49,100 @@ export function Sidebar() {
           </div>
         </div>
 
-        {demo.message && <p role="alert" className="mx-3 text-xs text-destructive">{demo.message}</p>}
-        {demo.canDevelop && <div className="mx-3 my-3 space-y-2 rounded-lg border border-border p-3">
-          <label className="flex gap-2 text-xs"><input type="checkbox" checked={demo.enabled} disabled={!demo.devAvailable} onChange={e => { demo.setEnabled(e.target.checked); router.push("/dashboard"); }} /> Dev mode</label>
-          <p className="text-xs text-muted-foreground">{demo.enabled ? "Данные из dev БД" : "Данные из API"}</p>
-          <label className="block text-xs">Просмотр от роли<select aria-label="Просмотр от роли" className="mt-2 w-full rounded border border-input bg-background p-2" value={demo.role} onChange={e => { demo.setRole(e.target.value as Role); router.push("/dashboard"); }}>{Object.entries(label).map(([role, name]) => <option key={role} value={role}>{name}</option>)}</select></label>
-        </div>}
-        {demo.canDevelop && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/developer">DEV settings</Link>}
-        {demo.canAdminister && <label className="mx-3 my-2 flex gap-2 rounded-lg border border-border p-3 text-xs"><input type="checkbox" checked={demo.administration} onChange={e => demo.setAdministration(e.target.checked)} /> Режим администрирования</label>}
-        {demo.canAdminister && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/users">Пользователи</Link>}
-        {(demo.enabled && ["administrator", "superuser"].includes(demo.role)) && <Link className="mx-3 rounded-lg px-3 py-2 text-sm" href="/dashboard/audit">Журнал действий</Link>}
+        {(demo.canDevelop || demo.canAdminister) && (
+          <details className="group mx-3 my-2 overflow-hidden rounded-xl border border-blue-400/15 bg-blue-500/[0.04]">
+            <summary className="flex cursor-pointer list-none items-center gap-2.5 px-3 py-3 outline-none transition-colors hover:bg-blue-500/[0.06] [&::-webkit-details-marker]:hidden">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-blue-400/15 bg-blue-500/10 text-blue-300">
+                {demo.canDevelop ? <FlaskConical size={16} /> : <ShieldCheck size={16} />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-semibold text-slate-200">
+                  {demo.canDevelop ? "Панель разработчика" : "Администрирование"}
+                </span>
+                <span className="mt-0.5 block truncate text-[10px] text-slate-500">
+                  {demo.canDevelop ? "Тестовые данные и роли" : "Управление доступом"}
+                </span>
+              </span>
+              {demo.enabled && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-400">Dev</span>}
+              <ChevronDown size={14} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" />
+            </summary>
+
+            <div className="space-y-3 border-t border-white/[0.06] px-3 py-3">
+              {demo.canDevelop && (
+                <>
+                  <label className="flex cursor-pointer items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block text-xs font-medium text-slate-200">Тестовый режим</span>
+                      <span className="mt-0.5 block text-[10px] text-slate-500">
+                        {demo.enabled ? "Источник: dev база данных" : "Источник: рабочая база данных"}
+                      </span>
+                    </span>
+                    <span className="relative inline-flex shrink-0">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        aria-label="Тестовый режим"
+                        checked={demo.enabled}
+                        disabled={!demo.devAvailable}
+                        onChange={(event) => {
+                          demo.setEnabled(event.target.checked);
+                          router.push("/dashboard");
+                        }}
+                      />
+                      <span className="h-5 w-9 rounded-full bg-slate-700 transition-colors peer-checked:bg-blue-500 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-400 peer-disabled:cursor-not-allowed peer-disabled:opacity-40 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4" />
+                    </span>
+                  </label>
+
+                  <label className="block text-xs font-medium text-slate-300">
+                    Просмотр от роли
+                    <select
+                      aria-label="Просмотр от роли"
+                      className="mt-1.5 w-full rounded-lg border border-white/[0.08] bg-[#0b121e] px-2.5 py-2 text-xs text-slate-200 outline-none transition-colors focus:border-blue-400/40"
+                      value={demo.role}
+                      onChange={(event) => {
+                        demo.setRole(event.target.value as Role);
+                        router.push("/dashboard");
+                      }}
+                    >
+                      {Object.entries(label).map(([role, name]) => (
+                        <option key={role} value={role}>{name}</option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              )}
+
+              {demo.canAdminister && (
+                <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
+                  <span>
+                    <span className="block text-xs font-medium text-slate-200">Режим администрирования</span>
+                    <span className="mt-0.5 block text-[10px] text-slate-500">Разрешить действия с данными</span>
+                  </span>
+                  <span className="relative inline-flex shrink-0">
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      aria-label="Режим администрирования"
+                      checked={demo.administration}
+                      onChange={(event) => demo.setAdministration(event.target.checked)}
+                    />
+                    <span className="h-5 w-9 rounded-full bg-slate-700 transition-colors peer-checked:bg-blue-500 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-400 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4" />
+                  </span>
+                </label>
+              )}
+
+              {demo.message && <p role="alert" className="m-0 rounded-lg border border-rose-400/15 bg-rose-500/[0.06] px-2.5 py-2 text-[11px] text-rose-300">{demo.message}</p>}
+
+              {(demo.canDevelop || demo.canAdminister || (demo.enabled && ["administrator", "superuser"].includes(demo.role))) && (
+                <div className="space-y-1 border-t border-white/[0.06] pt-2">
+                  {demo.canDevelop && <Link className={`block rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-white/[0.05] ${pathname === "/dashboard/developer" ? "text-blue-300" : "text-slate-400 hover:text-slate-200"}`} href="/dashboard/developer">Настройки DEV</Link>}
+                  {demo.canAdminister && <Link className={`block rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-white/[0.05] ${pathname === "/dashboard/users" ? "text-blue-300" : "text-slate-400 hover:text-slate-200"}`} href="/dashboard/users">Пользователи</Link>}
+                  {demo.enabled && ["administrator", "superuser"].includes(demo.role) && <Link className={`block rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-white/[0.05] ${pathname === "/dashboard/audit" ? "text-blue-300" : "text-slate-400 hover:text-slate-200"}`} href="/dashboard/audit">Журнал действий</Link>}
+                </div>
+              )}
+            </div>
+          </details>
+        )}
         <div className="my-3 h-px bg-sidebar-border" />
 
         <div className="px-5 pb-1 text-[14px] font-semibold uppercase tracking-wide text-muted-foreground">

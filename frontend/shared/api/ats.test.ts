@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
-import { allPages, candidateView, assignCandidate, type CandidateDTO } from "./ats";
+import { allPages, candidateView, assignCandidate, updateCandidateStage, type CandidateDTO } from "./ats";
 import { jobFormSchema } from "@/features/create-vacancy/model/JobSchema";
 import { createVacancy, updateVacancy, deleteVacancy } from "@/entities/job/model/api";
 
@@ -53,6 +53,29 @@ test("vacancy mutations use canonical paths and only supported create fields", a
 test("failed assignment remains an error rather than a demo candidate", async () => {
   globalThis.fetch = async () => json({ detail: "Candidates can be assigned only to open vacancies" }, 409);
   await assert.rejects(assignCandidate("candidate", "vacancy"), /only to open vacancies/);
+});
+
+test("candidate stage updates target the assigned vacancy and selected pipeline stage", async () => {
+  let request: { url: string; method: string; body: unknown } | undefined;
+  globalThis.fetch = async (input, options) => {
+    request = {
+      url: String(input),
+      method: String(options?.method),
+      body: options?.body ? JSON.parse(String(options.body)) : undefined,
+    };
+    return json({
+      id: "application",
+      tenant_id: "tenant",
+      vacancy_id: "vacancy",
+      candidate_id: "candidate",
+      current_stage_id: "stage",
+      status: "active",
+    });
+  };
+  await updateCandidateStage("candidate", "vacancy", "stage");
+  assert.equal(new URL(request!.url).pathname, "/api/v1/candidates/candidate/stage");
+  assert.equal(request!.method, "PATCH");
+  assert.deepEqual(request!.body, { vacancy_id: "vacancy", stage_id: "stage" });
 });
 
 

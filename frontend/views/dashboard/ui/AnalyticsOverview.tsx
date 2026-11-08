@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  Legend,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Card } from "@/shared/ui/card";
 import { HiringVelocityCard } from "@/widgets/candidates-grow/ui/CandidateVelocityChart";
 import { HiringFunnelCard } from "@/widgets/candidate-funnel";
@@ -15,7 +8,13 @@ import { TopCandidatesCard } from "@/widgets/top-candidate";
 import { UpcomingInterviewsCard } from "@/widgets/upcoming-interviews/ui/UpcomingInterviewsCard";
 import type { DashboardAnalytics } from "@/widgets/dashboard-stats/model/analytics";
 
-const colors = ["#22d3ee", "#a78bfa", "#34d399", "#facc15", "#fb7185"];
+const colors = ["#38bdf8", "#818cf8", "#34d399", "#fbbf24", "#fb7185"];
+const funnelColors = ["bg-sky-400", "bg-indigo-400", "bg-violet-400", "bg-emerald-400"];
+const demoCandidates = [
+  { id: "demo-anna", name: "Анна Смирнова", position: "Frontend-разработчик", stage: "Интервью", rating: 4.9, grade: "Senior", skills: ["React", "TypeScript", "Next.js"] },
+  { id: "demo-mikhail", name: "Михаил Волков", position: "Backend-разработчик", stage: "Технический этап", rating: 4.8, grade: "Middle+", skills: ["Python", "FastAPI", "PostgreSQL"] },
+  { id: "demo-alina", name: "Алина Ким", position: "Product Designer", stage: "Оффер", rating: 4.7, grade: "Senior", skills: ["Figma", "Research", "Design Systems"] },
+];
 const initials = (name: string) =>
   name
     .split(" ")
@@ -27,67 +26,96 @@ const initials = (name: string) =>
 export function AnalyticsOverview({
   data,
   candidateLink,
+  demoMode = false,
 }: {
   data: DashboardAnalytics;
   candidateLink?: (id: string) => string;
+  demoMode?: boolean;
 }) {
   const max = Math.max(1, ...data.pipeline.map((stage) => stage.count));
+  const sourceTotal = data.sources.reduce((sum, source) => sum + source.count, 0);
+  const candidates = data.top_candidates.length
+    ? data.top_candidates.map((candidate) => ({
+        id: candidate.id,
+        name: candidate.name,
+        position: candidate.position,
+        stage: candidate.stage,
+        rating: candidate.rating,
+        initials: initials(candidate.name),
+        stageColorClass: "border-blue-400/20 bg-blue-500/10 text-blue-300",
+      }))
+    : demoMode
+      ? demoCandidates.map((candidate) => ({
+          ...candidate,
+          initials: initials(candidate.name),
+          isMock: true,
+          stageColorClass: "border-emerald-400/20 bg-emerald-500/10 text-emerald-300",
+        }))
+      : [];
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <HiringVelocityCard data={data.candidate_trend} />
+      <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
+        <div className="flex flex-col gap-6 lg:col-span-7">
+          <Card className="flex min-h-[340px] flex-col border-white/[0.08] bg-[#0e1726]/80 p-6 shadow-none">
+          <div className="mb-3">
+          <h3 className="m-0 text-lg font-semibold text-white">Источники кандидатов</h3>
+          <p className="mt-1 mb-0 text-sm text-slate-400">Откуда приходят лучшие специалисты</p>
+        </div>
+        {data.sources.length && sourceTotal > 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <div className="relative h-36 w-full max-w-[180px] shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={data.sources} dataKey="count" nameKey="stage" innerRadius={42} outerRadius={62} paddingAngle={3} stroke="none">
+                    {data.sources.map((source, index) => (
+                      <Cell key={source.stage} fill={colors[index % colors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: "#0b121e", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#e2e8f0" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-white">{sourceTotal}</span>
+                <span className="text-xs text-slate-400">Всего</span>
+              </div>
+            </div>
+            <div className="mt-2 w-full space-y-2">
+              {data.sources.map((source, index) => (
+                <div key={source.stage} className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
+                    <span className="truncate text-sm text-slate-300">{source.stage}</span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <span className="text-sm font-semibold text-white">{source.count}</span>
+                    <span className="w-10 text-right text-xs text-slate-500">{Math.round((source.count / sourceTotal) * 100)}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-1 items-center justify-center text-sm text-slate-500">Нет данных об источниках</div>
+        )}
+          </Card>
+          <HiringVelocityCard data={data.candidate_trend} />
+        </div>
         <HiringFunnelCard
           stages={data.pipeline.map((stage, index) => ({
             id: String(index),
             name: stage.stage,
             count: stage.count,
             percentage: (stage.count / max) * 100,
-            colorClass: "bg-cyan-main",
+            colorClass: funnelColors[index % funnelColors.length],
           }))}
         />
       </div>
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold">Источники кандидатов</h3>
-        {data.sources.length ? (
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data.sources}
-                  dataKey="count"
-                  nameKey="stage"
-                  innerRadius={50}
-                  outerRadius={85}
-                >
-                  {data.sources.map((source, index) => (
-                    <Cell
-                      key={source.stage}
-                      fill={colors[index % colors.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <p>Нет данных об источниках</p>
-        )}
-      </Card>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TopCandidatesCard
           candidateLink={candidateLink}
-          candidates={data.top_candidates.map((c) => ({
-            id: c.id,
-            name: c.name,
-            position: c.position,
-            stage: c.stage,
-            rating: c.rating,
-            initials: initials(c.name),
-            stageColorClass:
-              "bg-cyan-main/10 text-cyan-main border-cyan-main/20",
-          }))}
+          candidates={candidates}
         />
         <UpcomingInterviewsCard
           todayCount={data.todays_interviews}

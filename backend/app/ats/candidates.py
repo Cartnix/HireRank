@@ -21,6 +21,7 @@ from app.models import (
     ApplicationStatus,
     Candidate,
     CandidateStatus,
+    PipelineStage,
     User,
     UserRole,
     role_str,
@@ -30,6 +31,7 @@ from app.schemas.ats import (
     CandidatePublic,
     CreateCandidateRequest,
     Pagination,
+    UpdateApplicationStageRequest,
     UpdateQuestionnaireRequest,
 )
 
@@ -70,7 +72,14 @@ async def _ensure_unique_email(
 async def active_assigned_vacancy_id(
     session: AsyncSession, candidate_id: uuid.UUID
 ) -> uuid.UUID | None:
-    app = (
+    application = await active_application(session, candidate_id)
+    return application.vacancy_id if application else None
+
+
+async def active_application(
+    session: AsyncSession, candidate_id: uuid.UUID
+) -> Application | None:
+    return (
         await session.exec(
             select(Application)
             .where(
@@ -81,11 +90,15 @@ async def active_assigned_vacancy_id(
             .limit(1)
         )
     ).first()
-    return app.vacancy_id if app else None
 
 
 async def to_public(session: AsyncSession, candidate: Candidate) -> CandidatePublic:
-    assigned = await active_assigned_vacancy_id(session, candidate.id)
+    application = await active_application(session, candidate.id)
+    stage = (
+        await session.get(PipelineStage, application.current_stage_id)
+        if application
+        else None
+    )
     return CandidatePublic(
         id=candidate.id,
         tenant_id=candidate.tenant_id,
@@ -95,7 +108,9 @@ async def to_public(session: AsyncSession, candidate: Candidate) -> CandidatePub
         questionnaire=dict(candidate.questionnaire or {}),
         resume_url=candidate.resume_url,
         active_package_id=candidate.active_package_id,
-        assigned_vacancy_id=assigned,
+        assigned_vacancy_id=application.vacancy_id if application else None,
+        current_stage_id=application.current_stage_id if application else None,
+        current_stage_name=stage.stage_name if stage else None,
         created_at=candidate.created_at,
         updated_at=candidate.updated_at,
     )
@@ -327,6 +342,43 @@ async def assign_candidate(
     await session.commit()
     await session.refresh(candidate)
     return candidate
+
+
+async def update_candidate_stage(
+    *,
+    session: AsyncSession,
+    candidate: Candidate,
+    body: UpdateApplicationStageRequest,
+) -> Application:
+    application = (
+        await session.exec(
+            select(Application)
+            .where(
+                Application.tenant_id == candidate.tenant_id,
+                Application.candidate_id == candidate.id,
+                Application.vacancy_id == body.vacancy_id,
+                Application.status == ApplicationStatus.ACTIVE,
+            )
+            .order_by(col(Application.created_at).desc())
+            .limit(1)
+        )
+    ).first()
+    if application is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Candidate has no active application for this vacancy",
+        )
+    stage = await vacancy_svc.validate_stage_for_vacancy(
+        session=session,
+        vacancy_id=application.vacancy_id,
+        stage_id=body.stage_id,
+    )
+    application.current_stage_id = stage.id
+    application.updated_at = _now()
+    session.add(application)
+    await session.commit()
+    await session.refresh(application)
+    return application
 
 
 async def apply_to_vacancy(

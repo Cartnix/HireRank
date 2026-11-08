@@ -6,6 +6,9 @@ export interface TopCandidate {
   rating: number;
   initials: string;
   stageColorClass: string;
+  grade?: string;
+  skills?: string[];
+  isMock?: boolean;
 }
 
 export const topCandidatesMock: TopCandidate[] = [];

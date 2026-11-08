@@ -15,7 +15,7 @@ import type { Job } from "@/entities/job";
 import { useCandidatesPage } from "@/features/candidate-page";
 import { IntakeTab } from "@/features/hr-copilot/ui/tabs/IntakeTab";
 import { useAtsData } from "@/shared/api/useAtsData";
-import { assignCandidate, createCandidate, deleteCandidate, updateQuestionnaire } from "@/shared/api/ats";
+import { assignCandidate, createCandidate, deleteCandidate, updateCandidateStage, updateQuestionnaire } from "@/shared/api/ats";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
 
@@ -181,8 +181,25 @@ function LiveCandidatesPageClient({
           )}
 
           <CandidateProfile
+            key={`${selectedCandidate.id}-${selectedCandidate.current_stage_id ?? "unassigned"}`}
             candidate={selectedCandidate}
             job={selectedJob}
+            stages={selectedJob?.stages ?? []}
+            canChangeStage={can("application.assign")}
+            savingStage={saving}
+            onChangeStage={async (stageId) => {
+              if (!selectedCandidate.assigned_vacancy_id || saving) return;
+              setSaving(true);
+              setFormMessage("");
+              try {
+                await updateCandidateStage(selectedCandidate.id, selectedCandidate.assigned_vacancy_id, stageId);
+                reload();
+              } catch (e) {
+                setFormMessage(e instanceof Error ? e.message : "Не удалось изменить этап кандидата");
+              } finally {
+                setSaving(false);
+              }
+            }}
             notes={notes}
             noteDraft={noteDraft}
             setNoteDraft={setNoteDraft}

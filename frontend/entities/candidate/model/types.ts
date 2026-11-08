@@ -50,6 +50,8 @@ export interface Candidate {
   resume_url?: string | null;
   active_package_id?: string | null;
   assigned_vacancy_id?: string | null;
+  current_stage_id?: string | null;
+  current_stage_name?: string | null;
   created_at: string;
   updated_at: string;
   // Optional presentation fields used by the legacy dashboard mock. API candidates

@@ -16,6 +16,7 @@ export type DashboardStats = {
 
 export type DashboardPageViewProps = DashboardStats & {
   analytics?: DashboardAnalytics;
+  demoMode?: boolean;
   candidateLink?: (id: string) => string;
   live?: boolean; candidateLabel?: string; demoActiveJobs?: boolean; demoCandidates?: boolean;
   currentDate?: CurrentDateInfo;
@@ -29,8 +30,8 @@ export type DashboardPageViewProps = DashboardStats & {
 
 export function DashboardPageView(props: DashboardPageViewProps) {
   return (
-    <div className="px-6 md:px-10 lg:px-15 space-y-8 pb-12">
-      <SectionTitle title="Главная" subtitle="Обзор рекрутинга на сегодня" />
+    <div className="space-y-6 px-2 pb-12 md:px-4">
+      <SectionTitle title="Главная" subtitle="Обзор рекрутинга на сегодня" variant="plain" />
 
       <StatsWidgets
         activeJobsCount={props.activeJobsCount}
@@ -41,7 +42,7 @@ export function DashboardPageView(props: DashboardPageViewProps) {
         analytics={props.analytics} live={props.live} candidateLabel={props.candidateLabel} demoActiveJobs={props.demoActiveJobs} demoCandidates={props.demoCandidates}
       />
 
-      {props.analytics && <AnalyticsOverview data={props.analytics} candidateLink={props.candidateLink} />}
+      {props.analytics && <AnalyticsOverview data={props.analytics} candidateLink={props.candidateLink} demoMode={props.demoMode} />}
 
     </div>
   );

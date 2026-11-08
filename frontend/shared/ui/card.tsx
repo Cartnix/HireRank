@@ -3,6 +3,7 @@ import { cn } from "@/shared/utils/cn";
 
 interface CardProps extends React.HTMLAttributes<HTMLElement> {
   icon?: LucideIcon;
+  iconClassName?: string;
   title?: string;
   desc?: string;
   badge?: React.ReactNode; 
@@ -12,6 +13,7 @@ interface CardProps extends React.HTMLAttributes<HTMLElement> {
 
 export const Card = ({
   icon: Icon,
+  iconClassName,
   title,
   desc,
   badge,
@@ -32,7 +34,7 @@ export const Card = ({
     {(Icon || badge) && (
       <div className="flex items-center justify-between gap-4 mb-4">
         {Icon ? (
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-brand-primary/10 text-brand-primary group-hover:bg-brand-primary/20 group-hover:scale-105 transition-all duration-300">
+          <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center bg-brand-primary/10 text-brand-primary group-hover:bg-brand-primary/20 group-hover:scale-105 transition-all duration-300", iconClassName)}>
             <Icon className="w-6 h-6" strokeWidth={1.8} />
           </div>
         ) : (

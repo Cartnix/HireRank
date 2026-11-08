@@ -33,6 +33,7 @@ from app.models import (
     role_str,
 )
 from app.schemas.ats import (
+    ApplicationPublic,
     AssignCandidateRequest,
     CandidateEvaluationRequest,
     CandidateEvaluationResponse,
@@ -40,6 +41,7 @@ from app.schemas.ats import (
     CreateCandidateRequest,
     PagedCandidateResponse,
     ResumeUrlResponse,
+    UpdateApplicationStageRequest,
     UpdateQuestionnaireRequest,
 )
 from app.schemas.copilot import CopilotConfig
@@ -230,6 +232,30 @@ async def assign_candidate(
         session=session, candidate=candidate, body=body
     )
     return await candidate_svc.to_public(session, candidate)
+
+
+@router.patch(
+    "/{candidate_id}/stage",
+    response_model=ApplicationPublic,
+    dependencies=[Depends(require_permission("application.assign"))],
+)
+async def update_candidate_stage(
+    *,
+    session: SessionDep,
+    candidate_id: uuid.UUID,
+    body: UpdateApplicationStageRequest,
+) -> ApplicationPublic:
+    candidate = await candidate_svc.get_candidate(
+        session=session, candidate_id=candidate_id
+    )
+    if candidate is None:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    application = await candidate_svc.update_candidate_stage(
+        session=session,
+        candidate=candidate,
+        body=body,
+    )
+    return ApplicationPublic.model_validate(application)
 
 
 @router.get("/{candidate_id}/questionnaire")

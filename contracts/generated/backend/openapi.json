@@ -2182,6 +2182,67 @@
         }
       }
     },
+    "/api/v1/candidates/{candidate_id}/stage": {
+      "patch": {
+        "tags": [
+          "Candidates"
+        ],
+        "summary": "Update Candidate Stage",
+        "operationId": "Candidates-update_candidate_stage",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationStageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/candidates/{candidate_id}/questionnaire": {
       "get": {
         "tags": [
@@ -2771,6 +2832,55 @@
                   "additionalProperties": true,
                   "type": "object",
                   "title": "Response Developer-Developer Access"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/developer/evaluate": {
+      "post": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Evaluate Demo Candidate",
+        "operationId": "developer-evaluate_demo_candidate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoGeminiEvaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateEvaluationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -3639,6 +3749,29 @@
             ],
             "title": "Assigned Vacancy Id"
           },
+          "current_stage_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage Id"
+          },
+          "current_stage_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage Name"
+          },
           "created_at": {
             "anyOf": [
               {
@@ -4134,6 +4267,137 @@
           "prompts"
         ],
         "title": "DatasetWrite"
+      },
+      "DemoCandidateForEvaluation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenantid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Email"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Phone"
+          },
+          "experience": {
+            "type": "string",
+            "maxLength": 6000,
+            "title": "Experience"
+          },
+          "skills": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Skills"
+          },
+          "resumeText": {
+            "type": "string",
+            "maxLength": 18000,
+            "title": "Resumetext"
+          },
+          "resumeRef": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Resumeref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "name",
+          "email",
+          "phone",
+          "experience",
+          "skills",
+          "resumeText",
+          "resumeRef"
+        ],
+        "title": "DemoCandidateForEvaluation"
+      },
+      "DemoGeminiEvaluationRequest": {
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/DemoCandidateForEvaluation"
+          },
+          "vacancy": {
+            "$ref": "#/components/schemas/DemoVacancyForEvaluation"
+          },
+          "copilot": {
+            "$ref": "#/components/schemas/CopilotConfig"
+          },
+          "consent_attested": {
+            "type": "boolean",
+            "title": "Consent Attested",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "candidate",
+          "vacancy",
+          "copilot"
+        ],
+        "title": "DemoGeminiEvaluationRequest"
+      },
+      "DemoVacancyForEvaluation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenantid"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 8000,
+            "title": "Description",
+            "default": ""
+          },
+          "requirements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 40,
+            "title": "Requirements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "title"
+        ],
+        "title": "DemoVacancyForEvaluation"
       },
       "Distribution": {
         "properties": {
@@ -4911,6 +5175,27 @@
           "value"
         ],
         "title": "TrendPoint"
+      },
+      "UpdateApplicationStageRequest": {
+        "properties": {
+          "vacancy_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Vacancy Id"
+          },
+          "stage_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stage Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "vacancy_id",
+          "stage_id"
+        ],
+        "title": "UpdateApplicationStageRequest"
       },
       "UpdatePassword": {
         "properties": {

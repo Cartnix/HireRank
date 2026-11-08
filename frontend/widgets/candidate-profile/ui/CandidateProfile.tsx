@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ChevronLeft, Mail, Phone, MapPin, FileText, Paperclip } from "lucide-react";
 import { Candidate, StageBadge } from "@/entities/candidate";
 import { Job } from "@/entities/job";
+import type { Stage } from "@/entities/job";
 import { Note } from "@/entities/note";
 import { NoteComposer } from "@/features/add-candidate-note";
 import { Card } from "@/shared/ui/card";
@@ -27,6 +28,10 @@ export function CandidateProfile({
   setNoteDraft,
   addNote,
   onBack,
+  stages = [],
+  canChangeStage = false,
+  savingStage = false,
+  onChangeStage,
 }: {
   candidate: Candidate;
   job: Job | null;
@@ -35,8 +40,13 @@ export function CandidateProfile({
   setNoteDraft: (v: string) => void;
   addNote: () => void;
   onBack: () => void;
+  stages?: Stage[];
+  canChangeStage?: boolean;
+  savingStage?: boolean;
+  onChangeStage?: (stageId: string) => Promise<void>;
 }) {
   const [tab, setTab] = useState<"profile" | "history" | "files" | "notes">("profile");
+  const [selectedStageId, setSelectedStageId] = useState(candidate.current_stage_id ?? "");
   const { enabled } = useDemo();
   const q = candidate.questionnaire;
   const displayName = candidate.name ?? [q.first_name, q.surname].filter(Boolean).join(" ");
@@ -56,6 +66,39 @@ export function CandidateProfile({
             <div className="mt-2">
               <StageBadge stage={candidate.stage ?? "Новый"} />
             </div>
+            {canChangeStage && onChangeStage && stages.length > 0 && candidate.current_stage_id && (
+              <form
+                className="mt-4 w-full space-y-2 border-t border-border pt-4 text-left"
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  if (selectedStageId && selectedStageId !== candidate.current_stage_id) {
+                    await onChangeStage(selectedStageId);
+                  }
+                }}
+              >
+                <label htmlFor="candidate-stage" className="block text-xs font-medium text-foreground-secondary">
+                  Этап подбора
+                </label>
+                <select
+                  id="candidate-stage"
+                  value={selectedStageId}
+                  onChange={(event) => setSelectedStageId(event.target.value)}
+                  disabled={savingStage}
+                  className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground"
+                >
+                  {stages.map((stage) => (
+                    <option key={stage.id} value={stage.id}>{stage.stage_name}</option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={savingStage || selectedStageId === candidate.current_stage_id}
+                  className="w-full rounded-xl bg-brand-primary px-3 py-2 text-xs font-medium text-brand-primary-foreground transition-colors hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {savingStage ? "Сохраняем..." : "Сохранить этап"}
+                </button>
+              </form>
+            )}
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
               <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] uppercase tracking-wide text-muted-foreground">
                 {candidate.status === "assigned" ? "Назначен" : "Не назначен"}

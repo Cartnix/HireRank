@@ -2,9 +2,7 @@
 
 import { useId } from "react";
 import type { DashboardStats } from "@/views/dashboard";
-import { getTrendBadge } from "@/shared/ui/badges/PercentageBadge";
 import { Card } from "@/shared/ui/card";
-import { getDeltaPercent } from "@/shared/utils/percent";
 import { Briefcase, Users, CalendarDays, Clock } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
 
@@ -40,7 +38,7 @@ function MiniAreaChart({ data, strokeColor }: { data: number[]; strokeColor: str
   const gradientId = useId();
 
   return (
-    <div className="h-18 w-full mt-5 -mb-2">
+    <div className="h-14 w-full mt-4 -mb-1">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 6, right: 0, left: 0, bottom: 0 }}>
           <defs>
@@ -69,121 +67,89 @@ export function StatsWidgets({
   inProgressCandidates,
   todaysInterviewsCount,
   avgTimeToHire,
-  previousMonth,
   live = false, candidateLabel = "Всего кандидатов", demoActiveJobs = false, demoCandidates = false,
 }: StatsWidgetsProps) {
-  const activeJobsDelta = previousMonth
-    ? getDeltaPercent(activeJobsCount, previousMonth.activeJobsCount)
-    : null;
-  const candidatesDelta = previousMonth
-    ? getDeltaPercent(inProgressCandidates, previousMonth.inProgressCandidates)
-    : null;
-  const interviewsDelta = previousMonth
-    ? getDeltaPercent(
-        todaysInterviewsCount,
-        previousMonth.todaysInterviewsCount,
-      )
-    : null;
-  const timeToHireDelta = previousMonth
-    ? getDeltaPercent(avgTimeToHire, previousMonth.avgTimeToHire)
-    : null;
-
-  const activeJobsBadge =
-    activeJobsDelta !== null
-      ? getTrendBadge(
-          `${activeJobsDelta > 0 ? `+${activeJobsDelta}` : activeJobsDelta}%`,
-          activeJobsDelta >= 0,
-        )
-      : undefined;
-
-  const candidatesBadge =
-    candidatesDelta !== null
-      ? getTrendBadge(
-          `${candidatesDelta > 0 ? `+${candidatesDelta}` : candidatesDelta}%`,
-          candidatesDelta >= 0,
-        )
-      : undefined;
-
-  const interviewsBadge =
-    interviewsDelta !== null
-      ? getTrendBadge(
-          `${interviewsDelta > 0 ? `+${interviewsDelta}` : interviewsDelta}%`,
-          interviewsDelta >= 0,
-        )
-      : undefined;
-
-  const timeToHireBadge =
-    timeToHireDelta !== null
-      ? getTrendBadge(
-          `${timeToHireDelta > 0 ? `+${timeToHireDelta}` : timeToHireDelta}%`,
-          timeToHireDelta <= 0,
-        )
-      : undefined;
+  const weeklyDelta = (trend: { date: string; value: number }[]) => {
+    if (trend.length < 14) return null;
+    const previous = trend.slice(-14, -7).reduce((sum, point) => sum + point.value, 0);
+    const current = trend.slice(-7).reduce((sum, point) => sum + point.value, 0);
+    if (previous === 0) return null;
+    return Math.round(((current - previous) / previous) * 100);
+  };
+  const trendBadge = (delta: number | null, lowerIsBetter = false) => {
+    if (delta === null) {
+      return <span aria-label="Изменение за 7 дней: нет данных" className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400">N/A</span>;
+    }
+    const positive = lowerIsBetter ? delta <= 0 : delta >= 0;
+    return (
+      <span aria-label={`Изменение за 7 дней: ${delta}%`} className={`rounded-full px-2 py-0.5 text-xs font-medium ${positive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
+        {delta > 0 ? "+" : ""}{delta}%
+      </span>
+    );
+  };
+  const jobsDelta = analytics ? weeklyDelta(analytics.vacancy_trend) : null;
+  const candidatesDelta = analytics ? weeklyDelta(analytics.candidate_trend) : null;
+  const interviewsDelta = analytics ? weeklyDelta(analytics.interview_trend) : null;
+  const hireDelta = analytics ? weeklyDelta(analytics.hire_trend) : null;
+  const metric = (value: number, demoEmpty = false) =>
+    demoEmpty || value === 0 ? "N/A" : value;
 
   return (
     <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card icon={Briefcase} badge={activeJobsBadge} className="p-7 pb-4">
-        <div className="pl-2.5 space-y-1.5">
-          <div className="text-[32px] font-bold leading-none tracking-tight">
-            {demoActiveJobs ? "—" : activeJobsCount}
+      <Card icon={Briefcase} iconClassName="h-auto w-fit rounded-xl bg-blue-500/10 p-2.5 text-blue-400 group-hover:bg-blue-500/10 group-hover:scale-100" badge={trendBadge(jobsDelta)} className="bg-[#0e1726]/80 border-white/[0.08] p-5 shadow-none hover:border-white/[0.14]">
+        <div className="space-y-1.5">
+          <div className="text-3xl font-bold leading-none tracking-tight text-white">
+            {metric(activeJobsCount, demoActiveJobs)}
           </div>
-          <div className="text-sm text-foreground-secondary font-medium">
+          <div className="text-xs font-medium text-slate-400">
             Активные вакансии
           </div>
         </div>
         {analytics && <MiniAreaChart data={analytics.vacancy_trend.map(point => point.value)} strokeColor="#22d3ee" />}
-        {!live && <MiniAreaChart
-          data={getTrendData(activeJobsCount, activeJobsDelta)}
-          strokeColor="#22d3ee"
-        />}
+        {!live && <MiniAreaChart data={getTrendData(activeJobsCount, null)} strokeColor="#22d3ee" />}
       </Card>
 
-      <Card icon={Users} badge={candidatesBadge} className="p-7 pb-4">
-        <div className="pl-2.5 space-y-1.5">
-          <div className="text-[32px] font-bold leading-none tracking-tight">
-            {demoCandidates ? "—" : inProgressCandidates}
+      <Card icon={Users} iconClassName="h-auto w-fit rounded-xl bg-violet-500/10 p-2.5 text-violet-400 group-hover:bg-violet-500/10 group-hover:scale-100" badge={trendBadge(candidatesDelta)} className="bg-[#0e1726]/80 border-white/[0.08] p-5 shadow-none hover:border-white/[0.14]">
+        <div className="space-y-1.5">
+          <div className="text-3xl font-bold leading-none tracking-tight text-white">
+            {metric(inProgressCandidates, demoCandidates)}
           </div>
-          <div className="text-sm text-foreground-secondary font-medium">
+          <div className="text-xs font-medium text-slate-400">
             {candidateLabel}
           </div>
         </div>
         {analytics && <MiniAreaChart data={analytics.candidate_trend.map(point => point.value)} strokeColor="#a78bfa" />}
-        {!live && <MiniAreaChart
-          data={getTrendData(inProgressCandidates, candidatesDelta)}
-          strokeColor="#a78bfa"
-        />}
+        {!live && <MiniAreaChart data={getTrendData(inProgressCandidates, null)} strokeColor="#a78bfa" />}
       </Card>
 
-      <Card icon={CalendarDays} badge={interviewsBadge} className="p-7 pb-4">
-        <div className="pl-2.5 space-y-1.5">
-          <div className="text-[32px] font-bold leading-none tracking-tight">
-            {analytics ? analytics.todays_interviews : live ? "—" : todaysInterviewsCount}
+      <Card icon={CalendarDays} iconClassName="h-auto w-fit rounded-xl bg-amber-500/10 p-2.5 text-amber-400 group-hover:bg-amber-500/10 group-hover:scale-100" badge={trendBadge(interviewsDelta)} className="bg-[#0e1726]/80 border-white/[0.08] p-5 shadow-none hover:border-white/[0.14]">
+        <div className="space-y-1.5">
+          <div className="text-3xl font-bold leading-none tracking-tight text-white">
+            {metric(analytics ? analytics.todays_interviews : todaysInterviewsCount)}
           </div>
-          <div className="text-sm text-foreground-secondary font-medium">
+          <div className="text-xs font-medium text-slate-400">
             Назначено собеседований
           </div>
         </div>
         {analytics && <MiniAreaChart data={analytics.interview_trend.map(point => point.value)} strokeColor="#facc15" />}
-        {!live && <MiniAreaChart
-          data={getTrendData(todaysInterviewsCount, interviewsDelta)}
-          strokeColor="#facc15"
-        />}
+        {!live && <MiniAreaChart data={getTrendData(todaysInterviewsCount, null)} strokeColor="#facc15" />}
       </Card>
 
-      <Card icon={Clock} badge={timeToHireBadge} className="p-7 pb-4">
-        <div className="pl-2.5 space-y-1.5">
-          <div className="text-[32px] font-bold leading-none tracking-tight">
-            {analytics ? analytics.avg_time_to_hire === null ? "—" : `${analytics.avg_time_to_hire} дн.` : live ? "—" : `${avgTimeToHire} дн.`}
+      <Card icon={Clock} iconClassName="h-auto w-fit rounded-xl bg-emerald-500/10 p-2.5 text-emerald-400 group-hover:bg-emerald-500/10 group-hover:scale-100" badge={trendBadge(hireDelta, true)} className="bg-[#0e1726]/80 border-white/[0.08] p-5 shadow-none hover:border-white/[0.14]">
+        <div className="space-y-1.5">
+          <div className="text-3xl font-bold leading-none tracking-tight text-white">
+            {analytics
+              ? analytics.avg_time_to_hire === null || analytics.avg_time_to_hire === 0
+                ? "N/A"
+                : `${analytics.avg_time_to_hire} дн.`
+              : avgTimeToHire === 0 ? "N/A" : `${avgTimeToHire} дн.`}
           </div>
-          <div className="text-sm text-foreground-secondary font-medium">
+          <div className="text-xs font-medium text-slate-400">
             Среднее время для найма
           </div>
         </div>
         {analytics && <MiniAreaChart data={analytics.hire_trend.map(point => point.value)} strokeColor="#34d399" />}
-        {!live && <MiniAreaChart
-          data={getTrendData(avgTimeToHire, timeToHireDelta)}
-          strokeColor="#34d399"
-        />}
+        {!live && <MiniAreaChart data={getTrendData(avgTimeToHire, null)} strokeColor="#34d399" />}
       </Card>
     </div>
   );
