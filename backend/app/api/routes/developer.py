@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import UTC, datetime
 from typing import Any
@@ -42,6 +43,7 @@ router = APIRouter(
     tags=["developer"],
     dependencies=[Depends(get_current_active_superuser)],
 )
+logger = logging.getLogger(__name__)
 
 
 @router.get("/access")
@@ -427,6 +429,10 @@ async def development_analytics(
                 )
             ).first()
             if user is None:
+                logger.warning(
+                    "Development analytics role is not seeded",
+                    extra={"role": role.value},
+                )
                 raise HTTPException(
                     status_code=503, detail="Development role not seeded"
                 )
@@ -436,6 +442,10 @@ async def development_analytics(
     except HTTPException:
         raise
     except Exception as error:
+        logger.exception(
+            "Development analytics request failed",
+            extra={"role": role.value},
+        )
         raise HTTPException(
             status_code=503,
             detail="Development database unavailable; run dev bootstrap",

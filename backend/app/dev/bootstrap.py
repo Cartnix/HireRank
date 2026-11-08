@@ -73,17 +73,19 @@ async def seed(
         raise ValueError("A database session is required outside local development")
     is_separate_dev_database = session is None
     create_fixture_users = create_fixture_users or is_separate_dev_database
-    fixture = json.loads(FIXTURES.read_text())
+    fixture = json.loads(FIXTURES.read_text(encoding="utf-8"))
     async with _seed_session(session) as session:
         if is_separate_dev_database:
             await session.execute(text("SET LOCAL row_security = off"))
         else:
             await bind_demo_tenant(session)
         await session.execute(text("SELECT pg_advisory_xact_lock(5508400)"))
-        if (
-            not is_separate_dev_database
-            and await session.get(DevelopmentDataset, 1) is not None
-        ):
+        existing_dataset = (
+            await session.get(DevelopmentDataset, 1)
+            if not is_separate_dev_database
+            else None
+        )
+        if existing_dataset is not None and not create_fixture_users:
             return
         if create_fixture_users:
             await session.merge(
@@ -110,6 +112,9 @@ async def seed(
                     )
                 )
             await session.flush()
+            if existing_dataset is not None:
+                await session.commit()
+                return
             fixture_user_ids = {
                 row["role"]: (
                     uuid.UUID(row["id"])
