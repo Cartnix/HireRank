@@ -1,5 +1,4 @@
 import { useDemo } from "@/features/demo/DemoProvider";
-import { DemoBadge } from "@/shared/ui/badges/DemoBadge";
 import {
   useWatch,
   type Control,
@@ -143,9 +142,9 @@ export function NewJobFormFields({
 
           {enabled && <div>
             <label className={labelClass}>
-              <MapPin size={14} /> Формат работы <DemoBadge label="Dev mode · не сохраняется" />
+              <MapPin size={14} /> Формат работы
             </label>
-            <select className={`${fieldClass} cursor-pointer`} disabled {...register("location")}>
+            <select className={`${fieldClass} cursor-pointer`} {...register("location")}>
               <option value="">Не указан</option>
               {LOCATIONS.map((location) => (
                 <option key={location} value={location}>
@@ -157,11 +156,11 @@ export function NewJobFormFields({
 
           {enabled && <div>
             <label className={labelClass}>
-              <Briefcase size={14} /> Занятость <DemoBadge label="Dev mode · не сохраняется" />
+              <Briefcase size={14} /> Занятость
             </label>
             <select
               className={`${fieldClass} cursor-pointer`}
-              disabled {...register("employmentType")}
+              {...register("employmentType")}
             >
               <option value="">Не указана</option>
               {EMPLOYMENT_TYPES.map((type) => (
@@ -173,11 +172,11 @@ export function NewJobFormFields({
           </div>}
 
           {enabled && <div>
-            <label className={labelClass}>Опыт работы <DemoBadge label="Dev mode · не сохраняется" /></label>
+            <label className={labelClass}>Опыт работы</label>
             <input
               placeholder="Например, от 2 лет"
               className={fieldClass}
-              disabled {...register("experience")}
+              {...register("experience")}
             />
           </div>}
         </div>
@@ -277,7 +276,7 @@ export function NewJobFormFields({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {enabled && <div className="sm:col-span-2">
             <label className={labelClass}>
-              <Wallet size={14} /> Зарплатная вилка, ₸ <DemoBadge label="Dev mode · не сохраняется" />
+              <Wallet size={14} /> Зарплатная вилка, ₸
             </label>
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               <input
@@ -286,7 +285,7 @@ export function NewJobFormFields({
                 placeholder="От"
                 aria-label="Зарплата от"
                 className={fieldClass}
-                disabled {...register("salaryMin", {
+                {...register("salaryMin", {
                   setValueAs: (value) => (value === "" ? undefined : Number(value)),
                 })}
               />
@@ -297,7 +296,7 @@ export function NewJobFormFields({
                 placeholder="До"
                 aria-label="Зарплата до"
                 className={fieldClass}
-                disabled {...register("salaryMax", {
+                {...register("salaryMax", {
                   setValueAs: (value) => (value === "" ? undefined : Number(value)),
                 })}
               />
@@ -311,12 +310,12 @@ export function NewJobFormFields({
 
           {enabled && <div>
             <label className={labelClass}>
-              <User size={14} /> Ответственный рекрутер <DemoBadge label="Dev mode · не сохраняется" />
+              <User size={14} /> Ответственный рекрутер
             </label>
             <input
               placeholder="Имя рекрутера"
               className={fieldClass}
-              disabled {...register("recruiter")}
+              {...register("recruiter")}
             />
           </div>}
         </div>

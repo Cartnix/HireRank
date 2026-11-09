@@ -1091,6 +1091,8 @@ export interface components {
             resume_url?: string | null;
             /** Active Package Id */
             active_package_id?: string | null;
+            /** Active Application Id */
+            active_application_id?: string | null;
             /** Assigned Vacancy Id */
             assigned_vacancy_id?: string | null;
             /** Current Stage Id */
@@ -1413,6 +1415,15 @@ export interface components {
             reason: string;
             /** Evidence */
             evidence: string;
+        };
+        /** DeveloperCandidateStageRequest */
+        DeveloperCandidateStageRequest: {
+            /** Candidate Id */
+            candidate_id: string;
+            /** Stage Name */
+            stage_name: string;
+            /** Scheduled At */
+            scheduled_at?: string | null;
         };
         /** GenerateRequest */
         GenerateRequest: {
@@ -1757,6 +1768,8 @@ export interface components {
              * Format: uuid
              */
             stage_id: string;
+            /** Scheduled At */
+            scheduled_at?: string | null;
         };
         /** UpdatePassword */
         UpdatePassword: {
@@ -3994,6 +4007,12 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+            "/api/v1/developer/candidate-stage": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

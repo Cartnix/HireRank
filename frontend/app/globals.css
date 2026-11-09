@@ -198,11 +198,13 @@
     @apply cursor-pointer;
   }
 }
-/* Keep the pool available; inspectors stack until three readable columns fit. */
-.inspector-workspace { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr); align-items: start; gap: 1rem; min-width: 0; }
+/* Keep the candidate pool and one detail panel side by side on desktop. */
+.inspector-workspace { display: grid; grid-template-columns: minmax(280px, 0.38fr) minmax(0, 0.62fr); align-items: start; gap: 1rem; min-width: 0; }
 .inspector-dock { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; min-width: 0; }
+.inspector-workspace-empty { grid-template-columns: minmax(0, 1fr); }
+.inspector-workspace-empty .inspector-dock { display: none; }
 .detail-panel { position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: var(--card-foreground); box-shadow: 0 8px 24px #0000000a; overflow-wrap: anywhere; scroll-margin-top: 1rem; }
 .panel-resizer { display: none; }
-@media (min-width: 1800px) { .inspector-workspace { grid-template-columns: minmax(280px, 1fr) minmax(0, 4fr); } .inspector-dock { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; } }
+@media (min-width: 1800px) { .inspector-workspace { grid-template-columns: minmax(320px, 0.38fr) minmax(0, 0.62fr); } }
 @media (max-width: 1023px) { .inspector-workspace { grid-template-columns: minmax(0, 1fr); } }
 button:focus-visible, a:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }

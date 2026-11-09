@@ -32,6 +32,8 @@ export function CandidateProfile({
   canChangeStage = false,
   savingStage = false,
   onChangeStage,
+  drawerMode = false,
+  showAiMatch = true,
 }: {
   candidate: Candidate;
   job: Job | null;
@@ -43,21 +45,28 @@ export function CandidateProfile({
   stages?: Stage[];
   canChangeStage?: boolean;
   savingStage?: boolean;
-  onChangeStage?: (stageId: string) => Promise<void>;
+  onChangeStage?: (stageId: string, scheduledAt?: string) => Promise<void>;
+  drawerMode?: boolean;
+  showAiMatch?: boolean;
 }) {
   const [tab, setTab] = useState<"profile" | "history" | "files" | "notes">("profile");
   const [selectedStageId, setSelectedStageId] = useState(candidate.current_stage_id ?? "");
+  const [interviewAt, setInterviewAt] = useState("");
   const { enabled } = useDemo();
   const q = candidate.questionnaire;
   const displayName = candidate.name ?? [q.first_name, q.surname].filter(Boolean).join(" ");
+  const selectedStage = stages.find((stage) => stage.id === selectedStageId);
+  const requiresInterviewDate = /интервью|собесед/i.test(selectedStage?.stage_name ?? "");
 
   return (
     <div>
-      <button onClick={onBack} className="mb-5 flex items-center gap-1 text-[13px] font-medium text-foreground-secondary hover:text-foreground">
-        <ChevronLeft size={15} /> Все кандидаты
-      </button>
+      {!drawerMode && (
+        <button onClick={onBack} className="mb-5 flex items-center gap-1 text-[13px] font-medium text-foreground-secondary hover:text-foreground">
+          <ChevronLeft size={15} /> Все кандидаты
+        </button>
+      )}
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+      <div className={`grid grid-cols-1 gap-5 ${drawerMode ? "" : "xl:grid-cols-3"}`}>
         <Card className="h-fit p-6">
           <div className="mb-4 flex flex-col items-center text-center">
             <Avatar name={displayName} size={64} />
@@ -72,7 +81,12 @@ export function CandidateProfile({
                 onSubmit={async (event) => {
                   event.preventDefault();
                   if (selectedStageId && selectedStageId !== candidate.current_stage_id) {
-                    await onChangeStage(selectedStageId);
+                    await onChangeStage(
+                      selectedStageId,
+                      requiresInterviewDate && interviewAt
+                        ? new Date(interviewAt).toISOString()
+                        : undefined,
+                    );
                   }
                 }}
               >
@@ -82,7 +96,10 @@ export function CandidateProfile({
                 <select
                   id="candidate-stage"
                   value={selectedStageId}
-                  onChange={(event) => setSelectedStageId(event.target.value)}
+                  onChange={(event) => {
+                    setSelectedStageId(event.target.value);
+                    setInterviewAt("");
+                  }}
                   disabled={savingStage}
                   className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground"
                 >
@@ -90,9 +107,22 @@ export function CandidateProfile({
                     <option key={stage.id} value={stage.id}>{stage.stage_name}</option>
                   ))}
                 </select>
+                {requiresInterviewDate && (
+                  <label className="block text-xs font-medium text-foreground-secondary">
+                    Дата и время собеседования
+                    <input
+                      type="datetime-local"
+                      required
+                      value={interviewAt}
+                      onChange={(event) => setInterviewAt(event.target.value)}
+                      disabled={savingStage}
+                      className="mt-2 h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground"
+                    />
+                  </label>
+                )}
                 <button
                   type="submit"
-                  disabled={savingStage || selectedStageId === candidate.current_stage_id}
+                  disabled={savingStage || selectedStageId === candidate.current_stage_id || (requiresInterviewDate && !interviewAt)}
                   className="w-full rounded-xl bg-brand-primary px-3 py-2 text-xs font-medium text-brand-primary-foreground transition-colors hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {savingStage ? "Сохраняем..." : "Сохранить этап"}
@@ -135,7 +165,7 @@ export function CandidateProfile({
           </div>
         </Card>
 
-        <div className="min-w-0 xl:col-span-2">
+        <div className={`min-w-0 ${drawerMode ? "" : "xl:col-span-2"}`}>
           <div className="mb-4 inline-flex rounded-[10px] border border-border bg-background p-1">
             {tabs.filter(item => enabled || item.key === "profile").map((item) => {
               const active = tab === item.key;
@@ -189,7 +219,7 @@ export function CandidateProfile({
               </div>
 
               <div className="mt-5 space-y-3 border-t border-border pt-4 text-sm"><h3 className="font-semibold">Опыт</h3><p className="whitespace-pre-wrap">{String((q as unknown as Record<string, unknown>).experience ?? "Не указан")}</p><h3 className="font-semibold">Резюме</h3><p className="whitespace-pre-wrap break-words">{String((q as unknown as Record<string, unknown>).resume_text ?? "Не добавлено")}</p></div>
-              {enabled && <div className="mt-5 rounded-[10px] border border-border bg-muted/30 p-4">
+              {enabled && showAiMatch && <div className="mt-5 rounded-[10px] border border-border bg-muted/30 p-4">
                 <DemoBadge />
                 <div className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">AI Match по вакансиям</div>
                 {candidate.ai_rankings && candidate.ai_rankings.length > 0 ? (

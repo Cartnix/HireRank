@@ -24,6 +24,14 @@ from app.models import (
 )
 
 DOMAIN = (Vacancy, PipelineStage, Candidate, Application, Interview, Scorecard)
+DEV_PIPELINE_STAGES = (
+    "Новые",
+    "Скрининг",
+    "Рассмотрение",
+    "Собеседование",
+    "Оффер",
+    "Принят",
+)
 
 
 async def clear_domain(session: AsyncSession) -> None:
@@ -64,7 +72,7 @@ async def generate(
     ).first()
     batch = uuid.uuid4().hex[:12]
     jobs = []
-    stages = []
+    stages_by_job: dict[uuid.UUID, list[PipelineStage]] = {}
     for index in range(vacancies):
         template = fixture["vacancies"][index % len(fixture["vacancies"])]
         job = Vacancy(
@@ -82,14 +90,16 @@ async def generate(
     if clear and jobs:
         aliases[str(jobs[0].id)] = "v-design"
     for job in jobs:
-        stage = PipelineStage(
-            tenant_id=TENANT_ID,
-            vacancy_id=job.id,
-            stage_name="Рассмотрение",
-            sort_order=0,
-        )
-        session.add(stage)
-        stages.append(stage)
+        stages_by_job[job.id] = []
+        for order, stage_name in enumerate(DEV_PIPELINE_STAGES):
+            stage = PipelineStage(
+                tenant_id=TENANT_ID,
+                vacancy_id=job.id,
+                stage_name=stage_name,
+                sort_order=order,
+            )
+            session.add(stage)
+            stages_by_job[job.id].append(stage)
     await session.flush()
     for index in range(candidates):
         template = fixture["candidates"][index % len(fixture["candidates"])]
@@ -123,7 +133,7 @@ async def generate(
             tenant_id=TENANT_ID,
             vacancy_id=job.id,
             candidate_id=candidate.id,
-            current_stage_id=stages[index % len(jobs)].id,
+            current_stage_id=stages_by_job[job.id][0].id,
         )
         session.add(application)
         await session.flush()
@@ -305,14 +315,15 @@ async def save_dataset(session: AsyncSession, data: dict) -> None:
                 current.stage_name = stage["stage_name"]
             session.add(current)
         if not existing_stages and not item.get("stages"):
-            session.add(
-                PipelineStage(
-                    tenant_id=TENANT_ID,
-                    vacancy_id=row.id,
-                    stage_name="Рассмотрение",
-                    sort_order=0,
+            for order, stage_name in enumerate(DEV_PIPELINE_STAGES):
+                session.add(
+                    PipelineStage(
+                        tenant_id=TENANT_ID,
+                        vacancy_id=row.id,
+                        stage_name=stage_name,
+                        sort_order=order,
+                    )
                 )
-            )
     await session.flush()
     for item in data["candidates"]:
         row = candidate_keys.get(item["id"])
@@ -341,7 +352,11 @@ async def save_dataset(session: AsyncSession, data: dict) -> None:
                 await session.execute(
                     delete(Application).where(Application.id == application.id)
                 )
-        if wanted and not any(a.vacancy_id == wanted.id for a in applications):
+        application = next(
+            (a for a in applications if wanted and a.vacancy_id == wanted.id),
+            None,
+        )
+        if wanted and application is None:
             stage = (
                 await session.exec(
                     select(PipelineStage)
@@ -349,14 +364,19 @@ async def save_dataset(session: AsyncSession, data: dict) -> None:
                     .order_by(PipelineStage.sort_order)
                 )
             ).first()
-            session.add(
-                Application(
-                    tenant_id=TENANT_ID,
-                    candidate_id=row.id,
-                    vacancy_id=wanted.id,
-                    current_stage_id=stage.id,
-                )
+            application = Application(
+                tenant_id=TENANT_ID,
+                candidate_id=row.id,
+                vacancy_id=wanted.id,
+                current_stage_id=stage.id,
             )
+            session.add(application)
+        if wanted and application and item.get("stageId"):
+            stage = await session.get(PipelineStage, uuid.UUID(item["stageId"]))
+            if stage is None or stage.vacancy_id != wanted.id:
+                raise ValueError("Этап кандидата не принадлежит выбранной вакансии")
+            application.current_stage_id = stage.id
+            session.add(application)
     # Keep actor identities referenced by ATS records; refuse dangling user deletion.
     incoming_users = {uuid.UUID(u["id"]) for u in data["users"]}
     for row in users:

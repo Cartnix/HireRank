@@ -54,12 +54,13 @@ export function toDashboardCandidate(
       ? candidate.resumeRef
       : null,
     assigned_vacancy_id: candidate.vacancyId,
+    jobId: vacancy?.id ?? candidate.vacancyId ?? undefined,
     created_at: candidate.createdAt,
     updated_at: candidate.createdAt,
     name: candidate.name,
     phone: candidate.phone,
     skills: candidate.skills.split(/[,;]+/).map((skill) => skill.trim()).filter(Boolean),
-    stage: candidateStages[candidate.status],
+    stage: candidate.pipelineStage ?? candidate.stage ?? candidateStages[candidate.status],
     resumeFileName: candidate.resumeRef,
     location: candidate.location,
   };

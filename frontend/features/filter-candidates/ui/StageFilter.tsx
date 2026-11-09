@@ -1,23 +1,18 @@
 import { Filter } from "lucide-react";
-import type { CandidateStatus } from "@/entities/candidate";
 
 export function StageFilter({
   value,
   onChange,
+  stages,
 }: {
-  value: CandidateStatus | "Все";
+  value: string;
   onChange: (v: string | "Все") => void;
+  stages: string[];
 }) {
-  const stages: { value: CandidateStatus | "Все"; label: string }[] = [
-    { value: "Все", label: "Все" },
-    { value: "unassigned", label: "Без назначения" },
-    { value: "assigned", label: "В работе" },
-  ];
-
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto">
       <Filter size={14} className="mr-0.5 shrink-0 text-muted-foreground" />
-      {stages.map(({ value: stage, label }) => (
+      {["Все", ...stages].map((stage) => (
         <button
           key={stage}
           onClick={() => onChange(stage)}
@@ -27,7 +22,7 @@ export function StageFilter({
               : "bg-muted text-muted-foreground hover:text-foreground"
           }`}
         >
-          {label}
+          {stage}
         </button>
       ))}
     </div>

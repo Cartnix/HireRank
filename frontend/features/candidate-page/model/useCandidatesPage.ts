@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Candidate, CandidateStatus } from "@/entities/candidate";
+import { Candidate } from "@/entities/candidate";
 import { Job } from "@/entities/job";
 import { Note } from "@/entities/note";
 
@@ -17,13 +17,29 @@ export function useCandidatesPage(
 ) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilterState] = useState<CandidateStatus | "Все">(
-    "Все",
-  );
+  const [stageFilter, setStageFilterState] = useState("Все");
 
   const setStageFilter = (v: string) => {
-    setStageFilterState(v as CandidateStatus | "Все");
+    setStageFilterState(v);
   };
+
+  const stageOptions = useMemo(() => {
+    const stages = new Set(
+      Object.values(jobById).flatMap((job) =>
+        (job.stages ?? []).map((stage) => stage.stage_name),
+      ),
+    );
+    if (candidates.some((candidate) => !candidate.assigned_vacancy_id))
+      stages.add("Без назначения");
+    if (
+      candidates.some(
+        (candidate) =>
+          candidate.assigned_vacancy_id && !candidate.current_stage_name,
+      )
+    )
+      stages.add("Без этапа");
+    return [...stages].sort((a, b) => a.localeCompare(b, "ru"));
+  }, [candidates, jobById]);
 
   const selectedId = initialSelectedCandidateId;
   const [noteDraft, setNoteDraft] = useState("");
@@ -34,7 +50,10 @@ export function useCandidatesPage(
   const filteredCandidates = useMemo(() => {
     return candidates.filter(
       (c) =>
-        (stageFilter === "Все" || c.status === stageFilter) &&
+        (stageFilter === "Все" ||
+          (c.assigned_vacancy_id
+            ? c.current_stage_name || "Без этапа"
+            : "Без назначения") === stageFilter) &&
         getCandidateFullName(c).toLowerCase().includes(search.toLowerCase()),
     );
   }, [candidates, search, stageFilter]);
@@ -78,6 +97,7 @@ export function useCandidatesPage(
     setSearch,
     stageFilter,
     setStageFilter,
+    stageOptions,
     filteredCandidates,
     openCandidate,
     selectedCandidate,

@@ -49,6 +49,7 @@ export interface Candidate {
   questionnaire: Questionnaire;
   resume_url?: string | null;
   active_package_id?: string | null;
+  active_application_id?: string | null;
   assigned_vacancy_id?: string | null;
   current_stage_id?: string | null;
   current_stage_name?: string | null;

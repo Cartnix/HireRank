@@ -21,6 +21,7 @@ from app.models import (
     ApplicationStatus,
     Candidate,
     CandidateStatus,
+    Interview,
     PipelineStage,
     User,
     UserRole,
@@ -108,6 +109,7 @@ async def to_public(session: AsyncSession, candidate: Candidate) -> CandidatePub
         questionnaire=dict(candidate.questionnaire or {}),
         resume_url=candidate.resume_url,
         active_package_id=candidate.active_package_id,
+        active_application_id=application.id if application else None,
         assigned_vacancy_id=application.vacancy_id if application else None,
         current_stage_id=application.current_stage_id if application else None,
         current_stage_name=stage.stage_name if stage else None,
@@ -349,6 +351,7 @@ async def update_candidate_stage(
     session: AsyncSession,
     candidate: Candidate,
     body: UpdateApplicationStageRequest,
+    interviewer_id: uuid.UUID,
 ) -> Application:
     application = (
         await session.exec(
@@ -373,6 +376,34 @@ async def update_candidate_stage(
         vacancy_id=application.vacancy_id,
         stage_id=body.stage_id,
     )
+    is_interview_stage = any(
+        keyword in stage.stage_name.casefold()
+        for keyword in ("интервью", "собесед")
+    )
+    if is_interview_stage:
+        if body.scheduled_at is None or body.scheduled_at.tzinfo is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Укажите дату и время собеседования",
+            )
+        if body.scheduled_at <= datetime.now(UTC):
+            raise HTTPException(
+                status_code=422,
+                detail="Дата собеседования должна быть в будущем",
+            )
+        session.add(
+            Interview(
+                tenant_id=candidate.tenant_id,
+                application_id=application.id,
+                interviewer_id=interviewer_id,
+                scheduled_at=body.scheduled_at,
+            )
+        )
+    elif body.scheduled_at is not None:
+        raise HTTPException(
+            status_code=422,
+            detail="Дату можно указать только для этапа собеседования",
+        )
     application.current_stage_id = stage.id
     application.updated_at = _now()
     session.add(application)

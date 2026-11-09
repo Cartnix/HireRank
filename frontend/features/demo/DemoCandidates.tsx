@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useState, useRef, useEffect, type FormEvent } from "react";
 import { candidateContext } from "@/features/hr-copilot/model/candidateContext";
-import { DetailPanel } from "@/shared/ui/DetailPanel";
 import { Avatar } from "@/shared/ui/Avatar";
 import { Sparkles } from "lucide-react";
 import { apiFetch } from "@/shared/api/client";
@@ -18,7 +17,6 @@ import {
 import { IntakeTab } from "@/features/hr-copilot/ui/tabs/IntakeTab";
 import {
   actionLabel,
-  statusLabel,
   inputClass,
   primary,
   secondary,
@@ -28,6 +26,7 @@ import type {
   Action,
   Candidate,
   Evaluation,
+  Vacancy,
 } from "@/features/hr-copilot/model/types";
 import { EvaluationSchema } from "@/features/hr-copilot/model/types";
 
@@ -48,10 +47,46 @@ export function demoScore(candidate: Candidate, description: string) {
       )
     : 0;
 }
+
+const LEGACY_PIPELINE_STAGES = [
+  "Новые",
+  "Скрининг",
+  "Рассмотрение",
+  "Собеседование",
+  "Оффер",
+  "Принят",
+];
+
+function stagesForVacancy(vacancy?: Vacancy) {
+  const stages = [...(vacancy?.stages ?? [])].sort(
+    (a, b) => a.sort_order - b.sort_order,
+  );
+  if (
+    !vacancy ||
+    stages.length !== 1 ||
+    stages[0].stage_name !== "Рассмотрение"
+  )
+    return stages;
+
+  return LEGACY_PIPELINE_STAGES.map((stage_name, sort_order) =>
+    stage_name === stages[0].stage_name
+      ? { ...stages[0], sort_order }
+      : {
+          id: `${vacancy.id}-legacy-stage-${sort_order}`,
+          stage_name,
+          sort_order,
+        },
+  );
+}
+
 export function DemoCandidates({ initialId }: { initialId?: string | null }) {
-  const { state, role, update, message, canMutate, pending } = useDemo();
+  const { state, role, update, message, canMutate, pending, reload } = useDemo();
   const [vacancyOpen, setVacancyOpen] = useState(true);
-  const setVacancyId = (id: string | null) => setVacancyOpen(!!id);
+  const [detailTab, setDetailTab] = useState<"profile" | "copilot" | "vacancy">("profile");
+  const setVacancyId = (id: string | null) => {
+    setVacancyOpen(!!id);
+    if (id) setDetailTab("vacancy");
+  };
   const [search, setSearch] = useState("");
   const [skill, setSkill] = useState("");
   const [stage, setStage] = useState("");
@@ -75,11 +110,33 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
   const [geminiConsentCandidate, setGeminiConsentCandidate] = useState<string | null>(null);
   const [geminiPending, setGeminiPending] = useState(false);
   const [geminiError, setGeminiError] = useState("");
+  const [stageDraft, setStageDraft] = useState<{ candidateId: string; stageId: string } | null>(null);
+  const [interviewAt, setInterviewAt] = useState("");
+  const [stageSaving, setStageSaving] = useState(false);
+  const [stageError, setStageError] = useState("");
   const full =
     canMutate &&
     (role === "hr" || role === "administrator" || role === "superuser");
   const vacancies = state.vacancies.filter((v) => v.tenantId === DEMO_TENANT);
   const visible = state.candidates.filter((c) => canReadDemoCandidate(role, c));
+  const candidateStageName = (c: Candidate) => {
+    const assignedVacancy = vacancies.find((vacancy) => vacancy.id === c.vacancyId);
+    const stages = stagesForVacancy(assignedVacancy);
+    return (
+      c.pipelineStage ??
+      stages.find((item) => item.id === c.stageId)?.stage_name ??
+      stages.find((item) => item.stage_name === c.stage)?.stage_name ??
+      (assignedVacancy ? "Без этапа" : "Без назначения")
+    );
+  };
+  const stageOptions = [
+    ...new Set([
+      ...vacancies.flatMap((vacancy) =>
+        stagesForVacancy(vacancy).map((item) => item.stage_name),
+      ),
+      ...visible.map(candidateStageName),
+    ]),
+  ].sort((a, b) => a.localeCompare(b, "ru"));
   const skills = [
     ...new Set(
       visible.flatMap((c) =>
@@ -109,7 +166,7 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
           c.skills
             .split(/[,;]/)
             .some((s) => s.trim().toLowerCase() === skill.toLowerCase())) &&
-        (!stage || c.status === stage) &&
+        (!stage || candidateStageName(c) === stage) &&
         (!vacancyFilter ||
           c.vacancyId === vacancyFilter ||
           c.requestedVacancyId === vacancyFilter),
@@ -129,6 +186,25 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
   const copilotCandidate = copilotOpen ? candidate : undefined;
   const evaluation = copilotOpen ? context.evaluation : undefined;
   const vacancyId = vacancyOpen ? context.vacancy?.id : null;
+  const pipelineStages = stagesForVacancy(context.vacancy);
+  const currentPipelineStage =
+    pipelineStages.find((item) => item.id === candidate?.stageId) ??
+    pipelineStages.find((item) => item.stage_name === candidate?.stage) ??
+    pipelineStages.find((item) => item.stage_name === "Рассмотрение") ??
+    pipelineStages[0];
+  const selectedStageId =
+    stageDraft?.candidateId === candidate?.id
+      ? stageDraft?.stageId ?? currentPipelineStage?.id ?? ""
+      : currentPipelineStage?.id ?? "";
+  const selectedPipelineStage = pipelineStages.find(
+    (item) => item.id === selectedStageId,
+  );
+  const needsInterviewDate = /интервью|собесед/i.test(
+    selectedPipelineStage?.stage_name ?? "",
+  );
+  const forwardStages = pipelineStages.filter(
+    (item) => item.sort_order >= (currentPipelineStage?.sort_order ?? 0),
+  );
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const values = new FormData(event.currentTarget);
@@ -186,6 +262,7 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
   function openCopilot(c: Candidate) {
     if (!full) return;
     setSelected(c.id);
+    setDetailTab("copilot");
     setCopilotOpen(true);
     setVacancyOpen(true);
     setReason("");
@@ -461,10 +538,8 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                 className={`${inputClass} mt-2`}
               >
                 <option value="">Все этапы</option>
-                {Object.entries(statusLabel).map(([id, name]) => (
-                  <option key={id} value={id}>
-                    {name}
-                  </option>
+                {stageOptions.map((name) => (
+                  <option key={name} value={name}>{name}</option>
                 ))}
               </select>
             </label>
@@ -514,12 +589,12 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
               </span>
             </div>
           </section>
-          <div className="inspector-workspace">
+          <div className={`inspector-workspace ${candidate ? "" : "inspector-workspace-empty"}`}>
             <section
               aria-label="Пул кандидатов"
-              className="w-full min-w-0 overflow-hidden rounded-xl border border-border bg-card"
+              className="max-h-[calc(100vh-280px)] min-h-64 w-full min-w-0 overflow-y-auto rounded-xl border border-border bg-card"
             >
-              <div className="flex items-center justify-between border-b border-border px-4 py-3 text-xs text-muted-foreground">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-4 py-3 text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">Пул кандидатов</span>
                 <span>{filtered.length} из {visible.length}</span>
               </div>
@@ -529,9 +604,11 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                   .map((item) => item.trim())
                   .filter(Boolean)
                   .slice(0, 3);
-                const vacancyTitle = vacancies.find(
+                const assignedVacancy = vacancies.find(
                   (item) => item.id === (c.vacancyId || c.requestedVacancyId),
-                )?.title;
+                );
+                const vacancyTitle = assignedVacancy?.title;
+                const currentStageName = candidateStageName(c);
                 return (
                   <button
                     key={c.id}
@@ -543,6 +620,7 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                         setSelected(c.id);
                         setVacancyOpen(true);
                       }
+                      setDetailTab("profile");
                       setReason("");
                       setEditId(null);
                       setIntakeOpen(false);
@@ -557,7 +635,7 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                         </span>
                       </span>
                       <span className="mt-1 block truncate text-xs text-muted-foreground">
-                        {vacancyTitle || "Без назначения"} · {statusLabel[c.status]}
+                        {vacancyTitle || "Без назначения"} · {currentStageName}
                       </span>
                       {topSkills.length > 0 && (
                         <span className="mt-2 flex flex-wrap gap-1.5">
@@ -585,39 +663,41 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
             <div className="inspector-dock" aria-live="polite">
               {candidate && (
                 <nav
-                  aria-label="Карточки выбранного кандидата"
-                  className="sticky top-2 z-10 col-span-full flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3 text-xs shadow-sm"
+                  aria-label="Разделы карточки кандидата"
+                  className="flex flex-wrap items-center gap-1 rounded-xl border border-border bg-card p-2 text-xs shadow-sm"
                 >
-                  <strong>{candidate.name}</strong>
-                  <a href="#candidate-profile" className="text-brand-primary">
-                    Анкета
-                  </a>
-                  {full && (
-                    <a
-                      href="#candidate-copilot"
-                      onClick={() => setCopilotOpen(true)}
-                      className="text-brand-primary"
+                  <strong className="mr-auto px-2 text-foreground">{candidate.name}</strong>
+                  {([
+                    ["profile", "Анкета"],
+                    ...(full ? [["copilot", "HR Copilot / AI-анализ"] as const] : []),
+                    ...(context.vacancy ? [["vacancy", "Вакансия"] as const] : []),
+                  ] as const).map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      aria-pressed={detailTab === key}
+                      onClick={() => {
+                        setDetailTab(key);
+                        if (key === "copilot") setCopilotOpen(true);
+                        if (key === "vacancy") setVacancyOpen(true);
+                      }}
+                      className={`rounded-lg px-3 py-2 font-medium transition-colors ${
+                        detailTab === key
+                          ? "bg-brand-primary text-brand-primary-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
                     >
-                      HR Copilot
-                    </a>
-                  )}
-                  {context.vacancy && (
-                    <a
-                      href="#candidate-vacancy"
-                      onClick={() => setVacancyOpen(true)}
-                      className="text-brand-primary"
-                    >
-                      Вакансия
-                    </a>
-                  )}
+                      {label}
+                    </button>
+                  ))}
                 </nav>
               )}
-              {candidate && (
-                <DetailPanel
+              {candidate && detailTab === "profile" && (
+                <section
                   id="candidate-profile"
                   key={candidate.id}
-                  title="Анкета кандидата"
-                  onClose={() => setSelected(null)}
+                  aria-label="Анкета кандидата"
+                  className="min-w-0 overflow-hidden rounded-xl border border-border bg-card p-5"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar name={candidate.name} size={40} />
@@ -698,6 +778,7 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                             const vacancy = next.vacancies.find(
                               (v) => v.id === c.vacancyId && v.open,
                             );
+                            c.stageId = stagesForVacancy(vacancy)[0]?.id;
                             if (vacancy) evaluate(next, c, vacancy, role);
                             next.audit.unshift({
                               id: crypto.randomUUID(),
@@ -721,6 +802,103 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                           ))}
                       </select>
                     </label>
+                  )}
+                  {full && candidate.vacancyId && pipelineStages.length > 0 && (
+                    <form
+                      className="mt-5 space-y-3 border-t border-border pt-4"
+                      onSubmit={async (event) => {
+                        event.preventDefault();
+                        const nextStage = forwardStages.find(
+                          (item) => item.id === selectedStageId,
+                        );
+                        if (
+                          !nextStage ||
+                          nextStage.sort_order <=
+                            (currentPipelineStage?.sort_order ?? 0)
+                        )
+                          return;
+                        if (needsInterviewDate && !interviewAt) return;
+                        setStageSaving(true);
+                        setStageError("");
+                        try {
+                          await apiFetch("/developer/candidate-stage", {
+                            method: "POST",
+                            json: {
+                              candidate_id: candidate.id,
+                              stage_name: nextStage.stage_name,
+                              scheduled_at: needsInterviewDate
+                                ? new Date(interviewAt).toISOString()
+                                : null,
+                            },
+                          });
+                          await reload();
+                          setStageDraft(null);
+                          setInterviewAt("");
+                        } catch (error) {
+                          setStageError(
+                            error instanceof Error
+                              ? error.message
+                              : "Не удалось изменить этап кандидата",
+                          );
+                        } finally {
+                          setStageSaving(false);
+                        }
+                      }}
+                    >
+                      <label className="block text-xs">
+                        Этап пайплайна
+                        <select
+                          className={`${inputClass} mt-2`}
+                          value={selectedStageId}
+                          onChange={(event) =>
+                            {
+                              setStageDraft({
+                                candidateId: candidate.id,
+                                stageId: event.target.value,
+                              });
+                              setInterviewAt("");
+                            }
+                          }
+                        >
+                          {forwardStages.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.stage_name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {needsInterviewDate && (
+                        <label className="block text-xs">
+                          Дата и время собеседования
+                          <input
+                            type="datetime-local"
+                            required
+                            value={interviewAt}
+                            onChange={(event) =>
+                              setInterviewAt(event.target.value)
+                            }
+                            className={`${inputClass} mt-2`}
+                          />
+                        </label>
+                      )}
+                      {stageError && (
+                        <p role="alert" className="text-xs text-destructive">
+                          {stageError}
+                        </p>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={
+                          pending ||
+                          stageSaving ||
+                          selectedStageId === currentPipelineStage?.id ||
+                          (needsInterviewDate && !interviewAt)
+                        }
+                        className={`${primary} w-full disabled:opacity-50`}
+                      >
+                        {pending || stageSaving ? "Сохраняем..." : "Продвинуть кандидата"}
+                      </button>
+                    </form>
                   )}
                   {role === "manager" && (
                     <form
@@ -833,14 +1011,14 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                         Удалить кандидата
                       </button>
                     )}
-                </DetailPanel>
+                </section>
               )}
-              {full && copilotCandidate && evaluation && (
-                <DetailPanel
+              {full && copilotCandidate && evaluation && detailTab === "copilot" && (
+                <section
                   id="candidate-copilot"
                   key={`copilot-${copilotCandidate.id}-${evaluation.id}`}
-                  title="HR Copilot"
-                  onClose={() => setCopilotOpen(false)}
+                  aria-label="HR Copilot"
+                  className="min-w-0 overflow-hidden rounded-xl border border-border bg-card p-5"
                 >
                   <div className="flex items-center gap-3">
                     <Link
@@ -1025,14 +1203,14 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                       Решение подтверждает HR.
                     </p>
                   )}
-                </DetailPanel>
+                </section>
               )}
-              {full && copilotCandidate && !evaluation && (
-                <DetailPanel
+              {full && copilotCandidate && !evaluation && detailTab === "copilot" && (
+                <section
                   id="candidate-copilot"
                   key={`empty-${copilotCandidate.id}`}
-                  title="HR Copilot"
-                  onClose={() => setCopilotOpen(false)}
+                  aria-label="HR Copilot"
+                  className="min-w-0 overflow-hidden rounded-xl border border-border bg-card p-5"
                 >
                   <p className="text-sm font-semibold">
                     {copilotCandidate.name}
@@ -1052,14 +1230,14 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                   >
                     Настройки Copilot
                   </Link>
-                </DetailPanel>
+                </section>
               )}
-              {vacancyId && (
-                <DetailPanel
+              {vacancyId && detailTab === "vacancy" && (
+                <section
                   id="candidate-vacancy"
                   key={vacancyId}
-                  title="Вакансия"
-                  onClose={() => setVacancyId(null)}
+                  aria-label="Вакансия кандидата"
+                  className="min-w-0 overflow-hidden rounded-xl border border-border bg-card p-5"
                 >
                   {(() => {
                     const vacancy = vacancies.find((v) => v.id === vacancyId);
@@ -1097,7 +1275,7 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                       <p>Вакансия недоступна.</p>
                     );
                   })()}
-                </DetailPanel>
+                </section>
               )}
             </div>
           </div>

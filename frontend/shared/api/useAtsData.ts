@@ -6,7 +6,13 @@ import type { Candidate } from "@/entities/candidate/model/types";
 import type { Job } from "@/entities/job/model/types";
 import { candidateDetail, listCandidateViews, listVacancyViews, vacancyDetail } from "./ats";
 
-export function useAtsData(candidateId?: string | null, vacancyId?: string | null) {
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function useAtsData(
+  candidateId?: string | null,
+  vacancyId?: string | null,
+  enabled = true,
+) {
   const { user, isLoading: sessionLoading } = useAuthSession();
   const demo = useOptionalDemo();
   const role = demo?.role ?? user?.role;
@@ -20,7 +26,7 @@ export function useAtsData(candidateId?: string | null, vacancyId?: string | nul
   const reload = useCallback(() => setVersion(v => v + 1), []);
   const can = useCallback((permission: string) => (role === "superuser" || (permissions?.includes(permission) ?? false)) && (permission.endsWith(".read") || canMutate), [role, permissions, canMutate]);
   useEffect(() => {
-    if (sessionLoading) return;
+    if (sessionLoading || !enabled) return;
     let cancelled = false;
     async function load() {
       setLoading(true); setError("");
@@ -29,7 +35,7 @@ export function useAtsData(candidateId?: string | null, vacancyId?: string | nul
         const [candidates, jobs, candidate, vacancy] = await Promise.all([
           permissions?.includes("candidate.read") ? listCandidateViews() : Promise.resolve([]),
           listVacancyViews(),
-          candidateId ? candidateDetail(candidateId) : Promise.resolve(null),
+          candidateId && UUID_PATTERN.test(candidateId) ? candidateDetail(candidateId) : Promise.resolve(null),
           vacancyId ? vacancyDetail(vacancyId) : Promise.resolve(null),
         ]);
         if (cancelled) return;
@@ -41,6 +47,6 @@ export function useAtsData(candidateId?: string | null, vacancyId?: string | nul
     }
     void load();
     return () => { cancelled = true; };
-  }, [user, sessionLoading, candidateId, vacancyId, version, role, permissions]);
-  return { ...data, user: effectiveUser, can, loading: loading || sessionLoading, error, reload };
+  }, [user, sessionLoading, candidateId, vacancyId, version, role, permissions, enabled]);
+  return { ...data, user: effectiveUser, can, loading: enabled && (loading || sessionLoading), error: enabled ? error : "", reload };
 }

@@ -44,6 +44,6 @@ export async function vacancyDetail(id: string) { return vacancyView(await apiFe
 export async function createCandidate(input: CandidateInput) { return candidateView(await apiFetch<CandidateDTO>("/candidates/", { method: "POST", json: input })); }
 export async function updateQuestionnaire(id: string, questionnaire: Record<string, unknown>) { return candidateView(await apiFetch<CandidateDTO>(`/candidates/${id}/questionnaire`, { method: "PUT", json: { questionnaire } })); }
 export async function assignCandidate(id: string, vacancy_id: string) { return candidateView(await apiFetch<CandidateDTO>(`/candidates/${id}/assign`, { method: "POST", json: { vacancy_id } })); }
-export async function updateCandidateStage(id: string, vacancy_id: string, stage_id: string) { return apiFetch<components["schemas"]["ApplicationPublic"]>(`/candidates/${id}/stage`, { method: "PATCH", json: { vacancy_id, stage_id } }); }
+export async function updateCandidateStage(id: string, vacancy_id: string, stage_id: string, scheduled_at?: string) { return apiFetch<components["schemas"]["ApplicationPublic"]>(`/candidates/${id}/stage`, { method: "PATCH", json: { vacancy_id, stage_id, ...(scheduled_at ? { scheduled_at } : {}) } }); }
 export async function evaluateCandidate(id: string, vacancy_id: string) { return apiFetch<CandidateEvaluationResponse>(`/candidates/${id}/evaluate`, { method: "POST", json: { vacancy_id } }); }
 export async function deleteCandidate(id: string) { await apiFetch<void>(`/candidates/${id}`, { method: "DELETE" }); }

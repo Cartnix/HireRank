@@ -242,6 +242,7 @@ async def assign_candidate(
 async def update_candidate_stage(
     *,
     session: SessionDep,
+    current_user: CurrentUser,
     candidate_id: uuid.UUID,
     body: UpdateApplicationStageRequest,
 ) -> ApplicationPublic:
@@ -254,6 +255,7 @@ async def update_candidate_stage(
         session=session,
         candidate=candidate,
         body=body,
+        interviewer_id=current_user.id,
     )
     return ApplicationPublic.model_validate(application)
 

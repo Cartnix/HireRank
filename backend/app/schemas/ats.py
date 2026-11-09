@@ -94,6 +94,7 @@ class UpdateApplicationStageRequest(BaseModel):
 
     vacancy_id: uuid.UUID
     stage_id: uuid.UUID
+    scheduled_at: datetime | None = None
 
 
 class ApplyToVacancyRequest(BaseModel):
@@ -124,6 +125,7 @@ class CandidatePublic(BaseModel):
     questionnaire: dict[str, Any] = Field(default_factory=dict)
     resume_url: str | None = None
     active_package_id: uuid.UUID | None = None
+    active_application_id: uuid.UUID | None = None
     assigned_vacancy_id: uuid.UUID | None = None
     current_stage_id: uuid.UUID | None = None
     current_stage_name: str | None = None

@@ -78,7 +78,7 @@ export function StatsWidgets({
   };
   const trendBadge = (delta: number | null, lowerIsBetter = false) => {
     if (delta === null) {
-      return <span aria-label="Изменение за 7 дней: нет данных" className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400">N/A</span>;
+      return <span aria-label="Изменение за 7 дней: нет данных" className="rounded-full bg-white/[0.03] px-2 py-0.5 text-xs font-medium text-slate-500">N/A</span>;
     }
     const positive = lowerIsBetter ? delta <= 0 : delta >= 0;
     return (

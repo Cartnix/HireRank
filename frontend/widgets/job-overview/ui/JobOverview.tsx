@@ -1,14 +1,20 @@
 "use client";
 
 import { useDemo } from "@/features/demo/DemoProvider";
-import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowLeft,
+  Banknote,
   BriefcaseBusiness,
   CalendarDays,
-  ChevronLeft,
+  Check,
   Clock3,
+  Copy,
   MapPin,
   MoreHorizontal,
+  Pencil,
+  Plus,
   Trash2,
   Users,
 } from "lucide-react";
@@ -16,8 +22,21 @@ import { deleteVacancy, Job, JobStatusBadge, Stage } from "@/entities/job";
 import { Candidate, getCandidateFullName, StageBadge } from "@/entities/candidate";
 import { StagesEditor } from "@/features/manage-job-stages";
 import { Card } from "@/shared/ui/card";
-import { GhostButton } from "@/shared/ui/buttons/GhostButton";
 import { Avatar } from "@/shared/ui/Avatar";
+
+const candidateStatusLabels: Record<string, string> = {
+  unassigned: "Без назначения",
+  assigned: "В работе",
+  rejected: "Отклонён",
+  pending_hitl: "На рассмотрении",
+  action_applied: "Обработан",
+};
+
+const employmentTypeLabels: Record<string, string> = {
+  "full-time": "Полная занятость",
+  "part-time": "Частичная занятость",
+  internship: "Стажировка",
+};
 
 export function JobOverview({
   job,
@@ -26,9 +45,12 @@ export function JobOverview({
   onUpdateStages,
   onOpenCandidate,
   onDeleteJob,
-  canUpdate = false, canDelete = false, onUpdateJob,
+  canUpdate = false,
+  canDelete = false,
+  onUpdateJob,
 }: {
-  canUpdate?: boolean; canDelete?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
   onUpdateJob?: (id: string, payload: import("@/shared/api/ats").VacancyUpdate) => Promise<void>;
   job: Job;
   candidates: Candidate[];
@@ -38,208 +60,389 @@ export function JobOverview({
   onDeleteJob?: (id: string) => void;
 }) {
   const { enabled } = useDemo();
+  const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
+  const [shareError, setShareError] = useState("");
+  const [candidateFilter, setCandidateFilter] = useState("all");
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isMenuOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
 
-  const handleDelete = async () => {
-    if (!canDelete) return;
-    if (!confirm(`Удалить вакансию «${job.title}»? Это действие необратимо.`)) {
-      return;
-    }
+  const stages = useMemo(() => {
+    const counts = new Map<string, number>();
+    candidates.forEach((candidate) => {
+      const stage =
+        candidate.current_stage_name ||
+        candidate.stage ||
+        candidateStatusLabels[candidate.status] ||
+        candidate.status;
+      counts.set(stage, (counts.get(stage) ?? 0) + 1);
+    });
+    const stageNames = job.stages?.length
+      ? [...job.stages]
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map((stage) => stage.stage_name)
+      : [...counts.keys()];
+    const allStageNames = [...new Set([...stageNames, ...counts.keys()])];
+    return allStageNames.map((name) => ({ name, count: counts.get(name) ?? 0 }));
+  }, [candidates, job.stages]);
 
+  const filteredCandidates =
+    candidateFilter === "all"
+      ? candidates
+      : candidates.filter((candidate) => candidate.status === candidateFilter);
+
+  const handleShare = async () => {
+    setIsSharing(true);
+    setShareMessage("");
+    setShareError("");
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareMessage("Ссылка скопирована");
+    } catch {
+      setShareError("Не удалось скопировать ссылку");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!canDelete || !confirm(`Удалить вакансию «${job.title}»? Это действие необратимо.`)) return;
     setIsDeleting(true);
     try {
       if (onDeleteJob) await onDeleteJob(job.id);
       else await deleteVacancy(job.id);
       setIsMenuOpen(false);
       onBack();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Не удалось удалить вакансию");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Не удалось удалить вакансию");
     } finally {
       setIsDeleting(false);
     }
   };
 
+  const formattedSalary =
+    job.salaryMin != null || job.salaryMax != null
+      ? `${job.salaryMin?.toLocaleString() ?? "от"}${job.salaryMax != null ? `–${job.salaryMax.toLocaleString()}` : ""} ₸`
+      : "Не указана";
+  const publicationDate = job.createdAt
+    ? new Date(job.createdAt).toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "Не указана";
+
   return (
     <div className="space-y-6 pb-8">
       <button
         onClick={onBack}
-        className="flex items-center gap-1 text-[13px] font-medium text-foreground-secondary transition-colors hover:text-foreground"
+        className="inline-flex items-center gap-2 text-sm font-medium text-foreground-secondary transition-colors hover:text-foreground"
       >
-        <ChevronLeft size={15} /> Все вакансии
+        <ArrowLeft size={16} /> Назад к вакансиям
       </button>
 
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
-        <div className="min-w-0">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-primary">
-            Детали позиции
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
-              {job.title}
-            </h1>
-            <JobStatusBadge status={job.status} />
-          </div>
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-foreground-secondary">
-            {job.department && <span>{job.department}</span>}
-            {job.location && (
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin size={14} /> {job.location}
-              </span>
-            )}
-            {job.employmentType && (
-              <span className="inline-flex items-center gap-1.5">
-                <BriefcaseBusiness size={14} /> {job.employmentType}
-              </span>
-            )}
-          </div>
+      <header className="space-y-4 rounded-2xl border border-border bg-card/70 p-5 shadow-sm sm:p-7">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="m-0 text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+            {job.title}
+          </h1>
+          <JobStatusBadge status={job.status} />
         </div>
-
-        {canDelete && <div ref={menuRef} className="relative">
-          <GhostButton
-            icon={<MoreHorizontal size={15} />}
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-          >
-            Действия
-          </GhostButton>
-
-          {isMenuOpen && (
-            <div className="absolute right-0 top-full z-10 mt-1 w-44 rounded-lg border border-border bg-background py-1 shadow-lg">
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting || !canDelete}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-danger hover:bg-muted disabled:opacity-50"
-              >
-                <Trash2 size={14} />
-                {isDeleting ? "Удаление..." : "Удалить вакансию"}
-              </button>
-            </div>
-          )}
-        </div>}
+        <p className="m-0 text-sm text-muted-foreground">
+          {job.department || "Отдел не указан"}
+        </p>
+        <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+          {[
+            { icon: Banknote, label: "Зарплата", value: formattedSalary },
+            { icon: Clock3, label: "Опыт", value: job.experience || "Не указан" },
+            {
+              icon: BriefcaseBusiness,
+              label: "Занятость",
+              value: job.employmentType
+                ? employmentTypeLabels[job.employmentType] ?? job.employmentType
+                : "Не указана",
+            },
+          ].map(({ icon: Icon, label, value }) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background/70 px-3 py-2 text-xs"
+            >
+              <Icon size={14} className="text-brand-primary" />
+              <span className="text-muted-foreground">{label}:</span>
+              <span className="font-medium text-foreground">{value}</span>
+            </span>
+          ))}
+        </div>
       </header>
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-border pb-5 text-sm">
-        {job.salaryMin != null && job.salaryMax != null && (
-          <div>
-            <div className="text-[11px] font-medium uppercase text-muted-foreground">Зарплата</div>
-            <div className="mt-1 font-semibold text-foreground">
-              {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()} ₸
-            </div>
-          </div>
-        )}
-        {job.experience && (
-          <div>
-            <div className="text-[11px] font-medium uppercase text-muted-foreground">Опыт</div>
-            <div className="mt-1 inline-flex items-center gap-1.5 font-medium text-foreground">
-              <Clock3 size={14} className="text-muted-foreground" /> {job.experience}
-            </div>
-          </div>
-        )}
-        <div>
-          <div className="text-[11px] font-medium uppercase text-muted-foreground">Кандидаты</div>
-          <div className="mt-1 inline-flex items-center gap-1.5 font-semibold text-foreground">
-            <Users size={14} className="text-muted-foreground" /> {candidates.length}
-          </div>
-        </div>
-        {job.createdAt && (
-          <div className="ml-auto">
-            <div className="text-[11px] font-medium uppercase text-muted-foreground">Создана</div>
-            <div className="mt-1 inline-flex items-center gap-1.5 text-foreground-secondary">
-              <CalendarDays size={14} /> {job.createdAt}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {canUpdate && onUpdateJob && <form key={job.id + (job.status ?? "")} onSubmit={event => {
-        event.preventDefault(); const form = new FormData(event.currentTarget);
-        void onUpdateJob(job.id, { title: String(form.get("title")), department: String(form.get("department")), description: String(form.get("description")), requirements: String(form.get("requirements")).split("\n").map(s => s.trim()).filter(Boolean), status: String(form.get("status")) as "draft" | "open" | "closed" });
-      }} className="rounded-xl border border-border p-4 space-y-3">
-        <details><summary className="cursor-pointer text-sm font-medium">Редактировать вакансию</summary>
-          <div className="mt-3 grid gap-3">
-            <input aria-label="Название" name="title" required maxLength={255} defaultValue={job.title} className="rounded-lg border border-input bg-background p-2" />
-            <input aria-label="Отдел" name="department" maxLength={255} defaultValue={job.department} className="rounded-lg border border-input bg-background p-2" />
-            <textarea aria-label="Описание" name="description" defaultValue={job.description} className="rounded-lg border border-input bg-background p-2" />
-            <textarea aria-label="Требования, по одному на строку" name="requirements" defaultValue={job.requirements.join("\n")} className="rounded-lg border border-input bg-background p-2" />
-            <select aria-label="Статус вакансии" name="status" defaultValue={job.status} className="rounded-lg border border-input bg-background p-2"><option value="draft">Черновик</option><option value="open">Открыта</option><option value="closed">Закрыта</option></select>
-            <button type="submit" className="text-brand-primary">Сохранить</button>
-          </div>
-        </details>
-      </form>}
-      <div className="grid gap-5 grid-cols-1">
-        <Card className="p-5 sm:p-6">
-          <section>
-            <h2 className="text-sm font-semibold text-foreground">Описание вакансии</h2>
-            <p className="mt-3 whitespace-pre-line text-[13.5px] leading-6 text-foreground-secondary">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(280px,3fr)]">
+        <main className="min-w-0 space-y-5">
+          <Card className="p-5 sm:p-6">
+            <h2 className="m-0 text-base font-semibold text-foreground">Описание вакансии</h2>
+            <p className="mb-0 mt-4 max-w-3xl whitespace-pre-line text-sm leading-7 text-foreground-secondary">
               {job.description || "Описание пока не добавлено."}
             </p>
-          </section>
+            <section className="mt-6 border-t border-border pt-5">
+              <h2 className="m-0 text-base font-semibold text-foreground">Требования</h2>
+              {!job.requirements.length ? (
+                <p className="mb-0 mt-3 text-sm text-muted-foreground">
+                  Требования пока не добавлены.
+                </p>
+              ) : (
+                <ul className="mb-0 mt-4 space-y-3 pl-5 text-sm leading-6 text-foreground-secondary marker:text-brand-primary">
+                  {job.requirements.map((requirement, index) => (
+                    <li key={`${index}-${requirement}`}>{requirement}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </Card>
 
-          <section className="mt-6 border-t border-border pt-5"><h2 className="m-0 text-sm font-semibold">Требования</h2>{!job.requirements.length && <p className="mt-3 text-sm text-muted-foreground">Требования пока не добавлены.</p>}<ul className="mt-3 list-disc space-y-2 pl-5 text-sm">{job.requirements.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
-          <section className="mt-6 border-t border-border pt-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-foreground">
-                Кандидаты по вакансии
-              </h2>
-              <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium tabular-nums text-foreground-secondary">
-                {candidates.length}
+          <Card className="p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="m-0 text-base font-semibold text-foreground">Кандидаты на вакансию</h2>
+                <p className="mb-0 mt-1 text-xs text-muted-foreground">
+                  Кандидаты, привязанные к этой позиции
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard/candidates")}
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-brand-primary px-3 text-xs font-medium text-brand-primary-foreground transition-colors hover:bg-brand-primary-hover"
+              >
+                <Plus size={14} /> Добавить кандидата
+              </button>
+            </div>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+              <span className="text-xs text-muted-foreground">
+                Всего: <strong className="text-foreground">{candidates.length}</strong>
               </span>
+              <select
+                aria-label="Фильтр кандидатов по статусу"
+                value={candidateFilter}
+                onChange={(event) => setCandidateFilter(event.target.value)}
+                className="h-9 rounded-lg border border-input bg-background px-3 text-xs text-foreground"
+              >
+                <option value="all">Все статусы</option>
+                {Object.entries(candidateStatusLabels).map(([status, label]) => (
+                  <option key={status} value={status}>{label}</option>
+                ))}
+              </select>
             </div>
             <div className="divide-y divide-border">
-              {candidates.length === 0 && (
-                <div className="py-8 text-center text-[13px] text-muted-foreground">
-                  Пока нет кандидатов на эту позицию.
-                </div>
-              )}
-              {candidates.map((candidate) => {
-                const fullName = getCandidateFullName(candidate);
-                return (
-                  <button
-                    key={candidate.id}
-                    type="button"
-                    onClick={() => onOpenCandidate(candidate.id)}
-                    className="flex w-full items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-muted/40"
-                  >
-                    <span className="flex min-w-0 items-center gap-3">
-                      <Avatar name={fullName} size={34} />
-                      <span className="min-w-0">
-                        <span className="block truncate text-[13.5px] font-medium text-foreground">
-                          {fullName}
-                        </span>
-                        <span className="mt-0.5 block text-xs text-foreground-secondary">
-                          {new Date(candidate.created_at).toLocaleDateString()}
+              {!filteredCandidates.length ? (
+                <p className="mb-0 py-8 text-center text-sm text-muted-foreground">
+                  {candidates.length
+                    ? "Нет кандидатов с таким статусом."
+                    : "Пока нет кандидатов на эту позицию."}
+                </p>
+              ) : (
+                filteredCandidates.map((candidate) => {
+                  const fullName = getCandidateFullName(candidate);
+                  return (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      onClick={() => onOpenCandidate(candidate.id)}
+                      className="flex w-full items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-muted/40"
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <Avatar name={fullName} size={36} />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium text-foreground">{fullName}</span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {new Date(candidate.created_at).toLocaleDateString("ru-RU")}
+                          </span>
                         </span>
                       </span>
-                    </span>
-                    <StageBadge stage={candidate.stage ?? candidate.status} />
-                  </button>
-                );
-              })}
+                      <StageBadge
+                        stage={
+                          candidate.current_stage_name ||
+                          candidate.stage ||
+                          candidateStatusLabels[candidate.status] ||
+                          candidate.status
+                        }
+                      />
+                    </button>
+                  );
+                })
+              )}
             </div>
-          </section>
-        </Card>
+          </Card>
+        </main>
 
-        {enabled && canUpdate && <aside>
-          <StagesEditor
-            demo
-            stages={job.stages ?? []}
-            onChange={onUpdateStages}
-          />
-        </aside>}
+        <aside className="min-w-0 space-y-5 lg:sticky lg:top-5">
+          <Card className="space-y-3 p-5">
+            <h2 className="m-0 text-sm font-semibold text-foreground">Быстрые действия</h2>
+            <button
+              type="button"
+              onClick={handleShare}
+              disabled={isSharing}
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+            >
+              {shareMessage ? <Check size={15} /> : <Copy size={15} />}
+              {isSharing ? "Копируем..." : shareMessage || "Поделиться ссылкой"}
+            </button>
+            {shareError && <p role="alert" className="m-0 text-xs text-danger">{shareError}</p>}
+            {canUpdate && onUpdateJob && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing((editing) => !editing)}
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <Pencil size={15} /> {isEditing ? "Скрыть редактирование" : "Редактировать"}
+                </button>
+                <label className="block space-y-1.5 pt-1 text-xs text-muted-foreground">
+                  Изменить статус
+                  <select
+                    aria-label="Изменить статус вакансии"
+                    value={job.status}
+                    onChange={(event) => {
+                      void onUpdateJob(job.id, {
+                        status: event.target.value as "draft" | "open" | "closed",
+                      });
+                    }}
+                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+                  >
+                    <option value="draft">Черновик</option>
+                    <option value="open">Открыта</option>
+                    <option value="closed">Закрыта</option>
+                  </select>
+                </label>
+              </>
+            )}
+            {canDelete && (
+              <div ref={menuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsMenuOpen((open) => !open)}
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-lg text-xs text-muted-foreground transition-colors hover:bg-danger/5 hover:text-danger"
+                >
+                  <MoreHorizontal size={15} /> Действия
+                </button>
+                {isMenuOpen && (
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete()}
+                    disabled={isDeleting}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-danger/20 px-3 py-2 text-xs text-danger hover:bg-danger/5 disabled:opacity-50"
+                  >
+                    <Trash2 size={14} /> {isDeleting ? "Удаление..." : "Удалить вакансию"}
+                  </button>
+                )}
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="m-0 text-sm font-semibold text-foreground">Воронка кандидатов</h2>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary/10 px-2.5 py-1 text-xs font-semibold text-brand-primary">
+                <Users size={13} /> {candidates.length}
+              </span>
+            </div>
+            {stages.length ? (
+              <div className="mt-4 space-y-3">
+                {stages.map((stage, index) => {
+                  const max = Math.max(1, ...stages.map((item) => item.count));
+                  return (
+                    <div key={stage.name}>
+                      <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
+                        <span className="truncate text-foreground-secondary">{stage.name}</span>
+                        <span className="font-semibold tabular-nums text-foreground">{stage.count}</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className={`h-full rounded-full ${["bg-sky-400", "bg-indigo-400", "bg-violet-400", "bg-emerald-400"][index % 4]}`}
+                          style={{ width: `${(stage.count / max) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mb-0 mt-4 text-xs text-muted-foreground">Этапы появятся вместе с кандидатами.</p>
+            )}
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="m-0 text-sm font-semibold text-foreground">Информация о вакансии</h2>
+            <dl className="mb-0 mt-4 space-y-4 text-xs">
+              <div>
+                <dt className="text-muted-foreground">Ответственный HR</dt>
+                <dd className="mb-0 mt-1 font-medium text-foreground">{job.recruiter || "Не указан"}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Дата публикации</dt>
+                <dd className="mb-0 mt-1 inline-flex items-center gap-1.5 font-medium text-foreground">
+                  <CalendarDays size={13} /> {publicationDate}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Локация</dt>
+                <dd className="mb-0 mt-1 inline-flex items-center gap-1.5 font-medium text-foreground">
+                  <MapPin size={13} /> {job.location || "Не указана"}
+                </dd>
+              </div>
+            </dl>
+          </Card>
+
+          {isEditing && canUpdate && onUpdateJob && (
+            <Card className="p-5">
+              <form
+                key={job.id + (job.status ?? "")}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = new FormData(event.currentTarget);
+                  void onUpdateJob(job.id, {
+                    title: String(form.get("title")),
+                    department: String(form.get("department")),
+                    description: String(form.get("description")),
+                    requirements: String(form.get("requirements"))
+                      .split("\n")
+                      .map((value) => value.trim())
+                      .filter(Boolean),
+                    status: String(form.get("status")) as "draft" | "open" | "closed",
+                  });
+                }}
+                className="space-y-3"
+              >
+                <h2 className="m-0 text-sm font-semibold">Редактировать вакансию</h2>
+                <input aria-label="Название" name="title" required maxLength={255} defaultValue={job.title} className="w-full rounded-lg border border-input bg-background p-2 text-sm" />
+                <input aria-label="Отдел" name="department" maxLength={255} defaultValue={job.department} className="w-full rounded-lg border border-input bg-background p-2 text-sm" />
+                <textarea aria-label="Описание" name="description" defaultValue={job.description} className="min-h-24 w-full rounded-lg border border-input bg-background p-2 text-sm" />
+                <textarea aria-label="Требования, по одному на строку" name="requirements" defaultValue={job.requirements.join("\n")} className="min-h-24 w-full rounded-lg border border-input bg-background p-2 text-sm" />
+                <select aria-label="Статус вакансии" name="status" defaultValue={job.status} className="w-full rounded-lg border border-input bg-background p-2 text-sm">
+                  <option value="draft">Черновик</option>
+                  <option value="open">Открыта</option>
+                  <option value="closed">Закрыта</option>
+                </select>
+                <button type="submit" className="h-9 w-full rounded-lg bg-brand-primary text-sm font-medium text-brand-primary-foreground">Сохранить</button>
+              </form>
+            </Card>
+          )}
+
+          {enabled && canUpdate && (
+            <StagesEditor demo stages={job.stages ?? []} onChange={onUpdateStages} />
+          )}
+        </aside>
       </div>
     </div>
   );

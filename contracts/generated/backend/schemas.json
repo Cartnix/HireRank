@@ -434,6 +434,18 @@
         ],
         "title": "Active Package Id"
       },
+      "active_application_id": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Active Application Id"
+      },
       "assigned_vacancy_id": {
         "anyOf": [
           {
@@ -1231,6 +1243,40 @@
     ],
     "title": "EvaluationRecommendation"
   },
+  "DeveloperCandidateStageRequest": {
+    "properties": {
+      "candidate_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "title": "Candidate Id"
+      },
+      "stage_name": {
+        "type": "string",
+        "maxLength": 100,
+        "minLength": 1,
+        "title": "Stage Name"
+      },
+      "scheduled_at": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Scheduled At"
+      }
+    },
+    "type": "object",
+    "required": [
+      "candidate_id",
+      "stage_name"
+    ],
+    "title": "DeveloperCandidateStageRequest"
+  },
   "GenerateRequest": {
     "properties": {
       "candidates": {
@@ -1884,6 +1930,18 @@
         "type": "string",
         "format": "uuid",
         "title": "Stage Id"
+      },
+      "scheduled_at": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Scheduled At"
       }
     },
     "additionalProperties": false,

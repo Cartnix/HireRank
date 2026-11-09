@@ -26,8 +26,10 @@ from app.dev.bootstrap import TENANT_ID
 from app.dev.database import dev_engine, prepare_dev_session, require_dev_database
 from app.models import (
     Application,
+    ApplicationStatus,
     Candidate,
     DevelopmentDataset,
+    Interview,
     PipelineStage,
     Tenant,
     User,
@@ -89,6 +91,12 @@ class DatasetWrite(BaseModel):
     audit: list[dict[str, Any]] = Field(default_factory=list, max_length=20000)
     memory: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
     mcpRuns: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
+
+
+class DeveloperCandidateStageRequest(BaseModel):
+    candidate_id: str = Field(min_length=1, max_length=128)
+    stage_name: str = Field(min_length=1, max_length=100)
+    scheduled_at: datetime | None = None
 
 
 class DemoCandidateForEvaluation(BaseModel):
@@ -320,6 +328,18 @@ async def read_dataset(response: Response) -> dict[str, Any]:
                     status_code=503, detail="Development tenant missing"
                 )
             assigned = {a.candidate_id: a.vacancy_id for a in applications}
+            active_applications = {
+                application.candidate_id: application
+                for application in applications
+                if application.status == ApplicationStatus.ACTIVE
+            }
+            stages_by_id = {stage.id: stage for stage in stages}
+            active_applications = {
+                application.candidate_id: application
+                for application in applications
+                if application.status == ApplicationStatus.ACTIVE
+            }
+            stages_by_id = {stage.id: stage for stage in stages}
             dataset = await session.get(DevelopmentDataset, 1)
             if dataset is None:
                 raise HTTPException(
@@ -393,6 +413,15 @@ async def read_dataset(response: Response) -> dict[str, Any]:
                             str(assigned[c.id]), str(assigned[c.id])
                         )
                         if c.id in assigned
+                        else None,
+                        "stageId": str(active_applications[c.id].current_stage_id)
+                        if c.id in active_applications
+                        else None,
+                        "pipelineStage": stages_by_id[
+                            active_applications[c.id].current_stage_id
+                        ].stage_name
+                        if c.id in active_applications
+                        and active_applications[c.id].current_stage_id in stages_by_id
                         else None,
                         "resumeRef": c.resume_url or "",
                     }
@@ -469,3 +498,180 @@ async def read_schedule(
     response.headers["Cache-Control"] = "no-store, private"
     overview = await development_analytics(role, upcoming_limit=None)
     return overview.upcoming_interviews
+
+
+@router.post("/candidate-stage", status_code=204)
+async def update_development_candidate_stage(
+    body: DeveloperCandidateStageRequest,
+) -> Response:
+    try:
+        require_dev_database()
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    engine = dev_engine()
+    try:
+        async with AsyncSession(engine) as session:
+            await ensure_dev_schema(session)
+            await prepare_dev_session(session)
+            dataset = await session.get(DevelopmentDataset, 1)
+            if dataset is None:
+                raise HTTPException(
+                    status_code=503, detail="Development dataset not seeded"
+                )
+            candidates = (
+                await session.exec(
+                    select(Candidate).where(Candidate.tenant_id == TENANT_ID)
+                )
+            ).all()
+            candidate = next(
+                (
+                    item
+                    for item in candidates
+                    if item.questionnaire.get("dev_key", str(item.id))
+                    == body.candidate_id
+                ),
+                None,
+            )
+            if candidate is None:
+                raise HTTPException(status_code=404, detail="Candidate not found")
+            application = (
+                await session.exec(
+                    select(Application).where(
+                        Application.tenant_id == TENANT_ID,
+                        Application.candidate_id == candidate.id,
+                        Application.status == ApplicationStatus.ACTIVE,
+                    )
+                )
+            ).first()
+            if application is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Candidate has no active application",
+                )
+            stages = list(
+                (
+                    await session.exec(
+                        select(PipelineStage)
+                        .where(
+                            PipelineStage.tenant_id == TENANT_ID,
+                            PipelineStage.vacancy_id == application.vacancy_id,
+                        )
+                        .order_by(PipelineStage.sort_order)
+                    )
+                ).all()
+            )
+            if len(stages) == 1 and stages[0].stage_name == "Рассмотрение":
+                default_names = (
+                    "Новые",
+                    "Скрининг",
+                    "Рассмотрение",
+                    "Собеседование",
+                    "Оффер",
+                    "Принят",
+                )
+                for order, stage_name in enumerate(default_names):
+                    if stage_name == stages[0].stage_name:
+                        stages[0].sort_order = 100 + order
+                        session.add(stages[0])
+                    else:
+                        session.add(
+                            PipelineStage(
+                                tenant_id=TENANT_ID,
+                                vacancy_id=application.vacancy_id,
+                                stage_name=stage_name,
+                                sort_order=100 + order,
+                            )
+                        )
+                await session.flush()
+                stages = list(
+                    (
+                        await session.exec(
+                            select(PipelineStage)
+                            .where(
+                                PipelineStage.tenant_id == TENANT_ID,
+                                PipelineStage.vacancy_id == application.vacancy_id,
+                            )
+                            .order_by(PipelineStage.sort_order)
+                        )
+                    ).all()
+                )
+                for order, item in enumerate(stages):
+                    item.sort_order = order
+                    session.add(item)
+                await session.flush()
+            stage = next(
+                (item for item in stages if item.stage_name == body.stage_name),
+                None,
+            )
+            if stage is None:
+                raise HTTPException(status_code=404, detail="Pipeline stage not found")
+            requires_interview = any(
+                marker in stage.stage_name.casefold()
+                for marker in ("интервью", "собесед")
+            )
+            if requires_interview:
+                if body.scheduled_at is None or body.scheduled_at.tzinfo is None:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="Укажите дату и время собеседования",
+                    )
+                if body.scheduled_at <= datetime.now(UTC):
+                    raise HTTPException(
+                        status_code=422,
+                        detail="Дата собеседования должна быть в будущем",
+                    )
+                interviewer = (
+                    await session.exec(
+                        select(User).where(
+                            User.tenant_id == TENANT_ID,
+                            User.role == UserRole.HR,
+                        )
+                    )
+                ).first()
+                if interviewer is None:
+                    interviewer = (
+                        await session.exec(
+                            select(User).where(
+                                User.tenant_id == TENANT_ID,
+                                User.role == UserRole.SUPERUSER,
+                            )
+                        )
+                    ).first()
+                if interviewer is None:
+                    raise HTTPException(
+                        status_code=503,
+                        detail="Development interviewer not configured",
+                    )
+                session.add(
+                    Interview(
+                        tenant_id=TENANT_ID,
+                        application_id=application.id,
+                        interviewer_id=interviewer.id,
+                        scheduled_at=body.scheduled_at,
+                    )
+                )
+            elif body.scheduled_at is not None:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Дата доступна только для этапа собеседования",
+                )
+            application.current_stage_id = stage.id
+            application.updated_at = datetime.now(UTC)
+            dataset.config = {
+                **dataset.config,
+                "revision": dataset.config.get("revision", 0) + 1,
+            }
+            session.add(application)
+            session.add(dataset)
+            await session.commit()
+            return Response(status_code=204)
+    except HTTPException:
+        raise
+    except Exception as error:
+        logger.exception("Development candidate stage update failed")
+        raise HTTPException(
+            status_code=503,
+            detail="Development database unavailable; run dev bootstrap",
+        ) from error
+    finally:
+        await engine.dispose()

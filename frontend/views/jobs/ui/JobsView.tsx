@@ -11,7 +11,6 @@ import {
 import { Job, Stage } from "@/entities/job";
 import { Candidate } from "@/entities/candidate";
 import { MainButton } from "@/shared/ui/buttons/MainButton";
-import { DetailPanel } from "@/shared/ui/DetailPanel";
 import { JobOverview } from "@/widgets/job-overview/ui/JobOverview";
 import { JobsTable } from "@/widgets/job-table/ui/JobsTable";
 import { SectionTitle } from "@/shared/ui/SectionTitle";
@@ -59,18 +58,38 @@ export const JobsView = ({
     );
   });
 
+  if (selectedJob) {
+    return (
+      <div className="space-y-6 px-2 pb-12 md:px-4">
+        <JobOverview
+          canUpdate={canUpdate}
+          canDelete={canDelete}
+          onUpdateJob={onUpdateJob}
+          job={selectedJob}
+          candidates={candidates.filter(
+            (candidate) => candidate.assigned_vacancy_id === selectedJob.id,
+          )}
+          onBack={onBack}
+          onUpdateStages={onUpdateStages}
+          onOpenCandidate={onOpenCandidate}
+          onDeleteJob={onDeleteJob}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 px-6 pb-12 md:px-10 lg:px-15">
+    <div className="space-y-6 px-2 pb-12 md:px-4">
       <SectionTitle
-        badge="Talent pipeline"
         title="Вакансии"
         subtitle="Управляйте позициями и отслеживайте поток кандидатов."
+        variant="plain"
         action={
           canCreate ? (
             <MainButton
               onClick={onCreateJob}
               title="Создать вакансию"
-              className="h-11 gap-2 rounded-xl px-4 shadow-sm"
+              className="h-10 gap-2 rounded-xl px-4 shadow-sm"
             >
               <Plus size={15} />
             </MainButton>
@@ -104,15 +123,15 @@ export const JobsView = ({
         ].map(({ label, value, icon: Icon, color }) => (
           <div
             key={label}
-            className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card/80 p-4 shadow-sm transition-transform hover:-translate-y-0.5"
+            className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-card/80 p-3 shadow-sm sm:p-3.5"
           >
             <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color}`}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}`}
             >
-              <Icon size={18} />
+              <Icon size={17} />
             </div>
             <div className="min-w-0">
-              <div className="text-2xl font-semibold leading-none tabular-nums text-foreground">
+              <div className="text-xl font-semibold leading-none tabular-nums text-foreground">
                 {value}
               </div>
               <div className="mt-1 truncate text-xs text-muted-foreground">
@@ -125,10 +144,10 @@ export const JobsView = ({
 
       <section
         aria-label="Поиск и фильтры вакансий"
-        className="rounded-2xl border border-border bg-card/80 p-3 shadow-sm sm:p-4"
+        className="rounded-xl border border-border bg-card/80 p-3 shadow-sm"
       >
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <label className="relative block w-full md:max-w-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <label className="relative block w-full lg:max-w-sm">
             <Search
               size={16}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -138,12 +157,12 @@ export const JobsView = ({
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Поиск по вакансии или отделу"
               aria-label="Поиск по вакансиям"
-              className="h-11 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
             />
           </label>
 
           <div
-            className="flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-muted/20 p-1"
+            className="flex w-fit items-center gap-1 overflow-x-auto rounded-lg border border-border bg-muted/20 p-1"
             aria-label="Статус вакансии"
           >
             {(
@@ -156,9 +175,9 @@ export const JobsView = ({
               <button
                 key={value}
                 onClick={() => setStatusFilter(value)}
-                className={`shrink-0 rounded-full px-3 py-2 text-xs font-medium transition-colors ${
+                className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                   statusFilter === value
-                    ? "bg-brand-primary text-brand-primary-foreground shadow-sm"
+                    ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-background hover:text-foreground"
                 }`}
               >
@@ -167,46 +186,21 @@ export const JobsView = ({
             ))}
           </div>
 
-          <div className="shrink-0 text-xs text-muted-foreground">
+          <div className="shrink-0 text-xs text-muted-foreground lg:ml-auto">
             Найдено{" "}
             <span className="font-semibold text-foreground">
               {filteredJobs.length}
             </span>{" "}
-            из {jobs.length}
+            из {jobs.length} вакансий
           </div>
         </div>
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(360px,1fr)] xl:items-start">
-        <div className="min-w-0">
-          <JobsTable
-            jobs={filteredJobs}
-            candidates={candidates}
-            selectedJobId={selectedJob?.id}
-            onOpenJob={onOpenJob}
-          />
-        </div>
-
-        {selectedJob && (
-          <div className="min-w-0 xl:sticky xl:top-6">
-            <DetailPanel title="Детали вакансии" onClose={onBack}>
-              <JobOverview
-                canUpdate={canUpdate}
-                canDelete={canDelete}
-                onUpdateJob={onUpdateJob}
-                job={selectedJob}
-                candidates={candidates.filter(
-                  (c) => c.assigned_vacancy_id === selectedJob.id,
-                )}
-                onBack={onBack}
-                onUpdateStages={onUpdateStages}
-                onOpenCandidate={onOpenCandidate}
-                onDeleteJob={onDeleteJob}
-              />
-            </DetailPanel>
-          </div>
-        )}
-      </div>
+      <JobsTable
+        jobs={filteredJobs}
+        candidates={candidates}
+        onOpenJob={onOpenJob}
+      />
     </div>
   );
 };
