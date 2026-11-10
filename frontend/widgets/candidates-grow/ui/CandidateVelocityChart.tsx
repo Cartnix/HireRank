@@ -12,20 +12,20 @@ export function HiringVelocityCard({ data }: { data: { date: string; value: numb
   const gradientId = useId();
 
   return (
-    <Card className="flex min-h-[340px] flex-col bg-[#0e1726]/80 p-6 border-white/[0.08] shadow-none">
+    <Card className="flex min-h-[340px] flex-col p-6 shadow-sm">
       <div className="mb-3 flex items-start justify-between">
         <div>
-          <h3 className="m-0 text-lg font-semibold tracking-tight text-white">
+          <h3 className="m-0 text-lg font-semibold tracking-tight text-foreground">
             Динамика кандидатов
           </h3>
-          <p className="mt-1 mb-0 text-sm text-slate-400">
+          <p className="mt-1 mb-0 text-sm text-muted-foreground">
             Новые кандидаты за последние 30 дней
           </p>
         </div>
       </div>
 
       <div className="mb-2">
-        <div className="text-3xl font-bold leading-none tracking-tight text-white">
+        <div className="text-3xl font-bold leading-none tracking-tight text-foreground">
           {total || "N/A"}
         </div>
       </div>
@@ -50,10 +50,10 @@ export function HiringVelocityCard({ data }: { data: { date: string; value: numb
               dy={10}
             />
             <YAxis hide domain={[minValue - yPadding, maxValue + yPadding]} />
-            <CartesianGrid vertical={false} stroke="#1e293b" strokeDasharray="3 4" />
+            <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 4" />
             <Tooltip
-              contentStyle={{ background: "#0b121e", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#e2e8f0" }}
-              labelStyle={{ color: "#94a3b8" }}
+              contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--popover-foreground)" }}
+              labelStyle={{ color: "var(--muted-foreground)" }}
             />
 
             <Area
@@ -64,7 +64,7 @@ export function HiringVelocityCard({ data }: { data: { date: string; value: numb
               fill={`url(#${gradientId})`}
               fillOpacity={1}
               dot={false}
-              activeDot={{ r: 4, fill: "#22d3ee", stroke: "#0e1726", strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: "#22d3ee", stroke: "var(--card)", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>

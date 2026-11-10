@@ -78,7 +78,7 @@ export function StatsWidgets({
   };
   const trendBadge = (delta: number | null, lowerIsBetter = false) => {
     if (delta === null) {
-      return <span aria-label="Изменение за 7 дней: нет данных" className="rounded-full bg-white/[0.03] px-2 py-0.5 text-xs font-medium text-slate-500">N/A</span>;
+      return <span aria-label="Изменение за 7 дней: нет данных" className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">N/A</span>;
     }
     const positive = lowerIsBetter ? delta <= 0 : delta >= 0;
     return (
@@ -96,12 +96,12 @@ export function StatsWidgets({
 
   return (
     <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card icon={Briefcase} iconClassName="h-auto w-fit rounded-xl bg-blue-500/10 p-2.5 text-blue-400 group-hover:bg-blue-500/10 group-hover:scale-100" badge={trendBadge(jobsDelta)} className="bg-[#0e1726]/80 border-white/[0.08] p-5 shadow-none hover:border-white/[0.14]">
+      <Card icon={Briefcase} iconClassName="h-auto w-fit rounded-xl bg-blue-500/10 p-2.5 text-blue-400 group-hover:bg-blue-500/10 group-hover:scale-100" badge={trendBadge(jobsDelta)} className="p-5 shadow-sm">
         <div className="space-y-1.5">
-          <div className="text-3xl font-bold leading-none tracking-tight text-white">
+          <div className="text-3xl font-bold leading-none tracking-tight text-foreground">
             {metric(activeJobsCount, demoActiveJobs)}
           </div>
-          <div className="text-xs font-medium text-slate-400">
+          <div className="text-xs font-medium text-muted-foreground">
             Активные вакансии
           </div>
         </div>
@@ -109,12 +109,12 @@ export function StatsWidgets({
         {!live && <MiniAreaChart data={getTrendData(activeJobsCount, null)} strokeColor="#22d3ee" />}
       </Card>
 
-      <Card icon={Users} iconClassName="h-auto w-fit rounded-xl bg-violet-500/10 p-2.5 text-violet-400 group-hover:bg-violet-500/10 group-hover:scale-100" badge={trendBadge(candidatesDelta)} className="bg-[#0e1726]/80 border-white/[0.08] p-5 shadow-none hover:border-white/[0.14]">
+      <Card icon={Users} iconClassName="h-auto w-fit rounded-xl bg-violet-500/10 p-2.5 text-violet-400 group-hover:bg-violet-500/10 group-hover:scale-100" badge={trendBadge(candidatesDelta)} className="p-5 shadow-sm">
         <div className="space-y-1.5">
-          <div className="text-3xl font-bold leading-none tracking-tight text-white">
+          <div className="text-3xl font-bold leading-none tracking-tight text-foreground">
             {metric(inProgressCandidates, demoCandidates)}
           </div>
-          <div className="text-xs font-medium text-slate-400">
+          <div className="text-xs font-medium text-muted-foreground">
             {candidateLabel}
           </div>
         </div>
@@ -122,12 +122,12 @@ export function StatsWidgets({
         {!live && <MiniAreaChart data={getTrendData(inProgressCandidates, null)} strokeColor="#a78bfa" />}
       </Card>
 
-      <Card icon={CalendarDays} iconClassName="h-auto w-fit rounded-xl bg-amber-500/10 p-2.5 text-amber-400 group-hover:bg-amber-500/10 group-hover:scale-100" badge={trendBadge(interviewsDelta)} className="bg-[#0e1726]/80 border-white/[0.08] p-5 shadow-none hover:border-white/[0.14]">
+      <Card icon={CalendarDays} iconClassName="h-auto w-fit rounded-xl bg-amber-500/10 p-2.5 text-amber-400 group-hover:bg-amber-500/10 group-hover:scale-100" badge={trendBadge(interviewsDelta)} className="p-5 shadow-sm">
         <div className="space-y-1.5">
-          <div className="text-3xl font-bold leading-none tracking-tight text-white">
+          <div className="text-3xl font-bold leading-none tracking-tight text-foreground">
             {metric(analytics ? analytics.todays_interviews : todaysInterviewsCount)}
           </div>
-          <div className="text-xs font-medium text-slate-400">
+          <div className="text-xs font-medium text-muted-foreground">
             Назначено собеседований
           </div>
         </div>
@@ -135,16 +135,16 @@ export function StatsWidgets({
         {!live && <MiniAreaChart data={getTrendData(todaysInterviewsCount, null)} strokeColor="#facc15" />}
       </Card>
 
-      <Card icon={Clock} iconClassName="h-auto w-fit rounded-xl bg-emerald-500/10 p-2.5 text-emerald-400 group-hover:bg-emerald-500/10 group-hover:scale-100" badge={trendBadge(hireDelta, true)} className="bg-[#0e1726]/80 border-white/[0.08] p-5 shadow-none hover:border-white/[0.14]">
+      <Card icon={Clock} iconClassName="h-auto w-fit rounded-xl bg-emerald-500/10 p-2.5 text-emerald-400 group-hover:bg-emerald-500/10 group-hover:scale-100" badge={trendBadge(hireDelta, true)} className="p-5 shadow-sm">
         <div className="space-y-1.5">
-          <div className="text-3xl font-bold leading-none tracking-tight text-white">
+          <div className="text-3xl font-bold leading-none tracking-tight text-foreground">
             {analytics
               ? analytics.avg_time_to_hire === null || analytics.avg_time_to_hire === 0
                 ? "N/A"
                 : `${analytics.avg_time_to_hire} дн.`
               : avgTimeToHire === 0 ? "N/A" : `${avgTimeToHire} дн.`}
           </div>
-          <div className="text-xs font-medium text-slate-400">
+          <div className="text-xs font-medium text-muted-foreground">
             Среднее время для найма
           </div>
         </div>

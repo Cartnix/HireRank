@@ -91,10 +91,10 @@ export function AnalyticsOverview({
     <>
       <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-7">
-          <Card className="flex min-h-[340px] flex-col border-white/[0.08] bg-[#0e1726]/80 p-6 shadow-none">
+          <Card className="flex min-h-[340px] flex-col p-6 shadow-sm">
           <div className="mb-3">
-          <h3 className="m-0 text-lg font-semibold text-white">Источники кандидатов</h3>
-          <p className="mt-1 mb-0 text-sm text-slate-400">Откуда приходят лучшие специалисты</p>
+          <h3 className="m-0 text-lg font-semibold text-foreground">Источники кандидатов</h3>
+          <p className="mt-1 mb-0 text-sm text-muted-foreground">Откуда приходят лучшие специалисты</p>
         </div>
         {hasSourceBreakdown ? (
           <div className="grid min-h-[230px] flex-1 grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-center gap-2">
@@ -103,11 +103,11 @@ export function AnalyticsOverview({
                 <div key={source.stage} className="flex min-w-0 items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
-                    <span className="truncate text-sm text-slate-300">{source.stage}</span>
+                    <span className="truncate text-sm text-foreground-secondary">{source.stage}</span>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-sm font-semibold text-white">{source.count}</span>
-                    <span className="w-9 text-right text-xs text-slate-500">{Math.round((source.count / sourceTotal) * 100)}%</span>
+                    <span className="text-sm font-semibold text-foreground">{source.count}</span>
+                    <span className="w-9 text-right text-xs text-muted-foreground">{Math.round((source.count / sourceTotal) * 100)}%</span>
                   </div>
                 </div>
               ))}
@@ -121,22 +121,22 @@ export function AnalyticsOverview({
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ background: "#0b121e", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#e2e8f0" }}
+                    contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--popover-foreground)" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-white">{sourceTotal}</span>
-                <span className="text-xs text-slate-400">Всего</span>
+                <span className="text-2xl font-bold text-foreground">{sourceTotal}</span>
+                <span className="text-xs text-muted-foreground">Всего</span>
               </div>
             </div>
           </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-            <span className="text-sm font-medium text-slate-300">
+            <span className="text-sm font-medium text-foreground-secondary">
               {sourceTotal ? "Данных пока недостаточно" : "Нет данных об источниках"}
             </span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-muted-foreground">
               {sourceTotal ? `Получено кандидатов: ${sourceTotal}` : "Распределение появится после первых откликов"}
             </span>
           </div>

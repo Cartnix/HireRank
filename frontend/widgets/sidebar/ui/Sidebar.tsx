@@ -56,24 +56,24 @@ export function Sidebar() {
                 {demo.canDevelop ? <FlaskConical size={16} /> : <ShieldCheck size={16} />}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-xs font-semibold text-slate-200">
+                <span className="block text-xs font-semibold text-foreground">
                   {demo.canDevelop ? "Панель разработчика" : "Администрирование"}
                 </span>
-                <span className="mt-0.5 block truncate text-[10px] text-slate-500">
+                <span className="mt-0.5 block truncate text-[10px] text-muted-foreground">
                   {demo.canDevelop ? "Тестовые данные и роли" : "Управление доступом"}
                 </span>
               </span>
               {demo.enabled && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-400">Dev</span>}
-              <ChevronDown size={14} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" />
+              <ChevronDown size={14} className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
             </summary>
 
-            <div className="space-y-3 border-t border-white/[0.06] px-3 py-3">
+            <div className="space-y-3 border-t border-border px-3 py-3">
               {demo.canDevelop && (
                 <>
                   <label className="flex cursor-pointer items-center justify-between gap-3">
                     <span className="min-w-0">
-                      <span className="block text-xs font-medium text-slate-200">Тестовый режим</span>
-                      <span className="mt-0.5 block text-[10px] text-slate-500">
+                      <span className="block text-xs font-medium text-foreground">Тестовый режим</span>
+                      <span className="mt-0.5 block text-[10px] text-muted-foreground">
                         {demo.enabled ? "Источник: dev база данных" : "Источник: рабочая база данных"}
                       </span>
                     </span>
@@ -89,15 +89,15 @@ export function Sidebar() {
                           router.push("/dashboard");
                         }}
                       />
-                      <span className="h-5 w-9 rounded-full bg-slate-700 transition-colors peer-checked:bg-blue-500 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-400 peer-disabled:cursor-not-allowed peer-disabled:opacity-40 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4" />
+                      <span className="h-5 w-9 rounded-full bg-input transition-colors peer-checked:bg-primary peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring peer-disabled:cursor-not-allowed peer-disabled:opacity-40 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-background after:transition-transform peer-checked:after:translate-x-4" />
                     </span>
                   </label>
 
-                  <label className="block text-xs font-medium text-slate-300">
+                  <label className="block text-xs font-medium text-foreground">
                     Просмотр от роли
                     <select
                       aria-label="Просмотр от роли"
-                      className="mt-1.5 w-full rounded-lg border border-white/[0.08] bg-[#0b121e] px-2.5 py-2 text-xs text-slate-200 outline-none transition-colors focus:border-blue-400/40"
+                      className="mt-1.5 w-full rounded-lg border border-border bg-background px-2.5 py-2 text-xs text-foreground outline-none transition-colors focus:border-ring"
                       value={demo.role}
                       onChange={(event) => {
                         demo.setRole(event.target.value as Role);
@@ -113,10 +113,10 @@ export function Sidebar() {
               )}
 
               {demo.canAdminister && (
-                <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
+                <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-border pt-3">
                   <span>
-                    <span className="block text-xs font-medium text-slate-200">Режим администрирования</span>
-                    <span className="mt-0.5 block text-[10px] text-slate-500">Разрешить действия с данными</span>
+                    <span className="block text-xs font-medium text-foreground">Режим администрирования</span>
+                    <span className="mt-0.5 block text-[10px] text-muted-foreground">Разрешить действия с данными</span>
                   </span>
                   <span className="relative inline-flex shrink-0">
                     <input
@@ -126,7 +126,7 @@ export function Sidebar() {
                       checked={demo.administration}
                       onChange={(event) => demo.setAdministration(event.target.checked)}
                     />
-                    <span className="h-5 w-9 rounded-full bg-slate-700 transition-colors peer-checked:bg-blue-500 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-400 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4" />
+                    <span className="h-5 w-9 rounded-full bg-input transition-colors peer-checked:bg-primary peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-background after:transition-transform peer-checked:after:translate-x-4" />
                   </span>
                 </label>
               )}
@@ -134,10 +134,10 @@ export function Sidebar() {
               {demo.message && <p role="alert" className="m-0 rounded-lg border border-rose-400/15 bg-rose-500/[0.06] px-2.5 py-2 text-[11px] text-rose-300">{demo.message}</p>}
 
               {(demo.canDevelop || demo.canAdminister || (demo.enabled && ["administrator", "superuser"].includes(demo.role))) && (
-                <div className="space-y-1 border-t border-white/[0.06] pt-2">
-                  {demo.canDevelop && <Link className={`block rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-white/[0.05] ${pathname === "/dashboard/developer" ? "text-blue-300" : "text-slate-400 hover:text-slate-200"}`} href="/dashboard/developer">Настройки DEV</Link>}
-                  {demo.canAdminister && <Link className={`block rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-white/[0.05] ${pathname === "/dashboard/users" ? "text-blue-300" : "text-slate-400 hover:text-slate-200"}`} href="/dashboard/users">Пользователи</Link>}
-                  {demo.enabled && ["administrator", "superuser"].includes(demo.role) && <Link className={`block rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-white/[0.05] ${pathname === "/dashboard/audit" ? "text-blue-300" : "text-slate-400 hover:text-slate-200"}`} href="/dashboard/audit">Журнал действий</Link>}
+                <div className="space-y-1 border-t border-border pt-2">
+                  {demo.canDevelop && <Link className={`block rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-accent ${pathname === "/dashboard/developer" ? "text-brand-primary" : "text-muted-foreground hover:text-foreground"}`} href="/dashboard/developer">Настройки DEV</Link>}
+                  {demo.canAdminister && <Link className={`block rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-accent ${pathname === "/dashboard/users" ? "text-brand-primary" : "text-muted-foreground hover:text-foreground"}`} href="/dashboard/users">Пользователи</Link>}
+                  {demo.enabled && ["administrator", "superuser"].includes(demo.role) && <Link className={`block rounded-lg px-2.5 py-2 text-xs transition-colors hover:bg-accent ${pathname === "/dashboard/audit" ? "text-brand-primary" : "text-muted-foreground hover:text-foreground"}`} href="/dashboard/audit">Журнал действий</Link>}
                 </div>
               )}
             </div>

@@ -15,17 +15,17 @@ function useIsClient() {
 }
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const mounted = useIsClient();
 
-  if (!mounted) {
+  if (!mounted || !resolvedTheme) {
     return <div className="h-9 w-full rounded-md bg-muted animate-pulse" />;
   }
 
-  const isDark = theme === "dark";
+  const isDark = resolvedTheme === "dark";
 
   return (
-    <div 
+    <div
       className="flex items-center justify-between w-full px-2 py-1.5 text-sm outline-none cursor-pointer select-none rounded-sm transition-colors hover:bg-accent hover:text-accent-foreground"
       onClick={(e) => {
         e.stopPropagation();
@@ -35,7 +35,7 @@ export function ThemeToggle() {
         {isDark ? <Moon className="h-4 w-4 text-blue-400" /> : <Sun className="h-4 w-4 text-amber-500" />}
         Тема
       </span>
-      
+
       <button
         type="button"
         onClick={(e) => {
@@ -43,6 +43,8 @@ export function ThemeToggle() {
           setTheme(isDark ? "light" : "dark");
         }}
         aria-label="Сменить тему"
+        aria-pressed={isDark}
+        title={isDark ? "Включить светлую тему" : "Включить тёмную тему"}
         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
           isDark ? "bg-primary" : "bg-input"
         }`}
