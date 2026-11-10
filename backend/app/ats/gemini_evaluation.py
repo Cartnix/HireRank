@@ -273,11 +273,16 @@ async def evaluate_candidate_with_gemini(
                 detail="Gemini quota or rate limit exceeded; check provider limits and retry",
             ) from error
         raise HTTPException(
-            status_code=502, detail="Gemini evaluation request failed"
+            status_code=502,
+            detail=(
+                f"Gemini rejected the evaluation request "
+                f"(HTTP {error.response.status_code}); check API access, key, and model"
+            ),
         ) from error
     except httpx.RequestError as error:
         raise HTTPException(
-            status_code=502, detail="Gemini evaluation request failed"
+            status_code=502,
+            detail="Could not connect to Gemini API; check backend network access",
         ) from error
 
     try:
