@@ -117,6 +117,7 @@ class DemoVacancyForEvaluation(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(default="", max_length=8000)
     requirements: list[str] = Field(default_factory=list, max_length=40)
+    stages: list[str] = Field(default_factory=list, max_length=30)
 
 
 class DemoGeminiEvaluationRequest(BaseModel):
@@ -161,6 +162,7 @@ async def evaluate_demo_candidate(
             "title": body.vacancy.title,
             "description": body.vacancy.description,
             "requirements": body.vacancy.requirements,
+            "stages": body.vacancy.stages,
         },
         body.copilot,
     )

@@ -69,6 +69,7 @@ export const RecommendationSchema = z.object({
   title: z.string(),
   reason: z.string(),
   evidence: z.string(),
+  stage_name: z.string().nullable().optional(),
 });
 export const EvaluationSchema = z.object({
   id: z.string(),

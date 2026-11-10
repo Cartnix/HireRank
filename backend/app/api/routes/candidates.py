@@ -28,6 +28,7 @@ from app.models import (
     Candidate,
     CandidateStatus,
     CopilotSettings,
+    PipelineStage,
     UserRole,
     Vacancy,
     role_str,
@@ -403,6 +404,16 @@ async def evaluate_candidate(
     ).first()
     if vacancy is None:
         raise HTTPException(status_code=404, detail="Vacancy not found")
+    stages = (
+        await session.exec(
+            select(PipelineStage)
+            .where(
+                PipelineStage.vacancy_id == vacancy.id,
+                PipelineStage.tenant_id == current_user.tenant_id,
+            )
+            .order_by(PipelineStage.sort_order)
+        )
+    ).all()
 
     copilot_record = (
         await session.exec(
@@ -414,7 +425,16 @@ async def evaluate_candidate(
     copilot = CopilotConfig.model_validate(
         copilot_record.config if copilot_record else {}
     )
-    result = await evaluate_candidate_with_gemini(candidate, vacancy, copilot)
+    result = await evaluate_candidate_with_gemini(
+        candidate,
+        {
+            "title": vacancy.title,
+            "description": vacancy.description,
+            "requirements": vacancy.requirements,
+            "stages": [stage.stage_name for stage in stages],
+        },
+        copilot,
+    )
     from app.audit.service import get_audit_service
 
     await get_audit_service().log(

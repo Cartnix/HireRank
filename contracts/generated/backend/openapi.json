@@ -3161,48 +3161,6 @@
               }
             }
           },
-          "/api/v1/developer/candidate-stage": {
-            "post": {
-              "tags": [
-                "developer"
-              ],
-              "summary": "Update Development Candidate Stage",
-              "operationId": "developer-update_development_candidate_stage",
-              "requestBody": {
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "$ref": "#/components/schemas/DeveloperCandidateStageRequest"
-                    }
-                  }
-                },
-                "required": true
-              },
-              "responses": {
-                "204": {
-                  "description": "Successful Response"
-                },
-                "422": {
-                  "description": "Validation Error",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "$ref": "#/components/schemas/HTTPValidationError"
-                      }
-                    }
-                  }
-                }
-              },
-              "security": [
-                {
-                  "OAuth2PasswordBearer": []
-                },
-                {
-                  "APIKeyCookie": []
-                }
-              ]
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3214,6 +3172,48 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/developer/candidate-stage": {
+      "post": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Update Development Candidate Stage",
+        "operationId": "developer-update_development_candidate_stage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeveloperCandidateStageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyCookie": []
+          }
+        ]
       }
     },
     "/api/v1/copilot/settings": {
@@ -4443,6 +4443,14 @@
             "type": "array",
             "maxItems": 40,
             "title": "Requirements"
+          },
+          "stages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Stages"
           }
         },
         "type": "object",
@@ -4452,6 +4460,40 @@
           "title"
         ],
         "title": "DemoVacancyForEvaluation"
+      },
+      "DeveloperCandidateStageRequest": {
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Candidate Id"
+          },
+          "stage_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Stage Name"
+          },
+          "scheduled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "candidate_id",
+          "stage_name"
+        ],
+        "title": "DeveloperCandidateStageRequest"
       },
       "Distribution": {
         "properties": {
@@ -4577,6 +4619,18 @@
             "type": "string",
             "maxLength": 600,
             "title": "Evidence"
+          },
+          "stage_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Name"
           }
         },
         "type": "object",
@@ -4587,40 +4641,6 @@
           "evidence"
         ],
         "title": "EvaluationRecommendation"
-      },
-      "DeveloperCandidateStageRequest": {
-        "properties": {
-          "candidate_id": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 1,
-            "title": "Candidate Id"
-          },
-          "stage_name": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 1,
-            "title": "Stage Name"
-          },
-          "scheduled_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scheduled At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "candidate_id",
-          "stage_name"
-        ],
-        "title": "DeveloperCandidateStageRequest"
       },
       "GenerateRequest": {
         "properties": {

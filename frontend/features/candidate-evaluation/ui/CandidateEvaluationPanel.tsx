@@ -29,7 +29,10 @@ export function CandidateEvaluationPanel({
   vacancies: Job[];
 }) {
   const [vacancyId, setVacancyId] = useState(
-    candidate.assigned_vacancy_id ?? vacancies[0]?.id ?? "",
+    [
+      candidate.assigned_vacancy_id,
+      candidate.questionnaire.requested_vacancy_id,
+    ].find((id) => id && vacancies.some((vacancy) => vacancy.id === id)) ?? "",
   );
   const [evaluation, setEvaluation] =
     useState<CandidateEvaluationResponse | null>(null);
@@ -210,6 +213,11 @@ export function CandidateEvaluationPanel({
                     <strong>
                       {recommendationLabel[item.action] ?? item.title}
                     </strong>
+                    {item.stage_name && (
+                      <p className="mb-0 mt-1 text-xs font-medium text-brand-primary">
+                        Рекомендуемый этап: {item.stage_name}
+                      </p>
+                    )}
                     <p className="mb-0 mt-1 text-muted-foreground">
                       {item.reason} {item.evidence}
                     </p>

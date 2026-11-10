@@ -25,6 +25,7 @@ export interface VacancyMatchScore {
 }
 
 export interface Questionnaire {
+  requested_vacancy_id?: string | null;
   surname: string;
   first_name: string;
   patronymic: string;

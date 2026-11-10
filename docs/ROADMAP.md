@@ -232,19 +232,19 @@ Not current work: LLM, MCP, n8n, Telegram, WhatsApp or Memory.
 
 ## Milestone 6 — Evaluation model
 
-- [ ] Define vacancy-specific HR prompt and evaluation criteria.
-- [x] Define tenant-scoped green/red flags and allowed recommendations in persisted HR configuration; production execution remains pending.
+- [x] Define vacancy-specific evaluation input using HR prompt and vacancy context.
+- [x] Define tenant-scoped green/red flags and allowed recommendations in persisted HR configuration and apply them to on-demand evaluation.
 - [ ] Define tenant-scoped candidate evaluation history.
-- [ ] Define evidence, rationale and audit fields.
-- [x] Version tenant prompts/criteria and apply them to subsequent deterministic dev analyses; production analysis integration remains pending.
+- [x] Return evidence, rationale, a 0–100 score and an audit record for on-demand evaluations.
+- [x] Version tenant prompts/criteria and apply them to subsequent live and deterministic dev analyses.
 
 ## Milestone 7 — LLM analysis
 
 - [ ] New-resume event triggers a tenant-scoped analysis job.
-- [ ] Analysis uses the relevant vacancy context.
+- [x] On-demand analysis uses the relevant vacancy context.
 - [ ] Add an idempotency key to prevent duplicate processing.
 - [ ] Process untrusted resume data only through an approved/in-perimeter model path.
-- [ ] Validate structured model output.
+- [x] Validate structured model output.
 - [ ] Return up to three recommendations, for example `advance`, `interview` or `reject`.
 - [ ] Every recommendation contains rationale/evidence and evaluation context.
 - [ ] Log model, prompt version and failures.

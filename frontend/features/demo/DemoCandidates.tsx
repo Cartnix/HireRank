@@ -326,6 +326,7 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
             title: vacancy.title,
             description: vacancy.description,
             requirements: vacancy.requirements ?? [],
+            stages: stagesForVacancy(vacancy).map((stage) => stage.stage_name),
           },
           copilot: {
             text: prompt.text,
@@ -1127,6 +1128,11 @@ export function DemoCandidates({ initialId }: { initialId?: string | null }) {
                         />
                         <span>
                           <strong>{r.title}</strong>
+                          {r.stage_name && (
+                            <span className="mt-1 block font-medium text-brand-primary">
+                              Рекомендуемый этап: {r.stage_name}
+                            </span>
+                          )}
                           <span className="mt-1 block">
                             {r.reason}. {r.evidence}
                           </span>

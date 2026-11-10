@@ -14,6 +14,8 @@ Copilot configuration, dev-result persistence and environment boundaries.
 - [x] Intake/edit forms save candidate location; dashboard adapters use candidate location rather than vacancy location.
 - [x] HR/admin/owner have a Copilot settings route in ordinary and dev modes: prompt, green/red flags, allowed recommendations, memory opt-in and optional Markdown text/file import.
 - [x] Server configuration survives browser clearing; no authoritative configuration is stored in localStorage or cookies.
+- [x] HR can request an on-demand Gemini evaluation for a candidate and vacancy; the API uses tenant Copilot flags and vacancy context and returns a 0–100 score with evidence and explanation.
+- [x] Live evaluation requires the configured Gemini processing country and candidate consent or HR attestation; the result is audit-logged and does not change hiring status.
 
 These are implementation checks. Browser interaction acceptance remains open below.
 
@@ -73,11 +75,11 @@ the previous inspector implementation and are not evidence for this layout.
 
 ## Remaining product scope
 
-- [ ] Production LLM analysis jobs, model credentials, approved model routing and output validation.
-- [ ] Production evaluation history and server-validated HR approval/MCP execution with retry/idempotency protection.
+- [ ] Automatic production analysis jobs, evaluation history and approved model routing.
+- [ ] Server-validated HR approval/MCP execution with retry/idempotency protection.
 - [ ] Production confirmed decision-memory lifecycle, retention/erasure and complete audit.
 - [ ] Protected resume file bytes, remaining manual pipeline/status APIs and full M4/M5 ATS acceptance.
 
-Ordinary Copilot configuration is durable; production AI execution is not connected.
+Ordinary Copilot configuration is durable; live Gemini evaluation is on-demand.
 Dev results remain deterministic simulations even though they now survive reload.
 Imported memory.md is stored as configuration text, not as a server filesystem file.

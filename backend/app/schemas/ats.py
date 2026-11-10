@@ -166,6 +166,7 @@ class EvaluationRecommendation(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     reason: str = Field(min_length=1, max_length=500)
     evidence: str = Field(max_length=600)
+    stage_name: str | None = Field(default=None, max_length=100)
 
 
 class CandidateEvaluationResponse(BaseModel):
