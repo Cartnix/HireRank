@@ -18,17 +18,17 @@ export const Header = () => {
 
   return (
     <header
-      className="fixed top-0 left-0 w-full z-50 px-6 flex items-center justify-between
+      className="fixed left-0 top-0 z-50 flex h-16 w-full items-center justify-between px-4 sm:px-6
                         bg-background/70 backdrop-blur-md border-b border-border-subtle"
     >
       <div className="font-bold text-xl tracking-tight cursor-pointer text-foreground">
         <h3>HireRank</h3>
       </div>
 
-      <nav>
-        <ul className="flex items-center gap-8">
+      <nav aria-label="Основная навигация">
+        <ul className="m-0 flex list-none items-center gap-3 p-0 sm:gap-6">
           {["Product", "mrxCompany", "Ecosystem", "News"].map((item) => (
-            <li key={item}>
+            <li key={item} className="hidden sm:block">
               <a
                 href="#"
                 className="text-sm font-medium text-foreground-secondary hover:text-foreground transition-colors"

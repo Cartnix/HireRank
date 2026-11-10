@@ -76,7 +76,7 @@ export function AgentsView() {
   };
 
   return (
-    <main className="relative w-full h-[calc(100vh-175px)] max-w-5xl mx-auto px-16 flex flex-col overflow-hidden">
+    <main className="relative mx-auto flex h-[calc(100dvh-12rem)] min-h-[360px] w-full max-w-5xl flex-col overflow-hidden px-1 sm:px-4 lg:px-8">
       <div className="flex items-center justify-between pb-2 mb-2 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary">

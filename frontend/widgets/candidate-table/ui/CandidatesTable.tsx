@@ -13,8 +13,58 @@ export function CandidatesTable({
   onOpenCandidate: (id: string) => void;
 }) {
   return (
-    <Card className="overflow-hidden p-0 shadow-sm hover:border-border hover:shadow-sm">
-      <div className="overflow-x-auto">
+    <Card className="min-w-0 overflow-hidden p-0 shadow-sm hover:border-border hover:shadow-sm">
+      <div className="space-y-2 p-2 xl:hidden">
+        {candidates.map((candidate) => {
+          const fullName = getCandidateFullName(candidate);
+          const job = candidate.assigned_vacancy_id
+            ? jobById[candidate.assigned_vacancy_id]
+            : null;
+          const specialty = candidate.questionnaire.education[0]?.specialty ?? "—";
+          const stage =
+            candidate.stage ??
+            ({
+              unassigned: "Без назначения",
+              assigned: "В работе",
+              rejected: "Отклонён",
+              pending_hitl: "Ожидает рассмотрения",
+              action_applied: "Обработан",
+            }[candidate.status] ?? candidate.status);
+
+          return (
+            <button
+              key={candidate.id}
+              type="button"
+              onClick={() => onOpenCandidate(candidate.id)}
+              className="w-full rounded-xl border border-border p-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <Avatar name={fullName} size={34} />
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                  {fullName}
+                </span>
+                <StageBadge stage={stage} />
+              </span>
+              <span className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-border pt-2.5 text-xs">
+                <span className="text-muted-foreground">Вакансия</span>
+                <span className="truncate text-right text-foreground-secondary">
+                  {job?.title ?? "—"}
+                </span>
+                <span className="text-muted-foreground">Образование</span>
+                <span className="truncate text-right text-foreground-secondary">
+                  {specialty}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+        {!candidates.length && (
+          <p className="m-0 p-5 text-center text-sm text-muted-foreground">
+            Ничего не найдено. Попробуйте изменить фильтры.
+          </p>
+        )}
+      </div>
+      <div className="hidden overflow-x-auto xl:block">
       <table className="w-full min-w-[760px] table-fixed text-left text-[13.5px]">
         <colgroup>
           <col className="w-[27%]" />

@@ -9,7 +9,7 @@ const stats = [
 ]
 
 export const Stats = () => (
-    <section className="relative py-28 px-6">
+    <section className="relative px-4 py-16 sm:px-6 sm:py-20 lg:py-28">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
             {stats.map((s, i) => (
                 <motion.div
@@ -19,7 +19,7 @@ export const Stats = () => (
                     viewport={{ once: true, margin: "-80px" }}
                     transition={{ duration: 0.6, delay: i * 0.12, ease: "easeOut" }}
                     whileHover={{ y: -4 }}
-                    className="group relative rounded-3xl p-8 text-center bg-background-elevated border border-border-subtle shadow-sm hover:shadow-md transition-shadow"
+                    className="group relative rounded-3xl p-5 text-center bg-background-elevated border border-border-subtle shadow-sm hover:shadow-md transition-shadow sm:p-8"
                 >
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 h-1 w-10 rounded-full bg-brand-primary opacity-0 group-hover:opacity-100 transition-opacity" />
 

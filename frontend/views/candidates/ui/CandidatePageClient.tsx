@@ -132,7 +132,7 @@ function LiveCandidatesPageClient({
   ];
 
   return (
-    <div className="space-y-6 px-6 pb-12 md:px-10 lg:px-15">
+    <div className="min-w-0 space-y-6 px-1 pb-12 sm:px-2 lg:px-4">
       <SectionTitle
         badge="Talent pipeline"
         title="Кандидаты"
@@ -228,8 +228,8 @@ function LiveCandidatesPageClient({
       </section>
 
       {selectedCandidate ? (
-        <div className="grid min-h-[680px] items-start gap-4 lg:grid-cols-[minmax(260px,0.34fr)_minmax(0,0.66fr)]">
-          <aside className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm lg:sticky lg:top-4">
+        <div className="grid min-h-0 min-w-0 items-start gap-4 2xl:min-h-[680px] 2xl:grid-cols-[minmax(260px,0.34fr)_minmax(0,0.66fr)]">
+          <aside className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm 2xl:sticky 2xl:top-4">
             <header className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
                 <h2 className="m-0 text-sm font-semibold text-foreground">Пул кандидатов</h2>
@@ -237,7 +237,7 @@ function LiveCandidatesPageClient({
               </div>
               <span className="rounded-full bg-muted px-2.5 py-1 text-xs tabular-nums text-muted-foreground">{candidates.length}</span>
             </header>
-            <div className="max-h-[calc(100vh-250px)] min-h-64 space-y-1 overflow-y-auto p-2">
+            <div className="max-h-64 min-h-40 space-y-1 overflow-y-auto p-2 sm:max-h-80 2xl:max-h-[calc(100vh-250px)] 2xl:min-h-64">
               {visibleCandidates.map(candidate => {
                 const active = candidate.id === selectedCandidate.id;
                 const name = candidate.name || candidate.email;
@@ -286,7 +286,7 @@ function LiveCandidatesPageClient({
 
           <section
             aria-labelledby="candidate-drawer-title"
-            className="flex min-h-[680px] min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+            className="flex min-h-[480px] min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm sm:min-h-[560px] 2xl:min-h-[680px]"
           >
             <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-7">
               <div className="min-w-0">

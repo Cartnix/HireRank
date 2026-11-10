@@ -7,7 +7,7 @@ import type { TopCandidate } from "../model/top-candidate.mock";
 
 export function TopCandidatesCard({ candidates, candidateLink = id => `/dashboard/candidates/${id}` }: { candidates: TopCandidate[]; candidateLink?: (id: string) => string }) {
   return (
-    <Card className="flex min-h-[360px] flex-col bg-[#0e1726]/80 p-6 border-white/[0.08] shadow-none">
+    <Card className="flex min-h-0 flex-col border-white/[0.08] bg-[#0e1726]/80 p-4 shadow-none sm:min-h-[360px] sm:p-6">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="m-0 text-lg font-semibold tracking-tight text-white">

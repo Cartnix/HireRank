@@ -11,11 +11,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SessionGate><DemoProvider><div className="dark flex min-h-screen w-full flex-col bg-[#060b13] text-slate-100 md:flex-row">
+    <SessionGate><DemoProvider><div className="dark flex min-h-screen w-full flex-col bg-[#060b13] text-slate-100 lg:flex-row">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader />
-        <main className="min-w-0 flex-1 bg-[#060b13] px-4 py-6 md:px-8"><DevRouteGate>{children}</DevRouteGate></main>
+        <main className="min-w-0 flex-1 bg-[#060b13] px-3 py-4 sm:px-5 sm:py-6 lg:px-8"><DevRouteGate>{children}</DevRouteGate></main>
       </div>
       <DashboardNotifications />
     </div></DemoProvider></SessionGate>

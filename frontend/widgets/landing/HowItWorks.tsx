@@ -100,9 +100,9 @@ const visuals = {
 }
 
 export const HowItWorks = () => (
-    <section className="relative py-28 px-6 overflow-hidden">
+    <section className="relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:py-28">
         <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20">
+            <div className="mb-12 text-center sm:mb-16 lg:mb-20">
                 <span className="text-brand-primary uppercase tracking-wide">
                     Как это работает
                 </span>

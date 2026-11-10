@@ -67,7 +67,7 @@ export default function CalendarPage() {
     setRevision((value) => value + 1);
   }
   return (
-    <main className="px-6 md:px-10 lg:px-15 pb-12 space-y-6">
+    <main className="min-w-0 space-y-6 px-3 pb-12 sm:px-5 lg:px-8">
       <SectionTitle title="Календарь" subtitle="Расписание собеседований" />
       {result?.endpoint !== endpoint ? (
         <p>Загрузка встреч...</p>

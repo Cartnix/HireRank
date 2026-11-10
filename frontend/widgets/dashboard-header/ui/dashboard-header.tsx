@@ -19,11 +19,11 @@ export const DashboardHeader = () => {
 
   const user = useCurrentUser();
   return (
-    <header className="h-24.25 min-h-24.25 shrink-0 border-b border-border px-25 pt-8">
-      <div className="text-foreground-secondary text-span">
+    <header className="min-h-20 shrink-0 border-b border-border px-4 py-3 sm:px-6 sm:py-4 lg:min-h-24 lg:px-8 lg:py-5">
+      <div className="truncate text-foreground-secondary text-span">
         {weekDay}, {month} {day}, {year}
       </div>
-      <div className="text-h3 font-bold">
+      <div className="truncate text-h3 font-bold">
         {dayPeriod}, {user?.first_name}
       </div>
     </header>

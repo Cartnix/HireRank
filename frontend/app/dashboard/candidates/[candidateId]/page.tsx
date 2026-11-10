@@ -7,7 +7,7 @@ export default async function Page({
 }) {
   const { candidateId } = await params;
   return (
-    <main className="px-16">
+    <main className="min-w-0">
       <CandidatesPageClient
         currentUserName="Test"
         initialSelectedCandidateId={candidateId}

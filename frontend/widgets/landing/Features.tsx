@@ -27,7 +27,7 @@ const features = [
 ]
 
 export const Features = () => (
-    <section className="relative py-28 px-6">
+    <section className="relative px-4 py-16 sm:px-6 sm:py-20 lg:py-28">
         <div className="max-w-5xl mx-auto">
             <div className="mb-14 text-center">
                 <h2 className="tracking-tight text-foreground">
@@ -39,7 +39,7 @@ export const Features = () => (
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {features.map((f, i) => (
+                {features.map((f) => (
                     <Card key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
                 ))}
             </div>

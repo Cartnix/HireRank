@@ -37,9 +37,9 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="relative flex h-auto w-full md:sticky md:top-0 md:h-screen md:w-60 shrink-0 flex-col border-r bg-sidebar border-sidebar-border py-5 text-sidebar-foreground">
-      <button type="button" aria-expanded={mobileOpen} aria-controls="dashboard-sidebar-navigation" className="mx-4 flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>HireAI · Меню <span>{mobileOpen ? "Закрыть" : "Открыть"}</span></button>
-      <nav id="dashboard-sidebar-navigation" className={`${mobileOpen ? "flex" : "hidden"} md:flex flex-1 flex-col gap-2 md:min-h-0 md:overflow-y-auto`}>
+    <aside className="relative flex h-auto w-full shrink-0 flex-col border-b border-sidebar-border bg-sidebar py-3 text-sidebar-foreground lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:border-b-0 lg:border-r lg:py-5">
+      <button type="button" aria-expanded={mobileOpen} aria-controls="dashboard-sidebar-navigation" className="mx-3 flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}>HireAI · Меню <span>{mobileOpen ? "Закрыть" : "Открыть"}</span></button>
+      <nav id="dashboard-sidebar-navigation" className={`${mobileOpen ? "flex" : "hidden"} flex-1 flex-col gap-2 lg:flex lg:min-h-0 lg:overflow-y-auto`}>
         <div className="flex h-14 items-center gap-2.5 rounded-lg px-5 text-[14px]">
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand-primary text-[15px] font-bold text-brand-primary-foreground">
             H
@@ -211,7 +211,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className={`${mobileOpen ? "block" : "hidden"} md:block shrink-0 px-3 pt-4`}>
+      <div className={`${mobileOpen ? "block" : "hidden"} shrink-0 px-3 pt-4 lg:block`}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex w-full items-center justify-between rounded-[10px] border border-border px-3 py-2.5 transition-colors hover:bg-accent cursor-pointer outline-none">

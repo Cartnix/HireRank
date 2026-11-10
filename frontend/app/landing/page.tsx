@@ -2,7 +2,7 @@ import { CTA, Features, Hero, HowItWorks, Stats, Testimonial } from "@/widgets/l
 
 export default function Landing() {
     return (
-        <div className="w-full h-vh items-center justify-center">
+        <div className="w-full">
             <Hero />
             <Stats />
             <Features />
