@@ -89,8 +89,8 @@ export function AnalyticsOverview({
       : [];
   return (
     <>
-      <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
-        <div className="flex flex-col gap-6 lg:col-span-7">
+      <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-12">
+        <div className="flex flex-col gap-6 xl:col-span-7">
           <Card className="flex min-h-[340px] flex-col p-6 shadow-sm">
           <div className="mb-3">
           <h3 className="m-0 text-lg font-semibold text-foreground">Источники кандидатов</h3>

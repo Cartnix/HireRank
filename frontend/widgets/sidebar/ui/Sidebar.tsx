@@ -50,8 +50,8 @@ export function Sidebar() {
         </div>
 
         {(demo.canDevelop || demo.canAdminister) && (
-          <details className="group mx-3 my-2 overflow-hidden rounded-xl border border-blue-400/15 bg-blue-500/[0.04]">
-            <summary className="flex cursor-pointer list-none items-center gap-2.5 px-3 py-3 outline-none transition-colors hover:bg-blue-500/[0.06] [&::-webkit-details-marker]:hidden">
+          <details className="group mx-3 my-2 min-w-0 rounded-xl border border-blue-400/15 bg-blue-500/[0.04]">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-3 outline-none transition-colors hover:bg-blue-500/[0.06] [&::-webkit-details-marker]:hidden">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-blue-400/15 bg-blue-500/10 text-blue-300">
                 {demo.canDevelop ? <FlaskConical size={16} /> : <ShieldCheck size={16} />}
               </span>
@@ -63,11 +63,11 @@ export function Sidebar() {
                   {demo.canDevelop ? "Тестовые данные и роли" : "Управление доступом"}
                 </span>
               </span>
-              {demo.enabled && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-400">Dev</span>}
+              {demo.enabled && <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-400">Dev</span>}
               <ChevronDown size={14} className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
             </summary>
 
-            <div className="space-y-3 border-t border-border px-3 py-3">
+            <div className="min-w-0 space-y-3 border-t border-border px-3 py-3">
               {demo.canDevelop && (
                 <>
                   <label className="flex cursor-pointer items-center justify-between gap-3">
@@ -114,7 +114,7 @@ export function Sidebar() {
 
               {demo.canAdminister && (
                 <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-border pt-3">
-                  <span>
+                  <span className="min-w-0">
                     <span className="block text-xs font-medium text-foreground">Режим администрирования</span>
                     <span className="mt-0.5 block text-[10px] text-muted-foreground">Разрешить действия с данными</span>
                   </span>
